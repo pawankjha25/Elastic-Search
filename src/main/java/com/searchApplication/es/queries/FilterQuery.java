@@ -12,22 +12,27 @@ public class FilterQuery {
         BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
         try
         {
+        	//not sure why you do this spliting can you explain please
             String[] queryList = request.getSearchText().split("\\|");
             if( queryList.length > 1 )
             {
                 for( String query : queryList )
                 {
+                	//instructions for this is to use a query_string query instead of match query
                     booleanQuery.must(QueryBuilders.matchQuery("description.ngramed", query.trim()));
                 }
             }
             else
-            {
+            {  
+            	//if I am reading this correctly unless there is a pipline char | the search changes completly?
+            	//why is that so, I am not sure I understand where in the instructions this comes to play?
+            	//is this related to bucketing?
                 NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
                         QueryBuilders.matchQuery("attributes.attribute_value.raw", request.getSearchText()));
 
                 booleanQuery.must(q);
             }
-
+            //can you explain what these do? how are requests parsed from the front end?
             if( request.getFilters() != null )
             {
                 for( String key : request.getFilters().keySet() )

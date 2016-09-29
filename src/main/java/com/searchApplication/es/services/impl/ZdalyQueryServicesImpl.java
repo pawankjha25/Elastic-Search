@@ -37,6 +37,9 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
     }
 
     @Override
+    // please fix the naming so we know what is being called when.
+    // having wildcardQuery being called to generate buckets and 
+    // having bucket query doing something else is really confusing.
     public WildCardSearchResponseList wildcardQuery( String queryText ) throws Exception
     {
         WildCardSearchResponseList response = new WildCardSearchResponseList();
@@ -49,7 +52,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
             queryText = queryText.toLowerCase();
 
             SearchResponse tFdocs = null;
-
+            //the size is not suppose to be 100. the query should run through all that have a partial match.
             tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
                     .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(100).execute()
                     .actionGet();
@@ -85,7 +88,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
             if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
             {
                 booleanQuery = FilterQuery.getQuery(request);
-
+                //please remove print-outs from code. this is suppose to be used for debuging.
                 System.out.println(booleanQuery.toString());
 
                 AggregationBuilder aggregation = FilterAggregation.getAggregation();
@@ -109,6 +112,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
     @SuppressWarnings( "rawtypes" )
     @Override
+    //is this waht gets called when a bucketing query is being executed?
     public QueryResultsList queryResults( FilterRequest request ) throws Exception
     {
         QueryResultsList response = new QueryResultsList();
@@ -117,6 +121,8 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
         {
             if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
             {
+            	//wouldn't this produce the query that doesn't look in the n-grams 
+            	//it would infact th
                 booleanQuery = FilterQuery.getQuery(request);
 
                 AggregationBuilder aggregation = ResultsAggregation.getAggregation();

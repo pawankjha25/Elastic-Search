@@ -16,10 +16,13 @@ public class BucketQuery {
             if( queryText != null && !queryText.isEmpty() )
             {
                 queryValue = queryText.trim().split(" ");
+                //this is a really bad use of bool queries; there is no need to have each separate word in a bool query
+                //doing just one query string would do fine. there is no need for so many should queries
+                //can you explain what are you trying to do here.
                 if( queryValue.length > 1 )
                 {
                     for( String value : queryValue )
-                    {
+                    { 
                         if( value.length() > 2 )
                         {
                             booleanQuery.should(QueryBuilders.matchQuery("description.ngramed", value));

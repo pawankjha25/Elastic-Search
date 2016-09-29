@@ -23,6 +23,7 @@ public class BucketingSearchResponse {
         {
             int queryLength = queryText.split(" ").length;
             SearchHit[] hits = tFdocs.getHits().getHits();
+            // there isn't a set set of ranks (3 ranks) all rows should be ranked based on a scale
             if( tFdocs != null )
             {
                 Map<Double, WildCardSearchResponse> rank1Rows = new HashMap<Double, WildCardSearchResponse>();
@@ -39,6 +40,8 @@ public class BucketingSearchResponse {
                     List<String> description = new ArrayList<String>();
 
                     //for each row get the following fields
+                    // please insure that you could deal with having multiple levels here
+                   
                     for( String key : res.keySet() )
                     {
                         if( res.get(key) != null && res.get(key).toString() != null )
@@ -72,6 +75,11 @@ public class BucketingSearchResponse {
                     Set<String> rank2Bucket = new TreeSet<String>();
                     Set<String> rank3Bucket = new TreeSet<String>();
 
+                    ///!!! the whole ordering system doesn't work as supposed.!!!
+                    /// for each row there should be a score of exact matches and partial matches
+                    /// and rows should be ordered first by exact, and then by partial matches
+                   //// please extract the  scoring to a separate function we can easily test
+                    /// the whole ranking system doesn't work as supposed.
                     for( String words : description )
                     {
                         for( String word : words.toLowerCase().split(" ") )
@@ -89,6 +97,7 @@ public class BucketingSearchResponse {
                                 //partial match
                                 else if( word.contains(query) )
                                 {
+                                
                                     partialMatch.add(word);
                                     rank3Bucket.add(words);
                                 }
@@ -154,6 +163,8 @@ public class BucketingSearchResponse {
                         }
                     }
                     //check for rank3 row
+                    /// so I am not sure I get this
+                    // if (partialMatch.size() > 0){} else if (partialMatch.size > 0){} -- both would be executed 
                     else if( partialMatch.size() > 0 )
                     {
                         //it will be a rank 3 row
