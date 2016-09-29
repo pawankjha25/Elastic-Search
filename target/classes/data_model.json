@@ -1,0 +1,179 @@
+{
+	"settings": {
+		"index": {
+			"number_of_replicas": 0,
+			"analysis": {
+				"filter": {
+					"gram_filter": {
+						"type": "ngram",
+						"min_gram": "2",
+						"max_gram": "6",
+						"token_chars": [
+							"letter",
+							"digit"
+						]
+					},
+					"filter_shingle": {
+						"type": "shingle",
+						"max_shingle_size": 3,
+						"min_shingle_size": 2,
+						"filter_token": "",
+						"output_unigrams": true
+					},
+					"en_stem_filter": {
+						"type": "snowball",
+						"langauge": "English"
+					}
+				},
+				"analyzer": {
+					"n_gram_analyzer": {
+						"type": "custom",
+						"tokenizer": "standard",
+						"filter": [
+							"asciifolding",
+							"lowercase",
+							"en_stem_filter",
+							"gram_filter"
+						]
+					},
+					"shingle_analyzer": {
+						"type": "custom",
+						"tokenizer": "standard",
+						"filter": [
+							"asciifolding",
+							"lowercase",
+							"en_stem_filter",
+							"filter_shingle"
+						]
+					}
+				}
+			}
+		}
+	},
+	"mappings": {
+		"time_series": {
+			"properties": {
+				"db": {
+					"type": "nested",
+					"properties": {
+						"db_name": {
+							"type": "string",
+							"index": "not_analyzed"
+						},
+						"properties": {
+							"type": "long"
+						}
+					}
+				},
+				"locations": {
+					"type": "nested",
+					"properties": {
+						"series_id": {
+							"type": "long"
+						},
+						"location_name": {
+							"type": "string",
+							"fields": {
+								"ngramed": {
+									"type": "string",
+									"analyzer": "n_gram_analyzer"
+								},
+								"shingled": {
+									"type": "string",
+									"analyzer": "shingle_analyzer"
+								},
+								"raw": {
+									"type": "string",
+									"index": "not_analyzed"
+								}
+							}
+						},
+						"location_type": {
+							"type": "string",
+							"fields": {
+								"ngramed": {
+									"type": "string",
+									"analyzer": "n_gram_analyzer"
+								},
+								"shingled": {
+									"type": "string",
+									"analyzer": "shingle_analyzer"
+								},
+								"raw": {
+									"type": "string",
+									"index": "not_analyzed"
+								}
+							}
+						},
+						"location_meta": {
+							"type": "string",
+							"index": "not_analyzed"
+						}
+					}
+				},
+				"sector": {
+					"type": "string",
+					"index": "not_analyzed"
+				},
+				"sub_sector": {
+					"type": "string",
+					"index": "not_analyzed"
+				},
+				"super_region": {
+					"type": "string",
+					"index": "not_analyzed"
+				},
+				"description": {
+					"type": "string",
+					"fields": {
+						"ngramed": {
+							"type": "string",
+							"analyzer": "n_gram_analyzer"
+						},
+						"shingled": {
+							"type": "string",
+							"analyzer": "shingle_analyzer"
+						},
+						"raw": {
+							"type": "string",
+							"index": "not_analyzed"
+						}
+					}
+				},
+				"attributes": {
+					"type": "nested",
+					"properties": {
+						"attribute_name": {
+							"type": "string",
+							"index": "not_analyzed"
+						},
+						"attribute_value": {
+							"type": "string",
+							"fields": {
+								"ngramed": {
+									"type": "string",
+									"analyzer": "n_gram_analyzer"
+								},
+								"shingled": {
+									"type": "string",
+									"analyzer": "shingle_analyzer"
+								},
+								"raw": {
+									"type": "string",
+									"index": "not_analyzed"
+								}
+							}
+						},
+						"attribute_parent": {
+							"type": "string",
+							"index": "not_analyzed"
+						},
+						"attribute_level": {
+							"type": "long"
+						}
+					}
+				}
+			}
+		}
+	}
+}
