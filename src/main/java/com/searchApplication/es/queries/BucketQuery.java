@@ -25,6 +25,7 @@ public class BucketQuery {
                     { 
                         if( value.length() > 2 )
                         {
+                        	// this has to be a query_string query
                             booleanQuery.should(QueryBuilders.matchQuery("description.ngramed", value));
                         }
                     }

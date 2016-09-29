@@ -112,7 +112,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
     @SuppressWarnings( "rawtypes" )
     @Override
-    //is this waht gets called when a bucketing query is being executed?
+    //is this what gets called when a bucketing query is being executed?
     public QueryResultsList queryResults( FilterRequest request ) throws Exception
     {
         QueryResultsList response = new QueryResultsList();
@@ -122,7 +122,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
             if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
             {
             	//wouldn't this produce the query that doesn't look in the n-grams 
-            	//it would infact th
+            	//it would infact does something really strange
                 booleanQuery = FilterQuery.getQuery(request);
 
                 AggregationBuilder aggregation = ResultsAggregation.getAggregation();
