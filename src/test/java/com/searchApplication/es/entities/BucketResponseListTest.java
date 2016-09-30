@@ -28,7 +28,7 @@ public class BucketResponseListTest {
 		
 		b1.addMetaData(meta);
 		
-		BucketResponseList l =  BucketResponseList.buildFromBucketList(Arrays.asList(b, b1));
+		BucketResponseList l =  BucketResponseList.buildFromBucketList(Arrays.asList(b, b1), "q");
 		Assertions.assertThat(l.getSearchResponse()).hasSize(3);
 		BucketResponse[] buckets = l.getSearchResponse().toArray(new BucketResponse[3]);
 		assertBucket(buckets[0], "a|b|","sector", "subSector","superRegion");

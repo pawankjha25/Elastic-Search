@@ -7,7 +7,7 @@ import com.searchApplication.es.entities.BucketResponseList;
 
 public interface ZdalyQueryServices {
 
-	public BucketResponseList wildcardQuery( String queryText ) throws Exception;
+	public BucketResponseList produceBuckets( String queryText ) throws Exception;
 
 	public SearchOutput matchQuery( String queryText ) throws Exception;
 	

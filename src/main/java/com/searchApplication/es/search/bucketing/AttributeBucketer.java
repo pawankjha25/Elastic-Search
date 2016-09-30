@@ -25,10 +25,9 @@ public class AttributeBucketer {
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query,
 			int loops) {
-		BucketResponseList list = new BucketResponseList();
 		List<Bucket> buckets = createBucketList(client, index, type, query, loops);
 		System.out.println(buckets);
-		return BucketResponseList.buildFromBucketList(buckets);
+		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
 	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops) {
@@ -70,8 +69,8 @@ public class AttributeBucketer {
 
 	private static Bucket processHitsToBuckets(SearchHit hit, String query) {
 		List<String> bucketTerms = new ArrayList<String>();
-		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("sector"),
-				(String) hit.getSource().get("sub_sector"), (String) hit.getSource().get("super_region"));
+		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
+				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
 		for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes")) {
 			bucketTerms.add(attributeData.get("attribute_name"));
 

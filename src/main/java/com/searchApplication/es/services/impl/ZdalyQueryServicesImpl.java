@@ -1,24 +1,23 @@
 package com.searchApplication.es.services.impl;
 
-import java.util.Set;
 import javax.annotation.Resource;
+
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.es.aggregations.FilterAggregation;
 import com.searchApplication.es.aggregations.ResultsAggregation;
-import com.searchApplication.es.entities.BucketResponse;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
-import com.searchApplication.es.queries.BucketQuery;
 import com.searchApplication.es.queries.FilterQuery;
-import com.searchApplication.es.services.response.BucketingSearchResponse;
+import com.searchApplication.es.search.bucketing.AttributeBucketer;
 import com.searchApplication.es.services.response.QueryFilterResponse;
 import com.searchApplication.es.services.response.ResultsResponse;
 import com.searchApplication.utils.ElasticSearchUtility;
@@ -26,116 +25,82 @@ import com.searchApplication.utils.ElasticSearchUtility;
 @Service
 public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
-    @Resource
-    private Environment env;
+	@Resource
+	private Environment env;
 
-    private static Client client = null;
+	private static Client client = null;
 
-    public ZdalyQueryServicesImpl()
-    {
-        ZdalyQueryServicesImpl.client = ElasticSearchUtility.addClient();
-    }
+	public ZdalyQueryServicesImpl() {
+		ZdalyQueryServicesImpl.client = ElasticSearchUtility.addClient();
+	}
 
-    @Override
-    public BucketResponseList wildcardQuery( String queryText ) throws Exception
-    {
-        BucketResponseList response = new BucketResponseList();
-        response.setSearchString(queryText);
-        BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
-        try
-        {
-            booleanQuery = BucketQuery.getQuery(queryText);
+	@Override
+	public BucketResponseList produceBuckets(String queryText) throws Exception {
+		try {
+			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
+					env.getProperty("es.search_object"), queryText, 10);
+		} catch (Exception e) {
+			throw e;
+		}
+	}
 
-            queryText = queryText.toLowerCase();
+	@Override
+	public SearchOutput matchQuery(String queryText) throws Exception {
+		return null;
+	}
 
-            SearchResponse tFdocs = null;
+	@SuppressWarnings("rawtypes")
+	@Override
+	public SearchOutput queryWithFilters(FilterRequest request) throws Exception {
+		SearchOutput response = new SearchOutput();
+		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
+		try {
+			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
+				booleanQuery = FilterQuery.getQuery(request);
 
-            tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
-                    .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(100).execute()
-                    .actionGet();
+				System.out.println(booleanQuery.toString());
 
-            Set<BucketResponse> sortedRows = BucketingSearchResponse.getResults(tFdocs, queryText);
+				AggregationBuilder aggregation = FilterAggregation.getAggregation();
 
-            response.setSearchResponse(sortedRows);
+				SearchResponse tFdocs = null;
+				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
+						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
+						.addAggregation(aggregation).execute().actionGet();
 
-        }
-        catch(
+				response = QueryFilterResponse.getResponse(tFdocs);
 
-        Exception e )
-        {
-            throw e;
-        }
-        return response;
-    }
+			}
 
-    @Override
-    public SearchOutput matchQuery( String queryText ) throws Exception
-    {
-        return null;
-    }
+		} catch (Exception e) {
+			throw e;
+		}
+		return response;
+	}
 
-    @SuppressWarnings( "rawtypes" )
-    @Override
-    public SearchOutput queryWithFilters( FilterRequest request ) throws Exception
-    {
-        SearchOutput response = new SearchOutput();
-        BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
-        try
-        {
-            if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
-            {
-                booleanQuery = FilterQuery.getQuery(request);
+	@SuppressWarnings("rawtypes")
+	@Override
+	public QueryResultsList queryResults(FilterRequest request) throws Exception {
+		QueryResultsList response = new QueryResultsList();
+		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
+		try {
+			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
+				booleanQuery = FilterQuery.getQuery(request);
 
-                System.out.println(booleanQuery.toString());
+				AggregationBuilder aggregation = ResultsAggregation.getAggregation();
 
-                AggregationBuilder aggregation = FilterAggregation.getAggregation();
+				SearchResponse tFdocs = null;
 
-                SearchResponse tFdocs = null;
-                tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
-                        .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
-                        .addAggregation(aggregation).execute().actionGet();
+				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
+						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(0)
+						.addAggregation(aggregation).execute().actionGet();
 
-                response = QueryFilterResponse.getResponse(tFdocs);
+				response = ResultsResponse.getResults(tFdocs);
+			}
 
-            }
-
-        }
-        catch( Exception e )
-        {
-            throw e;
-        }
-        return response;
-    }
-
-    @SuppressWarnings( "rawtypes" )
-    @Override
-    public QueryResultsList queryResults( FilterRequest request ) throws Exception
-    {
-        QueryResultsList response = new QueryResultsList();
-        BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
-        try
-        {
-            if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
-            {
-                booleanQuery = FilterQuery.getQuery(request);
-
-                AggregationBuilder aggregation = ResultsAggregation.getAggregation();
-
-                SearchResponse tFdocs = null;
-
-                tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
-                        .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(0)
-                        .addAggregation(aggregation).execute().actionGet();
-
-                response = ResultsResponse.getResults(tFdocs);
-            }
-
-        }
-        catch( Exception e )
-        {
-            throw e;
-        }
-        return response;
-    }
+		} catch (Exception e) {
+			throw e;
+		}
+		return response;
+	}
 
 }

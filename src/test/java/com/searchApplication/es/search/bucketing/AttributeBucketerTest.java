@@ -6,9 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.fest.assertions.api.Assertions;
-import org.junit.Assert;
 import org.junit.Test;
 
+import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.entities.DBData;
 import com.searchApplication.es.entities.Row;
 import com.searchApplication.es.entities.RowAttributes;
@@ -45,6 +45,51 @@ public class AttributeBucketerTest extends SearchESTest {
 		org.junit.Assert.assertEquals(1, buckets.size());
 		org.junit.Assert.assertEquals(2, buckets.get(0).getBucketMetaData().size());
 
+	}
+
+	@Test
+	public void testProduceResponseBuckets() throws IOException {
+		createSpoozIndex();
+
+		Row r = new Row();
+		r.setDescription(Arrays.asList("corn", "production", "x"));
+		DBData db = new DBData();
+		db.setDb_name("db");
+		db.setProperty(1);
+		r.setDb(db);
+		r.setSector("sector");
+		r.setSub_sector("sub_sector");
+		r.setSuper_region("super");
+		RowAttributes a1 = new RowAttributes("corn", "agro", "", "null", 0);
+		RowAttributes a2 = new RowAttributes("priduction", "prd", "", "agro", 1);
+		RowAttributes a3 = new RowAttributes("x", "x", "prd", "", 2);
+		List<RowAttributes> atts = Arrays.asList(a1, a2, a3);
+		r.setAttributes(atts);
+		index(r, 1);
+
+		Row r1 = r;
+		index(r1, 2);
+
+		Row r2 = r;
+		r2.setSector("sector 1");
+		index(r2, 3);
+
+		Row r3 = createAtrributeFromList("corn|corn production");
+		r3.setSector("sector");
+		r3.setSub_sector("subSector");
+		r3.setSuper_region("superRegion");
+
+		index(r3, 4);
+
+		Row r4 = createAtrributeFromList("soccer|transfer data");
+		r4.setSector("sector");
+		r4.setSub_sector("subSector");
+		r4.setSuper_region("superRegion");
+
+		index(r4, 5);
+
+		BucketResponseList buckets = AttributeBucketer.generateBuckets(client(), TEST_INDEX_NAME, TYPE_NAME, "corn", 1);
+		System.out.println(buckets.getSearchResponse());
 	}
 
 	/*
@@ -136,11 +181,8 @@ public class AttributeBucketerTest extends SearchESTest {
 	 * 
 	 * expected
 	 * 
-	 * wheat, wheat production
-	 * wheat production
-	 * wheat, production
-	 * minning wheat, iron production
-	 * wheat
+	 * wheat, wheat production wheat production wheat, production minning wheat,
+	 * iron production wheat
 	 */
 
 	@Test
@@ -156,9 +198,9 @@ public class AttributeBucketerTest extends SearchESTest {
 		index(createAtrributeFromList("wheat|wheat production"), 4);
 
 		index(createAtrributeFromList("soccer|wheat production"), 5);
-		
+
 		index(createAtrributeFromList("x|wheat"), 6);
-		
+
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"wheat production", 1);
 		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("wheat", "wheat production");
@@ -169,8 +211,6 @@ public class AttributeBucketerTest extends SearchESTest {
 		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsOnly("mining wheat", "iron production");
 
 		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsOnly("wheat");
-
-
 
 	}
 

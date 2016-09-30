@@ -48,8 +48,9 @@ public class BucketResponseList {
 		this.searchResponse = searchResponse;
 	}
 
-	public static BucketResponseList buildFromBucketList(List<Bucket> buckets) {
+	public static BucketResponseList buildFromBucketList(List<Bucket> buckets, String query) {
 		BucketResponseList b = new BucketResponseList();
+		b.setSearchString(query);
 		Set<BucketResponse> responses = new LinkedHashSet<BucketResponse>();
 		for (Bucket bucket : buckets) {
 			StringBuffer sb= new StringBuffer();
@@ -62,6 +63,7 @@ public class BucketResponseList {
 				r.setSubSector(meta.getSubSector());
 				r.setSuperRegion(meta.getSuperRegion());
 				r.setSuggestionString(sb.toString());
+				r.setTotalRows(meta.getTotal());
 				responses.add(r);
 			}
 			
