@@ -29,6 +29,25 @@ public class BucketBuildersTest {
 		Assert.assertEquals(b1.getBucketTerms().size(), 2);
 
 	}
+	@Test
+	public void testStems() {
+		Bucket b = BucketBuilders.createFromQueryString("run", Arrays.asList("running shoes"));
+		Assert.assertEquals(b.getTotalPerfectMatches(), 1);
+
+	}
+	
+	@Test
+	public void testStopWords() {
+		Bucket b = BucketBuilders.createFromQueryString("production in us", Arrays.asList("production in us"));
+		Assert.assertEquals(b.getTotalPerfectMatches(), 2);
+		
+		Bucket b1= BucketBuilders.createFromQueryString("production in us", Arrays.asList("corn production in china"));
+		Assert.assertEquals(b1.getTotalPerfectMatches(), 1);
+		
+		Bucket b2 = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn production in china"));
+		Assert.assertEquals(b2.getTotalPerfectMatches(), 2);
+
+	}
 	
 	@Test
 	public void testPartialMatch() {
