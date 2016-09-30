@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.Set;
 
 import com.searchApplication.es.services.impl.StringCompareUtil;
+import com.searchApplication.utils.Stemmer;
 
 public class BucketBuilders {
 
 	private static final String SPACE_DELIMITER = " ";
+	private static Stemmer STEMMER = new Stemmer();
 
 	public static Bucket createFromQueryString(String query, List<String> bucket) {
 
@@ -25,7 +27,7 @@ public class BucketBuilders {
 
 				for (String t : bucketTerms) {
 					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
-					int distance = StringCompareUtil.editDistance(q, cleaned);
+					int distance = StringCompareUtil.editDistance(STEMMER.stem(q), STEMMER.stem(cleaned));
 					String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
 					if (isPerfectMatch(queryPrefix, termPrefix, distance)) {
 						perfectMatches++;

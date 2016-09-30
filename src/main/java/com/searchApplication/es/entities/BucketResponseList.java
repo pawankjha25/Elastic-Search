@@ -1,6 +1,8 @@
 package com.searchApplication.es.entities;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -13,10 +15,7 @@ public class BucketResponseList {
 	private Set<BucketResponse> searchResponse;
 	private long totalTimesInMillis;
 	private long totalRows;
-	
-	
-	
-	
+
 	public long getTotalTimesInMillis() {
 		return totalTimesInMillis;
 	}
@@ -51,17 +50,24 @@ public class BucketResponseList {
 
 	public static BucketResponseList buildFromBucketList(List<Bucket> buckets) {
 		BucketResponseList b = new BucketResponseList();
-		List<BucketResponse> responses = new ArrayList<BucketResponse>();
+		Set<BucketResponse> responses = new LinkedHashSet<BucketResponse>();
 		for (Bucket bucket : buckets) {
+			StringBuffer sb= new StringBuffer();
+			for (String t: bucket.getBucketTerms()) {
+				sb.append(t+"|");
+			}
 			for (BucketMetaData meta : bucket.getBucketMetaData()) {
 				BucketResponse r = new BucketResponse();
 				r.setSector(meta.getSector());
 				r.setSubSector(meta.getSubSector());
 				r.setSuperRegion(meta.getSuperRegion());
+				r.setSuggestionString(sb.toString());
 				responses.add(r);
 			}
+			
+			
 		}
-
+		b.setSearchResponse(responses);
 		return b;
 	}
 }
