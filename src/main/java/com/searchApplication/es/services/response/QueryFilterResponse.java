@@ -31,11 +31,11 @@ public class QueryFilterResponse {
             for( Terms.Bucket bucket : attTypesTerms.getBuckets() )
             {
                 Stratum st = new Stratum();
-                st.setStratumName(bucket.getKeyAsString());
+                st.setStratumName(bucket.getKeyAsText().string());
                 Terms levelBuckets = bucket.getAggregations().get("attLevel");
                 for( Terms.Bucket levelBucket : levelBuckets.getBuckets() )
                 {
-                    st.setLevel(levelBucket.getKeyAsString());
+                    st.setLevel(levelBucket.getKeyAsText().string());
                     if( levelBucket != null && levelBucket.getAggregations() != null
                             && levelBucket.getAggregations().get("attParent") != null )
                     {
@@ -43,7 +43,7 @@ public class QueryFilterResponse {
                         Collection<Bucket> attParentBuckets = attParentTerm.getBuckets();
                         for( Terms.Bucket attParentBucket : attParentBuckets )
                         {
-                            st.setParent(attParentBucket.getKeyAsString());
+                            st.setParent(attParentBucket.getKeyAsText().string());
                             if( attParentBucket != null && attParentBucket.getAggregations() != null
                                     && attParentBucket.getAggregations().get("attValues") != null )
                             {
@@ -52,7 +52,7 @@ public class QueryFilterResponse {
                                 Collection<Bucket> buckets2 = super_Sector_terms.getBuckets();
                                 for( Terms.Bucket bucket2 : buckets2 )
                                 {
-                                    stratumValues.add(bucket2.getKeyAsString());
+                                    stratumValues.add(bucket2.getKeyAsText().string());
 
                                     ReverseNested reverse_nested = bucket2.getAggregations().get("reverseNested");
                                     InternalNested location_terms = reverse_nested.getAggregations().get("locations");
@@ -62,9 +62,9 @@ public class QueryFilterResponse {
                                     for( Terms.Bucket bucket5 : buckets5 )
                                     {
                                         LocationAggrigation loc;
-                                        if( locationList.get(bucket5.getKeyAsString()) != null )
+                                        if( locationList.get(bucket5.getKeyAsText().string()) != null )
                                         {
-                                            loc = locationList.get(bucket5.getKeyAsString());
+                                            loc = locationList.get(bucket5.getKeyAsText().string());
                                         }
                                         else
                                         {
@@ -77,7 +77,7 @@ public class QueryFilterResponse {
                                         Set<String> locationName = new TreeSet<String>();
                                         for( Terms.Bucket bucket6 : buckets6 )
                                         {
-                                            String locationNam = bucket6.getKeyAsString();
+                                            String locationNam = bucket6.getKeyAsText().string();
                                             if( locationNam.contains("(") && locationNam.contains(")") )
                                             {
                                                 locationNam = locationNam.substring(0, locationNam.indexOf('('));
@@ -92,11 +92,11 @@ public class QueryFilterResponse {
                                         {
                                             loc.setLocationName(locationName);
                                         }
-                                        locationList.put(bucket5.getKeyAsString(), loc);
+                                        locationList.put(bucket5.getKeyAsText().string(), loc);
                                     }
 
                                 }
-                                stratum.put(bucket.getKeyAsString(), stratumValues);
+                                stratum.put(bucket.getKeyAsText().string(), stratumValues);
                                 stratumList.add(st);
                             }
                         }

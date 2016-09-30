@@ -8,13 +8,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.entities.TransactionResponse;
-import com.searchApplication.es.entities.WildCardSearchResponseList;
+import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
 
 @Path( "/zdaly" )
@@ -38,7 +40,7 @@ public class ZdalyQueryRestServices {
 		try
 		{
 			long startTime = System.currentTimeMillis();
-			WildCardSearchResponseList results = zdalyQueryServices.wildcardQuery(queryString);
+			BucketResponseList results = zdalyQueryServices.wildcardQuery(queryString);
 
 			if( results != null )
 			{

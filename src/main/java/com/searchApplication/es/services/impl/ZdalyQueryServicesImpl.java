@@ -13,8 +13,8 @@ import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.es.aggregations.FilterAggregation;
 import com.searchApplication.es.aggregations.ResultsAggregation;
-import com.searchApplication.es.entities.WildCardSearchResponse;
-import com.searchApplication.es.entities.WildCardSearchResponseList;
+import com.searchApplication.es.entities.BucketResponse;
+import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
 import com.searchApplication.es.queries.BucketQuery;
 import com.searchApplication.es.queries.FilterQuery;
@@ -37,9 +37,9 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
     }
 
     @Override
-    public WildCardSearchResponseList wildcardQuery( String queryText ) throws Exception
+    public BucketResponseList wildcardQuery( String queryText ) throws Exception
     {
-        WildCardSearchResponseList response = new WildCardSearchResponseList();
+        BucketResponseList response = new BucketResponseList();
         response.setSearchString(queryText);
         BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
         try
@@ -54,7 +54,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
                     .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(100).execute()
                     .actionGet();
 
-            Set<WildCardSearchResponse> sortedRows = BucketingSearchResponse.getResults(tFdocs, queryText);
+            Set<BucketResponse> sortedRows = BucketingSearchResponse.getResults(tFdocs, queryText);
 
             response.setSearchResponse(sortedRows);
 
