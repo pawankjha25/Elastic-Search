@@ -34,13 +34,14 @@ public class AttributeBucketer {
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
 				.setFetchSource(new String[] { "attributes.attribute_name", "description", "attributes.attribute_value",
 						"sector", "sub_sector", "super_region" }, null)
-				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(5000));
+				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(60000));
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		while (hitCounter < HITS_IN_SCROLL * loops && sr.getHits().getHits().length > 0) {
-
+			System.out.println(sr.getScrollId());
 			for (SearchHit hit : sr.getHits()) {
+				
 				try {
 					Bucket b = processHitsToBuckets(hit, query);
 
@@ -59,7 +60,7 @@ public class AttributeBucketer {
 					e.printStackTrace();
 				}
 			}
-			sr = client.prepareSearchScroll(sr.getScrollId()).get();
+			sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(60000)).get();
 		}
 
 		Collections.sort(bucketList);
