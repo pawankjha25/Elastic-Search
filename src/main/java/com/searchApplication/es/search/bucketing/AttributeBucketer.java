@@ -39,7 +39,6 @@ public class AttributeBucketer {
 		SearchResponse sr = srb.get();
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		while (hitCounter < HITS_IN_SCROLL * loops && sr.getHits().getHits().length > 0) {
-			System.out.println(sr.getScrollId());
 			for (SearchHit hit : sr.getHits()) {
 				
 				try {

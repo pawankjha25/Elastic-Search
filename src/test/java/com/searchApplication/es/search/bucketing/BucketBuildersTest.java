@@ -58,7 +58,17 @@ public class BucketBuildersTest {
 		Assert.assertEquals(b.getBucketTerms().size(), 2);
 		Assert.assertEquals(b.getTotalLevenstheinDistance(), 0);
 
+	}
+	
+	@Test
+	public void testStrange() {
+		
+		Bucket b = BucketBuilders.createFromQueryString("corn production", Arrays.asList("tons", "1000 acers"));
+		Assert.assertEquals(b.getTotalPerfectMatches(), 0);
+		Assert.assertEquals(b.getTotalPartialMatches(), 1);
+		Assert.assertTrue(b.getBucketTerms().contains("tons"));
 
+	
 	}
 
 }
