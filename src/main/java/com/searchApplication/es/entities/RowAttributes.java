@@ -9,7 +9,7 @@ public class RowAttributes {
 	private int attribute_level;
 	
 	
-	public RowAttributes(String attribute_name, String attribute_value, String attribute_type, String attribute_parent,
+	public RowAttributes(String attribute_value, String attribute_name, String attribute_type, String attribute_parent,
 			int attribute_level) {
 		super();
 		this.attribute_name = attribute_name;
