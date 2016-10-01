@@ -18,7 +18,6 @@ import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -53,21 +52,15 @@ public class ElasticSearchUtility {
 	public static Client addClient() {
 		try {
 			//
-			// Settings settings =
-			// Settings.settingsBuilder().put("cluster.name",
-			// env.getProperty("es.cluster_name"))
-			// .put("number_of_shards", env.getProperty("es.num_shards"))
-			// .put("number_of_replicas",
-			// env.getProperty("es.num_replicas")).build();
-			// c =
-			// TransportClient.builder().settings(settings).build().addTransportAddress(
-			// new
-			// InetSocketTransportAddress(InetAddress.getByName(env.getProperty("es.host")),
-			// 9300));
-			Settings settings = ImmutableSettings.builder().put("cluster.name", env.getProperty("es.cluster_name"))
+			Settings settings = Settings.settingsBuilder().put("cluster.name", env.getProperty("es.cluster_name"))
+					.put("number_of_shards", env.getProperty("es.num_shards"))
 					.put("number_of_replicas", env.getProperty("es.num_replicas")).build();
-			c = new TransportClient(settings).addTransportAddress(
+			c = TransportClient.builder().settings(settings).build().addTransportAddress(
 					new InetSocketTransportAddress(InetAddress.getByName(env.getProperty("es.host")), 9300));
+//			Settings settings = ImmutableSettings.builder().put("cluster.name", env.getProperty("es.cluster_name"))
+//					.put("number_of_replicas", env.getProperty("es.num_replicas")).build();
+//			c = new TransportClient(settings).addTransportAddress(
+//					new InetSocketTransportAddress(InetAddress.getByName(env.getProperty("es.host")), 9300));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

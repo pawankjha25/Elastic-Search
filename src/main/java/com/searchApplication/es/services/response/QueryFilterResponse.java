@@ -7,11 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
 import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
+
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.entities.Stratum;
@@ -31,11 +33,11 @@ public class QueryFilterResponse {
             for( Terms.Bucket bucket : attTypesTerms.getBuckets() )
             {
                 Stratum st = new Stratum();
-                st.setStratumName(bucket.getKeyAsText().string());
+                st.setStratumName(bucket.getKeyAsString());
                 Terms levelBuckets = bucket.getAggregations().get("attLevel");
                 for( Terms.Bucket levelBucket : levelBuckets.getBuckets() )
                 {
-                    st.setLevel(levelBucket.getKeyAsText().string());
+                    st.setLevel(levelBucket.getKeyAsString());
                     if( levelBucket != null && levelBucket.getAggregations() != null
                             && levelBucket.getAggregations().get("attParent") != null )
                     {
@@ -43,7 +45,7 @@ public class QueryFilterResponse {
                         Collection<Bucket> attParentBuckets = attParentTerm.getBuckets();
                         for( Terms.Bucket attParentBucket : attParentBuckets )
                         {
-                            st.setParent(attParentBucket.getKeyAsText().string());
+                            st.setParent(attParentBucket.getKeyAsString());
                             if( attParentBucket != null && attParentBucket.getAggregations() != null
                                     && attParentBucket.getAggregations().get("attValues") != null )
                             {
@@ -52,7 +54,7 @@ public class QueryFilterResponse {
                                 Collection<Bucket> buckets2 = super_Sector_terms.getBuckets();
                                 for( Terms.Bucket bucket2 : buckets2 )
                                 {
-                                    stratumValues.add(bucket2.getKeyAsText().string());
+                                    stratumValues.add(bucket2.getKeyAsString());
 
                                     ReverseNested reverse_nested = bucket2.getAggregations().get("reverseNested");
                                     InternalNested location_terms = reverse_nested.getAggregations().get("locations");
@@ -62,9 +64,9 @@ public class QueryFilterResponse {
                                     for( Terms.Bucket bucket5 : buckets5 )
                                     {
                                         LocationAggrigation loc;
-                                        if( locationList.get(bucket5.getKeyAsText().string()) != null )
+                                        if( locationList.get(bucket5.getKeyAsString()) != null )
                                         {
-                                            loc = locationList.get(bucket5.getKeyAsText().string());
+                                            loc = locationList.get(bucket5.getKeyAsString());
                                         }
                                         else
                                         {
@@ -77,7 +79,7 @@ public class QueryFilterResponse {
                                         Set<String> locationName = new TreeSet<String>();
                                         for( Terms.Bucket bucket6 : buckets6 )
                                         {
-                                            String locationNam = bucket6.getKeyAsText().string();
+                                            String locationNam = bucket6.getKeyAsString();
                                             if( locationNam.contains("(") && locationNam.contains(")") )
                                             {
                                                 locationNam = locationNam.substring(0, locationNam.indexOf('('));
@@ -92,11 +94,11 @@ public class QueryFilterResponse {
                                         {
                                             loc.setLocationName(locationName);
                                         }
-                                        locationList.put(bucket5.getKeyAsText().string(), loc);
+                                        locationList.put(bucket5.getKeyAsString(), loc);
                                     }
 
                                 }
-                                stratum.put(bucket.getKeyAsText().string(), stratumValues);
+                                stratum.put(bucket.getKeyAsString(), stratumValues);
                                 stratumList.add(st);
                             }
                         }

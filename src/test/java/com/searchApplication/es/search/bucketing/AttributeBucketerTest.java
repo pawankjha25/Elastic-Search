@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.fest.assertions.api.Assertions;
+import org.junit.After;
 import org.junit.Test;
 
 import com.searchApplication.es.entities.BucketResponseList;
@@ -60,9 +61,9 @@ public class AttributeBucketerTest extends SearchESTest {
 		r.setSector("sector");
 		r.setSub_sector("sub_sector");
 		r.setSuper_region("super");
-		RowAttributes a1 = new RowAttributes("corn", "agro", "", "null", 0);
-		RowAttributes a2 = new RowAttributes("priduction", "prd", "", "agro", 1);
-		RowAttributes a3 = new RowAttributes("x", "x", "prd", "", 2);
+		RowAttributes a1 = new RowAttributes("corn", "agro", "a", "null", 0);
+		RowAttributes a2 = new RowAttributes("priduction", "prd", "a", "agro", 1);
+		RowAttributes a3 = new RowAttributes("x", "x", "prd", "a", 2);
 		List<RowAttributes> atts = Arrays.asList(a1, a2, a3);
 		r.setAttributes(atts);
 		index(r, 1);
@@ -89,7 +90,6 @@ public class AttributeBucketerTest extends SearchESTest {
 		index(r4, 5);
 
 		BucketResponseList buckets = AttributeBucketer.generateBuckets(client(), TEST_INDEX_NAME, TYPE_NAME, "corn", 1);
-		System.out.println(buckets.getSearchResponse());
 	}
 
 	/*
@@ -212,6 +212,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsOnly("wheat");
 
+
 	}
 
 	private Row createAtrributeFromList(String attributes) {
@@ -223,11 +224,17 @@ public class AttributeBucketerTest extends SearchESTest {
 		r.setDescription(Arrays.asList(attNames));
 		List<RowAttributes> atts = new ArrayList<RowAttributes>();
 		for (String name : attNames) {
-			RowAttributes a = new RowAttributes(name, "", "", "", 0);
+			RowAttributes a = new RowAttributes(name, "a", "a", "a", 0);
 			atts.add(a);
 		}
 		r.setAttributes(atts);
 		return r;
+	}
+	
+	@After
+	public void close() {
+		client().admin().indices().prepareClose(TEST_INDEX_NAME).get();
+
 	}
 
 }
