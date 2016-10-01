@@ -10,7 +10,7 @@ public class BucketTimer {
 
 		long start = System.currentTimeMillis();
 
-		AttributeBucketer.generateBuckets(client, index, type, query, loops).getSearchResponse();
+		System.out.println(AttributeBucketer.generateBuckets(client, index, type, query, loops).getSearchResponse());
 
 		long end = System.currentTimeMillis() - start;
 		System.out.println("The process lasted " + end);
