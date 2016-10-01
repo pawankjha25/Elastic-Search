@@ -11,23 +11,23 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import com.google.gson.Gson;
 import com.searchApplication.entities.SearchObjectFields;
-import com.searchApplication.es.entities.WildCardSearchResponse;
+import com.searchApplication.es.entities.BucketResponse;
 import com.searchApplication.es.services.impl.StringCompareUtil;
 
 public class BucketingSearchResponse {
 
-    public static Set<WildCardSearchResponse> getResults( SearchResponse tFdocs, String queryText ) throws Exception
+    public static Set<BucketResponse> getResults( SearchResponse tFdocs, String queryText ) throws Exception
     {
-        Set<WildCardSearchResponse> sortedRows = new LinkedHashSet<WildCardSearchResponse>();
+        Set<BucketResponse> sortedRows = new LinkedHashSet<BucketResponse>();
         try
         {
             int queryLength = queryText.split(" ").length;
             SearchHit[] hits = tFdocs.getHits().getHits();
             if( tFdocs != null )
             {
-                Map<Double, WildCardSearchResponse> rank1Rows = new HashMap<Double, WildCardSearchResponse>();
-                Map<Double, WildCardSearchResponse> rank2Rows = new HashMap<Double, WildCardSearchResponse>();
-                Map<Double, WildCardSearchResponse> rank3Rows = new HashMap<Double, WildCardSearchResponse>();
+                Map<Double, BucketResponse> rank1Rows = new HashMap<Double, BucketResponse>();
+                Map<Double, BucketResponse> rank2Rows = new HashMap<Double, BucketResponse>();
+                Map<Double, BucketResponse> rank3Rows = new HashMap<Double, BucketResponse>();
 
                 hits = tFdocs.getHits().getHits();
                 for( SearchHit d : hits )
@@ -35,7 +35,7 @@ public class BucketingSearchResponse {
                     Map<String, Object> res = null;
                     res = d.getSource();
 
-                    WildCardSearchResponse row = new WildCardSearchResponse();
+                    BucketResponse row = new BucketResponse();
                     List<String> description = new ArrayList<String>();
 
                     //for each row get the following fields
@@ -189,10 +189,10 @@ public class BucketingSearchResponse {
         return sortedRows;
     }
 
-    private static Set<WildCardSearchResponse> sortMap( Map<Double, WildCardSearchResponse> highPercentMatch )
+    private static Set<BucketResponse> sortMap( Map<Double, BucketResponse> highPercentMatch )
             throws Exception
     {
-        Set<WildCardSearchResponse> res = new LinkedHashSet<WildCardSearchResponse>();
+        Set<BucketResponse> res = new LinkedHashSet<BucketResponse>();
         try
         {
             TreeSet<Double> sortedMatch = new TreeSet<Double>();
