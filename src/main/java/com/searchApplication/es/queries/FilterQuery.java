@@ -13,7 +13,7 @@ public class FilterQuery {
         try
         {
             NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
-                    QueryBuilders.queryStringQuery(request.getSearchText().trim().replaceAll("\\|", ""))
+                    QueryBuilders.queryStringQuery(request.getSearchText().trim().replaceAll("\\|", " "))
                             .field("attributes.attribute_value"));
 
             booleanQuery.must(q);
