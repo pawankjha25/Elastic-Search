@@ -12,21 +12,11 @@ public class FilterQuery {
         BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
         try
         {
-            String[] queryList = request.getSearchText().split("\\|");
-            if( queryList.length > 1 )
-            {
-                for( String query : queryList )
-                {
-                    booleanQuery.must(QueryBuilders.matchQuery("description.ngramed", query.trim()));
-                }
-            }
-            else
-            {
-                NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
-                        QueryBuilders.matchQuery("attributes.attribute_value.raw", request.getSearchText()));
+            NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
+                    QueryBuilders.queryStringQuery(request.getSearchText().trim().replaceAll("\\|", ""))
+                            .field("attributes.attribute_value"));
 
-                booleanQuery.must(q);
-            }
+            booleanQuery.must(q);
 
             if( request.getFilters() != null )
             {
@@ -35,17 +25,20 @@ public class FilterQuery {
                     BoolQueryBuilder booleanQuery2 = new BoolQueryBuilder();
                     for( String value : request.getFilters().get(key) )
                     {
-                        BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
+                        if( value != null && !value.isEmpty() )
+                        {
+                            BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
 
-                        NestedQueryBuilder q1 = QueryBuilders.nestedQuery("attributes", QueryBuilders
-                                .matchQuery("attributes.attribute_value.raw", value).analyzer("whitespace"));
-                        booleanQuery1.must(q1);
+                            NestedQueryBuilder q1 = QueryBuilders.nestedQuery("attributes",
+                                    QueryBuilders.matchQuery("attributes.attribute_value.raw", value));
+                            booleanQuery1.must(q1);
 
-                        NestedQueryBuilder q2 = QueryBuilders.nestedQuery("attributes",
-                                QueryBuilders.matchQuery("attributes.attribute_name", key));
-                        booleanQuery1.must(q2);
+                            NestedQueryBuilder q2 = QueryBuilders.nestedQuery("attributes",
+                                    QueryBuilders.matchQuery("attributes.attribute_name", key));
+                            booleanQuery1.must(q2);
 
-                        booleanQuery2.should(booleanQuery1);
+                            booleanQuery2.should(booleanQuery1);
+                        }
                     }
                     booleanQuery.must(booleanQuery2);
                 }
@@ -55,22 +48,26 @@ public class FilterQuery {
             {
                 for( String key : request.getLocations().keySet() )
                 {
-                    BoolQueryBuilder booleanQuery2 = new BoolQueryBuilder();
-                    for( String value : request.getLocations().get(key) )
+                    String parent = request.getLocations().get(key).split(":")[0];
+                    String child = request.getLocations().get(key).split(":")[1];
+                    BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
+
+                    NestedQueryBuilder q1 = QueryBuilders.nestedQuery("locations",
+                            QueryBuilders.matchQuery("locations.location_name.raw", child));
+                    booleanQuery1.must(q1);
+
+                    NestedQueryBuilder q2 = QueryBuilders.nestedQuery("locations",
+                            QueryBuilders.matchQuery("locations.location_type", key));
+                    booleanQuery1.must(q2);
+
+                    if( parent != null && !parent.equals("null") )
                     {
-                        BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
-
-                        NestedQueryBuilder q1 = QueryBuilders.nestedQuery("locations",
-                                QueryBuilders.matchQuery("locations.location_name.raw", value));
-                        booleanQuery1.must(q1);
-
-                        NestedQueryBuilder q2 = QueryBuilders.nestedQuery("locations",
-                                QueryBuilders.matchQuery("locations.location_type", key));
-                        booleanQuery1.must(q2);
-
-                        booleanQuery2.should(booleanQuery1);
+                        NestedQueryBuilder q3 = QueryBuilders.nestedQuery("locations",
+                                QueryBuilders.matchQuery("locations.location_parent", parent));
+                        booleanQuery1.must(q3);
                     }
-                    booleanQuery.must(booleanQuery2);
+
+                    booleanQuery.must(booleanQuery1);
                 }
             }
         }
@@ -80,5 +77,4 @@ public class FilterQuery {
         }
         return booleanQuery;
     }
-
 }

@@ -2,20 +2,38 @@ package com.searchApplication.entities;
 
 import java.util.Set;
 
-public class LocationAggrigation
+public class LocationAggrigation implements Comparable<LocationAggrigation>
 
 {
 
-    private Set<String> locationName;
+    private String locationParent;
 
-    public Set<String> getLocationName()
+    private Set<String> locations;
+
+    public String getLocationParent()
     {
-        return locationName;
+        return locationParent;
     }
 
-    public void setLocationName( Set<String> locationName )
+    public void setLocationParent( String locationParent )
     {
-        this.locationName = locationName;
+        this.locationParent = locationParent;
+    }
+
+    public Set<String> getLocations()
+    {
+        return locations;
+    }
+
+    public void setLocations( Set<String> locations )
+    {
+        this.locations = locations;
+    }
+
+    @Override
+    public int compareTo( LocationAggrigation o )
+    {
+        return 1;
     }
 
 }

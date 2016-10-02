@@ -22,21 +22,28 @@ public class FilterAggregation {
                                                     .subAggregation(AggregationBuilders.terms("attValues")
                                                             .field("attributes.attribute_value.raw").size(100)
 
-                                                            .subAggregation(
-                                                                    AggregationBuilders.reverseNested("reverseNested")
+                                    ))));
+        }
+        catch( Exception e )
+        {
+            throw e;
+        }
+    }
 
-                                                                            .subAggregation(AggregationBuilders
-                                                                                    .nested("locations")
-                                                                                    .path("locations")
+    @SuppressWarnings( "rawtypes" )
+    public static AggregationBuilder getLocationAggregation() throws Exception
+    {
+        try
+        {
+            return AggregationBuilders.nested("locations").path("locations")
 
-                                                                                    .subAggregation(AggregationBuilders
-                                                                                            .terms("locationType")
-                                                                                            .field("locations.location_type")
+                    .subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw")
 
-                                                                                            .subAggregation(
-                                                                                                    AggregationBuilders
-                                                                                                            .terms("locationName")
-                                                                                                            .field("locations.location_name.raw")))))))));
+                            .subAggregation(
+                                    AggregationBuilders.terms("locationParent").field("locations.location_parent.raw")
+
+                                            .subAggregation(AggregationBuilders.terms("locationName")
+                                                    .field("locations.location_name.raw"))));
         }
         catch( Exception e )
         {

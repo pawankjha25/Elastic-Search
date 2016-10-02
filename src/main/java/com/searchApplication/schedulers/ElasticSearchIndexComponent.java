@@ -20,186 +20,191 @@ import com.searchApplication.utils.ElasticSearchUtility;
 @EnableScheduling
 public class ElasticSearchIndexComponent {
 
-    @Autowired
-    private ElasticSearchUtility elasticSearchUtility;
+	@Autowired
+	private ElasticSearchUtility elasticSearchUtility;
 
-    public ElasticSearchIndexComponent()
-    {
+	public ElasticSearchIndexComponent()
+	{
 
-    }
+	}
 
-    @Scheduled( fixedRate = 3600000 )
-    public void startApp() throws Exception
-    {
-        try
-        {
-            indexCSVFileData();
-        }
-        catch( Exception e )
-        {
-            throw e;
-        }
-    }
+	@Scheduled( fixedRate = 3600000 )
+	public void startApp() throws Exception
+	{
+		try
+		{
+			indexCSVFileData();
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+	}
 
-    @SuppressWarnings( "resource" )
-    public void indexCSVFileData() throws Exception
-    {
-        String csvFile = "/home/girish/zdalydata_sample.csv ";
-        BufferedReader br = null;
-        String line = "";
-        String cvsSplitBy = ">>>";
-        try
-        {
+	@SuppressWarnings( "resource" )
+	public void indexCSVFileData() throws Exception
+	{
+		String csvFile = "/home/girish/zdalydata_sample.csv ";
+		BufferedReader br = null;
+		String line = "";
+		String cvsSplitBy = ">>>";
+		try
+		{
 
-            br = new BufferedReader(new FileReader(csvFile));
-            int i = 0;
-            List<TimeSeriesData> list = new ArrayList<TimeSeriesData>();
-            while( (line = br.readLine()) != null )
-            {
-                if( i != 0 )
-                {
-                    line = line.replace("\",\"", ">>>");
-                    line = line.replace("\"", "");
+			br = new BufferedReader(new FileReader(csvFile));
+			int i = 0;
+			List<TimeSeriesData> list = new ArrayList<TimeSeriesData>();
+			while( (line = br.readLine()) != null )
+			{
+				if( i != 0 )
+				{
+					line = line.replace("\",\"", ">>>");
+					line = line.replace("\"", "");
 
-                    String[] description = line.split(cvsSplitBy);
-                    if( description.length == 5 )
-                    {
-                        TimeSeriesData data = convertData(description[0].trim(), description[1].trim(),
-                                description[2].trim(), description[3].trim(), description[4].trim());
-                        list.add(data);
-                    }
-                    if( i % 1000 == 0 )
-                    {
-                        elasticSearchUtility.addDocsInBulk(elasticSearchUtility.getESClient(), "zdaly", "time_series",
-                                list);
-                        System.out.println(i);
-                        list.removeAll(list);
-                    }
-                }
-                i++;
-            }
-        }
-        catch( Exception e )
-        {
-            throw e;
-        }
-    }
+					String[] description = line.split(cvsSplitBy);
+					if( description.length == 5 )
+					{
+						TimeSeriesData data = convertData(description[0].trim(), description[1].trim(),
+								description[2].trim(), description[3].trim(), description[4].trim());
+						list.add(data);
+					}
+					if( i % 1000 == 0 )
+					{
+						elasticSearchUtility.addDocsInBulk(elasticSearchUtility.getESClient(), "zdaly", "time_series",
+								list);
+						System.out.println(i);
+						list.removeAll(list);
+					}
+				}
+				i++;
+			}
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+	}
 
-    public static TimeSeriesData convertData( String propertyidDB, String attributes, String attributesMetaData,
-            String locations, String locationsMetaData ) throws Exception
-    {
-        TimeSeriesData data = new TimeSeriesData();
-        try
-        {
-            List<Attributes> attributeList = new ArrayList<Attributes>();
-            DatabaseInfo db = new DatabaseInfo();
-            Set<Locations> locationList = new TreeSet<Locations>();
-            List<String> description = new ArrayList<String>();
+	public static TimeSeriesData convertData( String propertyidDB, String attributes, String attributesMetaData,
+			String locations, String locationsMetaData ) throws Exception
+	{
+		TimeSeriesData data = new TimeSeriesData();
+		try
+		{
+			List<Attributes> attributeList = new ArrayList<Attributes>();
+			DatabaseInfo db = new DatabaseInfo();
+			Set<Locations> locationList = new TreeSet<Locations>();
+			List<String> description = new ArrayList<String>();
 
-            //setting up the db information
-            String[] dbInfo = propertyidDB.split(",");
-            db.setDb_name(dbInfo[1]);
-            db.setProperties(new Long(dbInfo[0]));
-            data.setDb(db);
+			//setting up the db information
+			String[] dbInfo = propertyidDB.split(",");
+			db.setDb_name(dbInfo[1].trim());
+			db.setProperties(new Long(dbInfo[0].trim()));
+			data.setDb(db);
 
-            //setting up the attributes information
-            String[] attributesValuesList = attributes.replace("|", ">>>").split(">>>");
-            int attLength = attributesValuesList.length;
-            String[] attributesMetadataList = attributesMetaData.trim().replace("|", ">>>").split(">>>");
-            String[] attributesNameList = new String[attributesMetadataList.length];
-            String[] attributesTypeList = new String[attributesMetadataList.length];
+			//setting up the attributes information
+			String[] attributesValuesList = attributes.replace("|", ">>>").split(">>>");
+			int attLength = attributesValuesList.length;
+			String[] attributesMetadataList = attributesMetaData.trim().replace("|", ">>>").split(">>>");
+			String[] attributesNameList = new String[attributesMetadataList.length];
+			String[] attributesTypeList = new String[attributesMetadataList.length];
 
-            for( int i = 0; i < attLength; i++ )
-            {
-                attributesNameList[i] = attributesMetadataList[i].substring(attributesMetadataList[i].indexOf("(") + 1,
-                        attributesMetadataList[i].indexOf(")"));
+			for( int i = 0; i < attLength; i++ )
+			{
+				attributesNameList[i] = attributesMetadataList[i].substring(attributesMetadataList[i].indexOf("(") + 1,
+						attributesMetadataList[i].indexOf(")"));
 
-                attributesTypeList[i] = attributesMetadataList[i].substring(0, attributesMetadataList[i].indexOf("("));
-            }
+				attributesTypeList[i] = attributesMetadataList[i].substring(0, attributesMetadataList[i].indexOf("("));
+			}
 
-            for( int i = 0; i < attLength; i++ )
-            {
-                Attributes att = new Attributes();
-                att.setAttribute_name(attributesTypeList[i].trim());
-                att.setAttribute_value(attributesValuesList[i].trim());
-                if( attributesNameList[i].split(",")[1] != null
-                        && !attributesNameList[i].split(",")[1].equalsIgnoreCase("NULL") )
-                {
-                    att.setAttribute_level(new Long(attributesNameList[i].split(",")[1]));
-                }
-                else
-                {
-                    att.setAttribute_level((long) 0);
-                }
-                att.setAttribute_parent(attributesNameList[i].split(",")[0]);
+			for( int i = 0; i < attLength; i++ )
+			{
+				Attributes att = new Attributes();
+				att.setAttribute_name(attributesTypeList[i].trim());
+				att.setAttribute_value(attributesValuesList[i].trim());
+				if( attributesNameList[i].split(",")[1] != null
+						&& !attributesNameList[i].split(",")[1].equalsIgnoreCase("NULL") )
+				{
+					att.setAttribute_level(new Long(attributesNameList[i].split(",")[1]));
+				}
+				else
+				{
+					att.setAttribute_level((long) 0);
+				}
+				att.setAttribute_parent(attributesNameList[i].split(",")[0].trim());
 
-                attributeList.add(att);
+				attributeList.add(att);
 
-                //add sector subsector and super region
-                if( att.getAttribute_name().equalsIgnoreCase("sector") )
-                {
-                    data.setSector(att.getAttribute_value());
-                }
-                else if( att.getAttribute_name().equalsIgnoreCase("SubSector") )
-                {
-                    data.setSub_sector(att.getAttribute_value());
-                }
-                //add description
-                description.add(att.getAttribute_value());
-            }
-            data.setAttributes(attributeList);
+				//add sector subsector and super region
+				if( att.getAttribute_name().equalsIgnoreCase("sector") )
+				{
+					data.setSector(att.getAttribute_value().trim());
+				}
+				else if( att.getAttribute_name().equalsIgnoreCase("SubSector") )
+				{
+					data.setSub_sector(att.getAttribute_value().trim());
+				}
+				//add description
+				description.add(att.getAttribute_value().trim());
+			}
+			data.setAttributes(attributeList);
 
-            //setting up the locations information
-            String[] locationValuesList = locations.replace("|", ">>>").split(">>>");
-            String[] locationMetaValuesList = locationsMetaData.replace("|", ">>>").split(">>>");
+			//setting up the locations information
+			String[] locationValuesList = locations.replace("|", ">>>").split(">>>");
+			String[] locationMetaValuesList = locationsMetaData.replace("|", ">>>").split(">>>");
 
-            for( int i = 0; i < locationValuesList.length; i++ )
-            {
-                String[] loc = locationValuesList[i].split(",");
-                String[] locMeta = locationMetaValuesList[i].split(",");
+			//iterate through all the location details
+			for( int i = 0; i < locationValuesList.length; i++ )
+			{
+				String[] loc = locationValuesList[i].split(",");
+				String[] locMeta = locationMetaValuesList[i].split(",");
 
-                if( loc.length >= 4 )
-                {
-                    for( int j = 0; j < loc.length; j++ )
-                    {
-                        if( locMeta[j].trim().equalsIgnoreCase("SuperRegion") )
-                        {
-                            data.setSuper_region(loc[j].trim());
-                        }
-                        else
-                        {
-                            Locations location = new Locations();
-                            if( loc[j].contains("(") )
-                            {
-                                location.setLocation_name(loc[j].substring(0, loc[j].indexOf("(")).trim());
-                            }
-                            else
-                            {
-                                location.setLocation_name(loc[j]);
-                            }
-                            location.setLocation_type(locMeta[j]);
-                            if( loc[3].contains("(") )
-                            {
-                                String state = loc[3].substring(0, loc[3].indexOf("(")).trim();
-                                String id = loc[3].replaceFirst(state, "").replace("(", "").replace(")", "").trim();
-                                if( !id.trim().isEmpty() )
-                                {
-                                    location.setSeries_id(new Long(id));
-                                    locationList.add(location);
-                                }
-                            }
-                        }
+				if( loc.length == locMeta.length )
+				{
+					for( int j = 0; j < loc.length; j++ )
+					{
+						if( locMeta[j].trim().equalsIgnoreCase("SuperRegion") )
+						{
+							data.setSuper_region(loc[j].trim());
+						}
+						else
+						{
+							Locations location = new Locations();
+							location.setLocation_meta("");
+							location.setLocation_parent(loc[j - 1].trim());
+							if( loc[j].contains("(") )
+							{
+								location.setLocation_name(loc[j].substring(0, loc[j].indexOf("(")).trim());
+							}
+							else
+							{
+								location.setLocation_name(loc[j].trim());
+							}
+							location.setLocation_type(locMeta[j].trim());
+							if( loc[loc.length - 1].contains("(") )
+							{
+								String lastLoc = loc[loc.length - 1].substring(0, loc[loc.length - 1].indexOf("("))
+										.trim();
+								String id = loc[loc.length - 1].replaceFirst(lastLoc, "").replace("(", "")
+										.replace(")", "").trim();
+								if( !id.trim().isEmpty() )
+								{
+									location.setSeries_id(new Long(id));
+									locationList.add(location);
+								}
+							}
+						}
 
-                    }
-                }
-            }
-            data.setLocations(locationList);
-            data.setDescription(description);
-        }
-        catch( Exception e )
-        {
-            throw e;
-        }
-        return data;
-    }
+					}
+				}
+			}
+			data.setLocations(locationList);
+			data.setDescription(description);
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+		return data;
+	}
 }

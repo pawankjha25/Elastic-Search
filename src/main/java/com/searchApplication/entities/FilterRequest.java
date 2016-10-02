@@ -7,7 +7,7 @@ public class FilterRequest {
 
     private String searchText;
     private Map<String, List<String>> filters;
-    private Map<String, List<String>> locations;
+    private Map<String, String> locations;
 
     public String getSearchText()
     {
@@ -29,12 +29,12 @@ public class FilterRequest {
         this.filters = filters;
     }
 
-    public Map<String, List<String>> getLocations()
+    public Map<String, String> getLocations()
     {
         return locations;
     }
 
-    public void setLocations( Map<String, List<String>> locations )
+    public void setLocations( Map<String, String> locations )
     {
         this.locations = locations;
     }
