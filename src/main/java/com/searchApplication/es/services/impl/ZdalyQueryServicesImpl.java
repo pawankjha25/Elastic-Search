@@ -58,8 +58,6 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
             {
                 booleanQuery = FilterQuery.getQuery(request);
 
-                System.out.println(booleanQuery.toString());
-
                 SearchResponse tFdocs = null;
                 tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
                         .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)

@@ -46,7 +46,7 @@ public class ElasticSearchIndexComponent {
 	@SuppressWarnings( "resource" )
 	public void indexOldCSVFileData() throws Exception
 	{
-		String csvFile = "/home/girish/zdalydata_sample.csv";
+		String csvFile = "/home/girish/zdalydata_sample.csv ";
 		BufferedReader br = null;
 		String line = "";
 		String cvsSplitBy = ">>>";
