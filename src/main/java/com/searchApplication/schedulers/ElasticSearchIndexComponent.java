@@ -191,7 +191,7 @@ public class ElasticSearchIndexComponent {
 			int i = 0;
 			List<TimeSeriesData> list = new ArrayList<TimeSeriesData>();
 			while ((line = br.readLine()) != null) {
-				if (i > 83) {
+				if (i > 0) {
 					line = line.replace("\",\"", ">>>");
 					line = line.replace("\"", "");
 					line = line.replace("]", "").replace("[", "");
@@ -211,7 +211,7 @@ public class ElasticSearchIndexComponent {
 							list.add(data);
 						}
 					}
-					if (i % 500 == 0) {
+					if (i % 300 == 0) {
 						elasticSearchUtility.addDocsInBulk(elasticSearchUtility.getESClient(), "zdaly", "time_series",
 								list);
 						list.removeAll(list);
