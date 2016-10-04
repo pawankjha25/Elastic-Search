@@ -88,6 +88,23 @@
 								}
 							}
 						},
+						"location_parent": {
+							"type": "string",
+							"fields": {
+								"ngramed": {
+									"type": "string",
+									"analyzer": "n_gram_analyzer"
+								},
+								"shingled": {
+									"type": "string",
+									"analyzer": "shingle_analyzer"
+								},
+								"raw": {
+									"type": "string",
+									"index": "not_analyzed"
+								}
+							}
+						},
 						"location_type": {
 							"type": "string",
 							"fields": {

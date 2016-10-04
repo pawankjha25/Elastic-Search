@@ -7,7 +7,18 @@ public class Attributes {
     private Long attribute_level;
     private String attribute_parent;
 
-    public String getAttribute_name()
+    public Attributes() {
+    	
+    }
+    public Attributes(String attribute_name, String attribute_value, Long attribute_level, String attribute_parent) {
+		super();
+		this.attribute_name = attribute_name;
+		this.attribute_value = attribute_value;
+		this.attribute_level = attribute_level;
+		this.attribute_parent = attribute_parent;
+	}
+
+	public String getAttribute_name()
     {
         return attribute_name;
     }

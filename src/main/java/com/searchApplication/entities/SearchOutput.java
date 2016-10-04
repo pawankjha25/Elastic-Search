@@ -8,7 +8,7 @@ public class SearchOutput {
 
     private String searchKey;
     private Map<String, List<String>> stratum;
-    private Map<String, LocationAggrigation> locations;
+    private Map<String, Set<LocationAggrigation>> locations;
     private Set<Stratum> stratumList;
 
     public Set<Stratum> getStratumList()
@@ -41,14 +41,14 @@ public class SearchOutput {
         this.searchKey = searchKey;
     }
 
-    public Map<String, LocationAggrigation> getLocations()
+    public Map<String, Set<LocationAggrigation>> getLocations()
     {
         return locations;
     }
 
-    public void setLocations( Map<String, LocationAggrigation> locations )
+    public void setLocations( Map<String, Set<LocationAggrigation>> map )
     {
-        this.locations = locations;
+        this.locations = map;
     }
 
 }

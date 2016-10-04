@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
-import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import com.searchApplication.entities.LocationAggrigation;
@@ -18,101 +17,137 @@ import com.searchApplication.entities.Stratum;
 
 public class QueryFilterResponse {
 
-    public static SearchOutput getResponse( SearchResponse tFdocs ) throws Exception
-    {
-        SearchOutput response = new SearchOutput();
-        Map<String, List<String>> stratum = new HashMap<String, List<String>>();
-        Map<String, LocationAggrigation> locationList = new HashMap<String, LocationAggrigation>();
-        Set<Stratum> stratumList = new TreeSet<Stratum>();
-        try
-        {
-            InternalNested nestedAttributes = tFdocs.getAggregations().get("attributes");
-            Terms attTypesTerms = nestedAttributes.getAggregations().get("attTypes");
-            for( Terms.Bucket bucket : attTypesTerms.getBuckets() )
-            {
-                Stratum st = new Stratum();
-                st.setStratumName(bucket.getKeyAsString());
-                Terms levelBuckets = bucket.getAggregations().get("attLevel");
-                for( Terms.Bucket levelBucket : levelBuckets.getBuckets() )
-                {
-                    st.setLevel(levelBucket.getKeyAsString());
-                    if( levelBucket != null && levelBucket.getAggregations() != null
-                            && levelBucket.getAggregations().get("attParent") != null )
-                    {
-                        Terms attParentTerm = levelBucket.getAggregations().get("attParent");
-                        Collection<Bucket> attParentBuckets = attParentTerm.getBuckets();
-                        for( Terms.Bucket attParentBucket : attParentBuckets )
-                        {
-                            st.setParent(attParentBucket.getKeyAsString());
-                            if( attParentBucket != null && attParentBucket.getAggregations() != null
-                                    && attParentBucket.getAggregations().get("attValues") != null )
-                            {
-                                List<String> stratumValues = new ArrayList<String>();
-                                Terms super_Sector_terms = attParentBucket.getAggregations().get("attValues");
-                                Collection<Bucket> buckets2 = super_Sector_terms.getBuckets();
-                                for( Terms.Bucket bucket2 : buckets2 )
-                                {
-                                    stratumValues.add(bucket2.getKeyAsString());
+	public static SearchOutput getResponse( SearchResponse tFdocs ) throws Exception
+	{
+		SearchOutput response = new SearchOutput();
+		Map<String, List<String>> stratum = new HashMap<String, List<String>>();
+		Set<Stratum> stratumList = new TreeSet<Stratum>();
+		try
+		{
+			InternalNested nestedAttributes = tFdocs.getAggregations().get("attributes");
+			Terms attTypesTerms = nestedAttributes.getAggregations().get("attTypes");
+			for( Terms.Bucket bucket : attTypesTerms.getBuckets() )
+			{
+				Stratum st = new Stratum();
+				st.setStratumName(bucket.getKeyAsString());
+				Terms levelBuckets = bucket.getAggregations().get("attLevel");
+				for( Terms.Bucket levelBucket : levelBuckets.getBuckets() )
+				{
+					st.setLevel(levelBucket.getKeyAsString());
+					if( levelBucket != null && levelBucket.getAggregations() != null
+							&& levelBucket.getAggregations().get("attParent") != null )
+					{
+						Terms attParentTerm = levelBucket.getAggregations().get("attParent");
+						Collection<Bucket> attParentBuckets = attParentTerm.getBuckets();
+						for( Terms.Bucket attParentBucket : attParentBuckets )
+						{
+							st.setParent(attParentBucket.getKeyAsString());
+							if( attParentBucket != null && attParentBucket.getAggregations() != null
+									&& attParentBucket.getAggregations().get("attValues") != null )
+							{
+								List<String> stratumValues = new ArrayList<String>();
+								Terms super_Sector_terms = attParentBucket.getAggregations().get("attValues");
+								Collection<Bucket> buckets2 = super_Sector_terms.getBuckets();
+								for( Terms.Bucket bucket2 : buckets2 )
+								{
+									stratumValues.add(bucket2.getKeyAsString());
+								}
+								stratum.put(bucket.getKeyAsString(), stratumValues);
+								stratumList.add(st);
+							}
+						}
+					}
+				}
 
-                                    ReverseNested reverse_nested = bucket2.getAggregations().get("reverseNested");
-                                    InternalNested location_terms = reverse_nested.getAggregations().get("locations");
-                                    Terms locationType = location_terms.getAggregations().get("locationType");
+			}
+			response.setStratum(stratum);
+			response.setStratumList(stratumList);
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+		return response;
+	}
 
-                                    Collection<Terms.Bucket> buckets5 = locationType.getBuckets();
-                                    for( Terms.Bucket bucket5 : buckets5 )
-                                    {
-                                        LocationAggrigation loc;
-                                        if( locationList.get(bucket5.getKeyAsString()) != null )
-                                        {
-                                            loc = locationList.get(bucket5.getKeyAsString());
-                                        }
-                                        else
-                                        {
-                                            loc = new LocationAggrigation();
-                                        }
+	public static Map<String, Set<LocationAggrigation>> getLocationAggregation( SearchResponse tFdocs,
+			Map<String, Set<String>> map ) throws Exception
+	{
+		Map<String, Set<LocationAggrigation>> locationBucket = new HashMap<String, Set<LocationAggrigation>>();
+		try
+		{
+			InternalNested location_terms = tFdocs.getAggregations().get("locations");
 
-                                        Terms superregion = bucket5.getAggregations().get("locationName");
+			Terms locationParent = location_terms.getAggregations().get("locationType");
 
-                                        Collection<Terms.Bucket> buckets6 = superregion.getBuckets();
-                                        Set<String> locationName = new TreeSet<String>();
-                                        for( Terms.Bucket bucket6 : buckets6 )
-                                        {
-                                            String locationNam = bucket6.getKeyAsString();
-                                            if( locationNam.contains("(") && locationNam.contains(")") )
-                                            {
-                                                locationNam = locationNam.substring(0, locationNam.indexOf('('));
-                                            }
-                                            locationName.add(locationNam);
-                                        }
-                                        if( loc.getLocationName() != null )
-                                        {
-                                            loc.getLocationName().addAll(locationName);
-                                        }
-                                        else
-                                        {
-                                            loc.setLocationName(locationName);
-                                        }
-                                        locationList.put(bucket5.getKeyAsString(), loc);
-                                    }
+			Collection<Terms.Bucket> parentBuckets = locationParent.getBuckets();
+			for( Terms.Bucket parentBucket : parentBuckets )
+			{
+				Terms locationType = parentBucket.getAggregations().get("locationParent");
+				Set<LocationAggrigation> locationList = new TreeSet<LocationAggrigation>();
+				Set<String> locations;
+				Collection<Terms.Bucket> buckets5 = locationType.getBuckets();
+				for( Terms.Bucket bucket5 : buckets5 )
+				{
+					LocationAggrigation loc = new LocationAggrigation();
+					loc.setLocationParent(bucket5.getKeyAsString());
 
-                                }
-                                stratum.put(bucket.getKeyAsString(), stratumValues);
-                                stratumList.add(st);
-                            }
-                        }
-                    }
-                }
+					locations = new TreeSet<String>();
 
-            }
-            response.setStratum(stratum);
-            response.setLocations(locationList);
-            response.setStratumList(stratumList);
-        }
-        catch( Exception e )
-        {
-            throw e;
-        }
-        return response;
-    }
+					Terms superregion = bucket5.getAggregations().get("locationName");
+					Collection<Terms.Bucket> buckets6 = superregion.getBuckets();
+					Set<String> locationName = new TreeSet<String>();
+					for( Terms.Bucket bucket6 : buckets6 )
+					{
+						locationName.add(bucket6.getKeyAsString());
+					}
+					if( locationName != null && !locationName.isEmpty() )
+					{
+						locations.addAll(locationName);
+						loc.setLocations(locations);
+						locationList.add(loc);
+					}
+				}
+				locationBucket.put(parentBucket.getKeyAsString(), locationList);
+			}
+
+			if( map != null && map.keySet() != null )
+			{
+				for( String locationType : map.keySet() )
+				{
+					Set<LocationAggrigation> newBuckets = new TreeSet<>();
+					Set<LocationAggrigation> buckets = locationBucket.get(locationType);
+
+					for( String locations : map.get(locationType) )
+					{
+						String[] location = locations.split(":");
+						if( locationBucket.get(locationType) != null && location[0] != null
+								&& !location[0].equals("null") )
+						{
+							for( LocationAggrigation bucket : buckets )
+							{
+								if( bucket.getLocationParent().equals(location[0]) )
+								{
+									LocationAggrigation newBucket = new LocationAggrigation();
+									Set<String> names = new TreeSet<>();
+									names.add(location[1]);
+									newBucket.setLocationParent(bucket.getLocationParent());
+									newBucket.setLocations(names);
+									newBuckets.add(newBucket);
+								}
+							}
+						}
+					}
+					locationBucket.put(locationType, newBuckets);
+				}
+			}
+
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+		return locationBucket;
+	}
 
 }

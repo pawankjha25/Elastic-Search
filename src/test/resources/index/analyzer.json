@@ -1,0 +1,48 @@
+{
+	"analysis": {
+		"filter": {
+			"gram_filter": {
+				"type": "ngram",
+				"min_gram": "2",
+				"max_gram": "6",
+				"token_chars": [
+					"letter",
+					"digit"
+				]
+			},
+			"filter_shingle": {
+				"type": "shingle",
+				"max_shingle_size": 3,
+				"min_shingle_size": 2,
+				"filter_token": "",
+				"output_unigrams": true
+			},
+			"en_stem_filter": {
+				"type": "snowball",
+				"langauge": "English"
+			}
+		},
+		"analyzer": {
+			"n_gram_analyzer": {
+				"type": "custom",
+				"tokenizer": "standard",
+				"filter": [
+					"asciifolding",
+					"lowercase",
+					"en_stem_filter",
+					"gram_filter"
+				]
+			},
+			"shingle_analyzer": {
+				"type": "custom",
+				"tokenizer": "standard",
+				"filter": [
+					"asciifolding",
+					"lowercase",
+					"en_stem_filter",
+					"filter_shingle"
+				]
+			}
+		}
+	}
+}
