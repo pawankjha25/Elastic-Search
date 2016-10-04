@@ -58,7 +58,7 @@ public class BucketBuilders {
 							perfectMatches++;
 							bucketWords.add(b);
 							matchedLocations.add(q);
-							System.err.println("Matched to loc " + q);
+							LOGGER.debug("Matched to loc {} -- {} " + q, b);
 						}
 					}
 				}
@@ -72,6 +72,9 @@ public class BucketBuilders {
 			for (String b : bucket) {
 				String[] bucketTerms = b.split(SPACE_DELIMITER);
 				for (String t : bucketTerms) {
+					if (t.endsWith("_LOC")) {
+						continue;
+					}
 					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
 					if (STOP_LIST.contains(t)) {
 						continue;
