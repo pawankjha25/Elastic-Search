@@ -45,25 +45,27 @@ public class BucketBuilders {
 					if (STOP_LIST.contains(t)) {
 						continue;
 					}
-					int distance = StringCompareUtil.editDistance(STEMMER.stem(q), STEMMER.stem(cleaned));
-					String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
-					if (isPerfectMatch(q, cleaned, queryPrefix, termPrefix, distance)) {
-						perfectMatches++;
-						totalDistance += distance;
-						if (isLocation) {
+
+					if (isLocation) {
+						if (q.equals(cleaned)) {
 							b += LOCATION_IDENTIFIER;
+							perfectMatches++;
+							bucketWords.add(b);
 						}
+					} else {
+						int distance = StringCompareUtil.editDistance(STEMMER.stem(q), STEMMER.stem(cleaned));
+						String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
+						if (isPerfectMatch(q, cleaned, queryPrefix, termPrefix, distance)) {
+							perfectMatches++;
+							totalDistance += distance;
+							bucketWords.add(b);
 
-						bucketWords.add(b);
+						} else if (isPartialMatch(q, cleaned, queryPrefix, termPrefix, distance)) {
+							partialMathces++;
+							totalDistance += distance;
+							bucketWords.add(b);
 
-					} else if (isPartialMatch(q, cleaned, queryPrefix, termPrefix, distance)) {
-						partialMathces++;
-						totalDistance += distance;
-						if (isLocation) {
-							b += LOCATION_IDENTIFIER;
 						}
-						bucketWords.add(b);
-
 					}
 				}
 			}

@@ -95,6 +95,7 @@ public class AttributeBucketer {
 		return QueryBuilders.boolQuery()
 				.should(QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER).defaultField(SEARCH_FIELD))
 				.should(QueryBuilders.nestedQuery(LOCATIONS,
-						QueryBuilders.matchQuery("locations.location_name", query.toLowerCase().split(" "))));
+						QueryBuilders.matchQuery("locations.location_name.shingles", query.toLowerCase().split(" "))
+								.analyzer("shingle_analyzer")));
 	}
 }

@@ -113,6 +113,12 @@ public class BucketBuildersTest {
 	
 	}
 	
+	@Test
+	public void exactTestLocation() {
+		Bucket b2 = BucketBuilders.createFromQueryString("illinois", Arrays.asList("corn production", "illinoi_LOC", "corn", "united states_LOC"));
+		Assert.assertNull(b2);
+	}
+	
 	
 
 }
