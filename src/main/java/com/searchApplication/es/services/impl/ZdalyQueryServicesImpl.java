@@ -103,8 +103,6 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 			{
 				booleanQuery = FilterQuery.getQuery(request);
 
-				System.out.println(booleanQuery.toString());
-
 				AggregationBuilder aggregation = ResultsAggregation.getAggregation();
 
 				SearchResponse tFdocs = null;

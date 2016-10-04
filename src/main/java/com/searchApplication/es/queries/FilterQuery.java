@@ -16,9 +16,18 @@ public class FilterQuery {
 
 			for( String query : queryString )
 			{
-				NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
-						QueryBuilders.matchQuery("attributes.attribute_value.raw", query));
-				booleanQuery.must(q);
+				if( !query.contains("_LOC") )
+				{
+					NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
+							QueryBuilders.matchQuery("attributes.attribute_value.raw", query));
+					booleanQuery.must(q);
+				}
+				else
+				{
+					NestedQueryBuilder q = QueryBuilders.nestedQuery("locations",
+							QueryBuilders.matchQuery("locations.location_name.raw", query.replace("_LOC", "")));
+					booleanQuery.must(q);
+				}
 			}
 
 			if( request.getFilters() != null )
