@@ -8,6 +8,7 @@ public class Locations implements Comparable<Locations>
     private String location_name;
     private String location_type;
     private String location_meta;
+    private String location_parent;
 
     public Long getSeries_id()
     {
@@ -67,6 +68,16 @@ public class Locations implements Comparable<Locations>
         {
             return 1;
         }
+    }
+
+    public String getLocation_parent()
+    {
+        return location_parent;
+    }
+
+    public void setLocation_parent( String location_parent )
+    {
+        this.location_parent = location_parent;
     }
 
 }

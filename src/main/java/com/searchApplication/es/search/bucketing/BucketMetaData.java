@@ -7,75 +7,87 @@ public class BucketMetaData {
 	private String subSector;
 	private int total;
 
-	
-	
-	public BucketMetaData(String superRegion, String sector, String subSector) {
+	public BucketMetaData( String superRegion, String sector, String subSector )
+	{
 		super();
 		this.superRegion = superRegion;
 		this.sector = sector;
 		this.subSector = subSector;
 		this.total = 1;
 	}
-	
-	public void incrementCount() {
-		this.total+=1;
+
+	public void incrementCount()
+	{
+		this.total += 1;
 	}
 
-	public String getSuperRegion() {
+	public String getSuperRegion()
+	{
 		return superRegion;
 	}
 
-	public void setSuperRegion(String superRegion) {
+	public void setSuperRegion( String superRegion )
+	{
 		this.superRegion = superRegion;
 	}
 
-	public String getSector() {
+	public String getSector()
+	{
 		return sector;
 	}
 
-	public void setSector(String sector) {
+	public void setSector( String sector )
+	{
 		this.sector = sector;
 	}
 
-	public String getSubSector() {
+	public String getSubSector()
+	{
 		return subSector;
 	}
 
-	public void setSubSector(String subSector) {
+	public void setSubSector( String subSector )
+	{
 		this.subSector = subSector;
 	}
 
-	public int getTotal() {
+	public int getTotal()
+	{
 		return total;
 	}
 
-	public void setTotal(int total) {
+	public void setTotal( int total )
+	{
 		this.total = total;
 	}
 
 	@Override
-	public int hashCode() {
+	public int hashCode()
+	{
 		return (sector + subSector + superRegion).hashCode();
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof BucketMetaData) {
+	public boolean equals( Object obj )
+	{
+		if( obj instanceof BucketMetaData )
+		{
 			BucketMetaData b = (BucketMetaData) obj;
 			return sector.equals(b.getSector()) && subSector.equals(b.getSubSector())
 					&& superRegion.equals(b.getSuperRegion());
-		} else {
+		}
+		else
+		{
 			return false;
 		}
 
 	}
 
 	@Override
-	public String toString() {
+	public String toString()
+	{
 		return "BucketMetaData [superRegion=" + superRegion + ", sector=" + sector + ", subSector=" + subSector
 				+ ", total=" + total + "]";
 	}
-	
-	
 
 }

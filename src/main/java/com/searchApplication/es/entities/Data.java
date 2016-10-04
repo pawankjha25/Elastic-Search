@@ -1,18 +1,18 @@
 package com.searchApplication.es.entities;
 
-import java.util.List;
+import java.util.Set;
 
 public class Data {
 
-	private List<Long> seriesId;
+	private Set<Long> seriesId;
 	private String details;
 
-	public List<Long> getSeriesId()
+	public Set<Long> getSeriesId()
 	{
 		return seriesId;
 	}
 
-	public void setSeriesId( List<Long> seriesId )
+	public void setSeriesId( Set<Long> seriesId )
 	{
 		this.seriesId = seriesId;
 	}

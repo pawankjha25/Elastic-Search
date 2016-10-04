@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Built-By: girish
+Build-Jdk: 1.8.0_91
+Implementation-Title: zdalySearchApplication
+Implementation-Version: 0.0.1-SNAPSHOT
+Implementation-Vendor-Id: com.tool.zdalySearchApplication
+Implementation-Vendor: Pivotal Software, Inc.
+Main-Class: com.searchApplication.App
+Created-By: Maven Integration for Eclipse
+

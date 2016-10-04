@@ -1,14 +1,16 @@
 package com.searchApplication.es.services.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.annotation.Resource;
-
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
@@ -30,60 +32,75 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 	private static Client client = null;
 
-	public ZdalyQueryServicesImpl() {
+	public ZdalyQueryServicesImpl()
+	{
 		ZdalyQueryServicesImpl.client = ElasticSearchUtility.addClient();
 	}
 
 	@Override
-	public BucketResponseList produceBuckets(String queryText) throws Exception {
-		try {
+	public BucketResponseList produceBuckets( String queryText ) throws Exception
+	{
+		try
+		{
 			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
 					env.getProperty("es.search_object"), queryText, 10);
-		} catch (Exception e) {
+		}
+		catch( Exception e )
+		{
 			throw e;
 		}
 	}
 
 	@Override
-	public SearchOutput matchQuery(String queryText) throws Exception {
+	public SearchOutput matchQuery( String queryText ) throws Exception
+	{
 		return null;
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
-	public SearchOutput queryWithFilters(FilterRequest request) throws Exception {
+	public SearchOutput queryWithFilters( FilterRequest request ) throws Exception
+	{
 		SearchOutput response = new SearchOutput();
 		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
-		try {
-			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
+		try
+		{
+			if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
+			{
 				booleanQuery = FilterQuery.getQuery(request);
-
-				System.out.println(booleanQuery.toString());
-
-				AggregationBuilder aggregation = FilterAggregation.getAggregation();
 
 				SearchResponse tFdocs = null;
 				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
 						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
-						.addAggregation(aggregation).execute().actionGet();
+						.addAggregation(FilterAggregation.getAggregation()).execute().actionGet();
 
 				response = QueryFilterResponse.getResponse(tFdocs);
 
+				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
+						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
+						.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
+
+				response.setLocations(QueryFilterResponse.getLocationAggregation(tFdocs, request.getLocations()));
+
 			}
 
-		} catch (Exception e) {
+		}
+		catch( Exception e )
+		{
 			throw e;
 		}
 		return response;
 	}
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings( "rawtypes" )
 	@Override
-	public QueryResultsList queryResults(FilterRequest request) throws Exception {
+	public QueryResultsList queryResults( FilterRequest request ) throws Exception
+	{
 		QueryResultsList response = new QueryResultsList();
 		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
-		try {
-			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
+		try
+		{
+			if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
+			{
 				booleanQuery = FilterQuery.getQuery(request);
 
 				AggregationBuilder aggregation = ResultsAggregation.getAggregation();
@@ -94,13 +111,44 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(0)
 						.addAggregation(aggregation).execute().actionGet();
 
-				response = ResultsResponse.getResults(tFdocs);
+				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()));
 			}
 
-		} catch (Exception e) {
+		}
+		catch( Exception e )
+		{
 			throw e;
 		}
 		return response;
+	}
+
+	private Map<String, Set<String>> getLocationMap( Map<String, Set<String>> map )
+	{
+		Map<String, Set<String>> res = new HashMap<>();
+		try
+		{
+			if( map != null && map.keySet() != null )
+			{
+				for( String locationType : map.keySet() )
+				{
+					Set<String> loc = new TreeSet<>();
+					for( String locName : map.get(locationType) )
+					{
+						String[] locString = locName.split(":");
+						if( locString[1] != null )
+						{
+							loc.add(locString[1]);
+						}
+					}
+					res.put(locationType, loc);
+				}
+			}
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+		return res;
 	}
 
 }
