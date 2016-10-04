@@ -39,6 +39,9 @@ public class BucketBuilders {
 			String[] bucketTerms = b.split(SPACE_DELIMITER);
 
 			for (String t : bucketTerms) {
+				if (STOP_LIST.contains(t)) {
+					continue;
+				}
 				for (String q : queryWords) {
 					String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
 
@@ -46,9 +49,6 @@ public class BucketBuilders {
 						continue;
 					}
 					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
-					if (STOP_LIST.contains(t)) {
-						continue;
-					}
 
 					if (isLocation) {
 						if (q.equals(cleaned)) {
