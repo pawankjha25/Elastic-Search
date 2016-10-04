@@ -54,8 +54,7 @@ public class Bucket implements Comparable<Bucket> {
 					int otc = o.calucalteTotalBucketLength();
 					if (tc < otc) {
 						return -1;
-					}
-					else if (tc > otc) {
+					} else if (tc > otc) {
 						return 1;
 					}
 				}
@@ -68,11 +67,12 @@ public class Bucket implements Comparable<Bucket> {
 
 	private int calucalteTotalBucketLength() {
 		int l = 0;
-		for (String s: this.bucketTerms) {
-			l+=s.replaceAll(" ","").length()+1;
+		for (String s : this.bucketTerms) {
+			l += s.replaceAll(" ", "").length() + 1;
 		}
 		return l;
 	}
+
 	public int getTotalRows() {
 		return totalRows;
 	}
@@ -135,13 +135,16 @@ public class Bucket implements Comparable<Bucket> {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Bucket) {
-			for (String term : ((Bucket) obj).getBucketTerms()) {
-				if (!this.bucketTerms.contains(term)) {
-					return false;
+			if (this.getBucketTerms().size() != ((Bucket) obj).getBucketTerms().size()) {
+				return false;
+			} else {
+				for (String term : ((Bucket) obj).getBucketTerms()) {
+					if (!this.bucketTerms.contains(term)) {
+						return false;
+					}
 				}
+				return true;
 			}
-			return true;
-
 		} else {
 			return false;
 		}
