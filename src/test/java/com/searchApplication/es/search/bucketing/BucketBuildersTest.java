@@ -79,7 +79,9 @@ public class BucketBuildersTest {
 		Assert.assertEquals(b.getTotalPerfectMatches(), 0);
 		Assert.assertEquals(b.getTotalPartialMatches(), 1);
 
-		
+
+		b = BucketBuilders.createFromQueryString("berries california", Arrays.asList("BUSINESS AND DEMOGRAPHICS"));
+		System.out.println(b);
 	}
 
 	@Test
