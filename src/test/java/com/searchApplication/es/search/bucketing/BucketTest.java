@@ -25,9 +25,9 @@ public class BucketTest {
 		Collections.sort(list);
 		
 		Assert.assertEquals(list.get(0).getBucketTerms().toArray()[0], "a3");
-		Assert.assertEquals(list.get(1).getBucketTerms().toArray()[0], "a1");
-		Assert.assertEquals(list.get(2).getBucketTerms().toArray()[0], "a2");
-		Assert.assertEquals(list.get(3).getBucketTerms().toArray()[0], "a");
+		Assert.assertEquals(list.get(1).getBucketTerms().toArray()[0], "a");
+		Assert.assertEquals(list.get(2).getBucketTerms().toArray()[0], "a1");
+		Assert.assertEquals(list.get(3).getBucketTerms().toArray()[0], "a2");
 		Assert.assertEquals(list.get(4).getBucketTerms().toArray()[0], "a5");
 		Assert.assertEquals(list.get(5).getBucketTerms().toArray()[0], "a4");
 
@@ -74,9 +74,15 @@ public class BucketTest {
 
 		Assert.assertEquals( 1, metaList.get(1).getTotal());
 		
-		
-		
-		
+	}
+	
+	@Test
+	public void testCompare() {
+		Bucket b = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn", "production"));
+		Bucket b1 = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn production"));
+		List<Bucket> lb = Arrays.asList(b,b1);
+		Collections.sort(lb);
+		System.err.println(lb);
 	}
 
 }
