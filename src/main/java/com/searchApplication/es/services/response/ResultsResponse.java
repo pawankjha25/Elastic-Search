@@ -77,11 +77,18 @@ public class ResultsResponse {
 													for( Terms.Bucket locationNameBucket : locationNameBuckets
 															.getBuckets() )
 													{
-														if( !locationMap.get(locationTypeBucket.getKeyAsString())
-																.contains(locationNameBucket.getKeyAsString()) )
+														if( locationMap != null && locationMap.keySet() != null )
 														{
-															add = false;
-															break;
+															if( locationMap
+																	.get(locationTypeBucket.getKeyAsString()) != null
+																	&& !locationMap
+																			.get(locationTypeBucket.getKeyAsString())
+																			.contains(locationNameBucket
+																					.getKeyAsString()) )
+															{
+																add = false;
+																break;
+															}
 														}
 													}
 												}

@@ -11,7 +11,6 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
-import com.google.gson.Gson;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.entities.Stratum;
@@ -112,31 +111,35 @@ public class QueryFilterResponse {
 				locationBucket.put(parentBucket.getKeyAsString(), locationList);
 			}
 
-			for( String locationType : map.keySet() )
+			if( map != null && map.keySet() != null )
 			{
-				Set<LocationAggrigation> newBuckets = new TreeSet<>();
-				Set<LocationAggrigation> buckets = locationBucket.get(locationType);
-
-				for( String locations : map.get(locationType) )
+				for( String locationType : map.keySet() )
 				{
-					String[] location = locations.split(":");
-					if( locationBucket.get(locationType) != null && location[0] != null && !location[0].equals("null") )
+					Set<LocationAggrigation> newBuckets = new TreeSet<>();
+					Set<LocationAggrigation> buckets = locationBucket.get(locationType);
+
+					for( String locations : map.get(locationType) )
 					{
-						for( LocationAggrigation bucket : buckets )
+						String[] location = locations.split(":");
+						if( locationBucket.get(locationType) != null && location[0] != null
+								&& !location[0].equals("null") )
 						{
-							if( bucket.getLocationParent().equals(location[0]) )
+							for( LocationAggrigation bucket : buckets )
 							{
-								LocationAggrigation newBucket = new LocationAggrigation();
-								Set<String> names = new TreeSet<>();
-								names.add(location[1]);
-								newBucket.setLocationParent(bucket.getLocationParent());
-								newBucket.setLocations(names);
-								newBuckets.add(newBucket);
+								if( bucket.getLocationParent().equals(location[0]) )
+								{
+									LocationAggrigation newBucket = new LocationAggrigation();
+									Set<String> names = new TreeSet<>();
+									names.add(location[1]);
+									newBucket.setLocationParent(bucket.getLocationParent());
+									newBucket.setLocations(names);
+									newBuckets.add(newBucket);
+								}
 							}
 						}
 					}
+					locationBucket.put(locationType, newBuckets);
 				}
-				locationBucket.put(locationType, newBuckets);
 			}
 
 		}

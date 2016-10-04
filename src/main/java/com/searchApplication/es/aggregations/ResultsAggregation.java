@@ -11,7 +11,7 @@ public class ResultsAggregation {
 		try
 		{
 			return AggregationBuilders.nested("attributes").path("attributes")
-					.subAggregation(AggregationBuilders.terms("attTypes").size(100).field("attributes.attribute_name")
+					.subAggregation(AggregationBuilders.terms("attTypes").size(100).field("attributes.attribute_name").include("Details")
 
 							.subAggregation(AggregationBuilders.terms("attributesValues").size(100)
 									.field("attributes.attribute_value.raw")

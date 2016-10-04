@@ -130,20 +130,22 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		Map<String, Set<String>> res = new HashMap<>();
 		try
 		{
-			for( String locationType : map.keySet() )
+			if( map != null && map.keySet() != null )
 			{
-				Set<String> loc = new TreeSet<>();
-				for( String locName : map.get(locationType) )
+				for( String locationType : map.keySet() )
 				{
-					String[] locString = locName.split(":");
-					if( locString[1] != null )
+					Set<String> loc = new TreeSet<>();
+					for( String locName : map.get(locationType) )
 					{
-						loc.add(locString[1]);
+						String[] locString = locName.split(":");
+						if( locString[1] != null )
+						{
+							loc.add(locString[1]);
+						}
 					}
+					res.put(locationType, loc);
 				}
-				res.put(locationType, loc);
 			}
-			System.out.println(new Gson().toJson(res));
 		}
 		catch( Exception e )
 		{
