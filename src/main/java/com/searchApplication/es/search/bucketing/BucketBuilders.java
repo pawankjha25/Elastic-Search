@@ -8,10 +8,6 @@ import java.util.Set;
 import com.searchApplication.es.services.impl.StringCompareUtil;
 import com.searchApplication.utils.Stemmer;
 
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class BucketBuilders {
 
 	private static final String LOCATION_IDENTIFIER = "_LOC";
@@ -22,8 +18,6 @@ public class BucketBuilders {
 
 	private static Stemmer STEMMER = new Stemmer();
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(BucketBuilders.class);
-
 	public static Bucket createFromQueryString(String query, List<String> bucket) {
 
 		Set<String> bucketWords = new HashSet<String>();
@@ -31,11 +25,13 @@ public class BucketBuilders {
 		int partialMathces = 0;
 		int totalDistance = 0;
 		String[] queryWords = query.toLowerCase().split(SPACE_DELIMITER);
-		Set<String> matchedLocations = new HashSet<String>();
+	
+		
 		for (String q : queryWords) {
 			if (STOP_LIST.contains(q)) {
 				continue;
 			}
+			String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
 			for (String b : bucket) {
 
 				boolean isLocation = false;
@@ -57,40 +53,23 @@ public class BucketBuilders {
 							b += LOCATION_IDENTIFIER;
 							perfectMatches++;
 							bucketWords.add(b);
-							matchedLocations.add(q);
-							LOGGER.debug("Matched to loc {} -- {} " + q, b);
 						}
-					}
-				}
-			}
-		}
-		for (String q : queryWords) {
-			if (STOP_LIST.contains(q) || matchedLocations.contains(q)) {
-				continue;
-			}
-			String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
-			for (String b : bucket) {
-				String[] bucketTerms = b.split(SPACE_DELIMITER);
-				for (String t : bucketTerms) {
-					if (t.endsWith("_LOC")) {
-						continue;
-					}
-					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
-					if (STOP_LIST.contains(t)) {
-						continue;
-					}
-					String qStem = STEMMER.stem(q);
-					String cStem = STEMMER.stem(cleaned);
-					int distance = StringCompareUtil.editDistance(qStem, cStem);
-					String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
-					if (isPerfectMatch(qStem, cStem, queryPrefix, termPrefix, distance)) {
-						perfectMatches++;
-						totalDistance += distance;
-						bucketWords.add(b);
-					} else if (isPartialMatch(qStem, cStem, queryPrefix, termPrefix, distance)) {
-						partialMathces++;
-						totalDistance += distance;
-						bucketWords.add(b);
+					} else {
+						String qStem = STEMMER.stem(q);
+						String termStem = STEMMER.stem(cleaned);
+						int distance = StringCompareUtil.editDistance(qStem, termStem);
+						String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
+						if (isPerfectMatch(qStem, termStem, queryPrefix, termPrefix, distance)) {
+							perfectMatches++;
+							totalDistance += distance;
+							bucketWords.add(b);
+
+						} else if (isPartialMatch(qStem, termStem, queryPrefix, termPrefix, distance)) {
+							partialMathces++;
+							totalDistance += distance;
+							bucketWords.add(b);
+
+						}
 					}
 				}
 			}
@@ -105,10 +84,11 @@ public class BucketBuilders {
 	private static boolean isPartialMatch(String fullQuery, String fullTerm, String queryPrefix, String termPrefix,
 			int distance) {
 		int lcs = StringCompareUtil.getLongestCommonSubsequence(fullQuery, fullTerm);
-		LOGGER.debug("partial match {} and {} distance {} lcs {}", fullQuery, fullTerm, distance, lcs);
 		if ((queryPrefix.equals(termPrefix) || lcs >= 3) && distance <= 3) {
 			return true;
+
 		} else {
+
 			return false;
 		}
 	}
@@ -118,7 +98,6 @@ public class BucketBuilders {
 
 		int lcs = Math.min(Math.min(fullQuery.length(), fullTerm.length()),
 				StringCompareUtil.getLongestCommonSubsequence(fullQuery, fullTerm));
-		LOGGER.debug("perfect match {} and {} distance {} lcs {}", fullQuery, fullTerm, distance, lcs);
 
 		if ((queryPrefix.equals(termPrefix) || lcs >= 4) && distance <= 1) {
 			return true;
