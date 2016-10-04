@@ -42,15 +42,13 @@ public abstract class SearchESTest extends ESIntegTestCase {
 		JsonSettingsLoader js = new JsonSettingsLoader();
 		String analyzerSettings = IOUtils.textLines("src/test/resources/index/analyzer.json");
 		Settings set = Settings.builder().put(js.load(analyzerSettings)).build();
-		// Settings set =
-		// ImmutableSettings.settingsBuilder().put(settingsParser.load(analyzerSettings)).build();
 
 		client().admin().indices().prepareCreate(TEST_INDEX_NAME).setSettings(set).get();
 		String mapping = IOUtils.textLines(mappingFile);
 		client().admin().indices().preparePutMapping(TEST_INDEX_NAME).setSource(mapping).setType(type).get();
 	}
 
-	public void createSpoozIndex() throws IOException {
+	public void createTestIndex() throws IOException {
 		createIndex(TEST_INDEX_NAME, TYPE_NAME, DEFAULT_ARTICLE_MAPPING);
 	}
 
@@ -71,9 +69,6 @@ public abstract class SearchESTest extends ESIntegTestCase {
 			String analyzerSettings = IOUtils.textLines("src/test/resources/index/analyzer.json");
 			Settings set = Settings.builder().put(settingsParser.load(analyzerSettings))
 					.put(super.nodeSettings(nodeOrdinal)).build();
-			// Settings set =
-			// ImmutableSettings.settingsBuilder().put(settingsParser.load(analyzerSettings))
-			// .put(super.nodeSettings(nodeOrdinal)).build();
 
 			return set;
 		} catch (IOException e) {

@@ -19,6 +19,8 @@ import com.searchApplication.es.entities.BucketResponseList;
 
 public class AttributeBucketer {
 
+	private static final String LOCATION_NAME = "location_name";
+	private static final String LOCATIONS = "locations";
 	private static final int HITS_IN_SCROLL = 100;
 	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
@@ -32,15 +34,15 @@ public class AttributeBucketer {
 	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops) {
 
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
-				.setFetchSource(new String[] { "attributes.attribute_name", "description", "attributes.attribute_value",
-						"sector", "sub_sector", "super_region" }, null)
+				.setFetchSource(new String[] { "description", "attributes.attribute_value", "sector", "sub_sector",
+						"super_region", "locations.location_name" }, null)
 				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(60000));
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		while (hitCounter < HITS_IN_SCROLL * loops && sr.getHits().getHits().length > 0) {
 			for (SearchHit hit : sr.getHits()) {
-				
+
 				try {
 					Bucket b = processHitsToBuckets(hit, query);
 
@@ -74,6 +76,12 @@ public class AttributeBucketer {
 			bucketTerms.add(attributeData.get("attribute_value"));
 
 		}
+		if (hit.getSource().containsKey(LOCATIONS)) {
+			for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get(LOCATIONS)) {
+				bucketTerms.add(attributeData.get(LOCATION_NAME) + "_LOC");
+
+			}
+		}
 		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
 		if (b != null) {
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
@@ -84,6 +92,9 @@ public class AttributeBucketer {
 	}
 
 	private static QueryBuilder generateQuery(String query) {
-		return QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER).defaultField(SEARCH_FIELD);
+		return QueryBuilders.boolQuery()
+				.should(QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER).defaultField(SEARCH_FIELD))
+				.should(QueryBuilders.nestedQuery(LOCATIONS,
+						QueryBuilders.matchQuery("locations.location_name", query.toLowerCase().split(" "))));
 	}
 }
