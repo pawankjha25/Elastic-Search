@@ -1,0 +1,92 @@
+{
+	"time_series": {
+		"properties": {
+			"attributes": {
+				"type": "nested",
+				"properties": {
+					"attribute_level": {
+						"type": "long"
+					},
+					"attribute_name": {
+						"type": "string",
+						"index": "not_analyzed"
+					},
+					"attribute_parent": {
+						"type": "string",
+						"index": "not_analyzed"
+					},
+					"attribute_type": {
+						"type": "string"
+					},
+					"attribute_value": {
+						"type": "string",
+						"index": "not_analyzed"
+					}
+				}
+			},
+			"db": {
+				"properties": {
+					"db_name": {
+						"type": "string",
+						"index": "not_analyzed"
+					},
+					"properties": {
+						"type": "long"
+					},
+					"property": {
+						"type": "long"
+					}
+				}
+			},
+			"description": {
+				"type": "string",
+				"fields": {
+					"ngramed": {
+						"type": "string",
+						"analyzer": "n_gram_analyzer"
+					},
+					"raw": {
+						"type": "string",
+						"index": "not_analyzed"
+					},
+					"shingled": {
+						"type": "string",
+						"analyzer": "shingle_analyzer"
+					}
+				}
+			},
+			"locations": {
+				"type": "nested",
+				"properties": {
+					"location_meta": {
+						"type": "string",
+						"index": "not_analyzed"
+					},
+					"location_name": {
+						"type": "string",
+						"analyzer": "n_gram_analyzer"
+					},
+					"location_type": {
+						"type": "string",
+						"index": "not_analyzed"
+					},
+					"series_id": {
+						"type": "long"
+					}
+				}
+			},
+			"sector": {
+				"type": "string",
+				"index": "not_analyzed"
+			},
+			"sub_sector": {
+				"type": "string",
+				"index": "not_analyzed"
+			},
+			"super_region": {
+				"type": "string",
+				"index": "not_analyzed"
+			}
+		}
+	}
+}
