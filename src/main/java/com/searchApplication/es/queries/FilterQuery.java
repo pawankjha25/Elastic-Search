@@ -12,11 +12,14 @@ public class FilterQuery {
 		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
 		try
 		{
-			NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
-					QueryBuilders.queryStringQuery(request.getSearchText().trim().replaceAll("\\|", " "))
-							.field("attributes.attribute_value"));
+			String[] queryString = request.getSearchText().trim().split("\\|");
 
-			booleanQuery.must(q);
+			for( String query : queryString )
+			{
+				NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
+						QueryBuilders.matchQuery("attributes.attribute_value.raw", query));
+				booleanQuery.must(q);
+			}
 
 			if( request.getFilters() != null )
 			{
