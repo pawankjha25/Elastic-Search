@@ -82,6 +82,7 @@ public class BucketBuilders {
 		int lcs = StringCompareUtil.getLongestCommonSubsequence(fullQuery, fullTerm);
 		if ((queryPrefix.equals(termPrefix) || lcs >= 3) && distance <= 3) {
 			return true;
+
 		} else {
 
 			return false;
@@ -93,8 +94,8 @@ public class BucketBuilders {
 
 		int lcs = Math.min(Math.min(fullQuery.length(), fullTerm.length()),
 				StringCompareUtil.getLongestCommonSubsequence(fullQuery, fullTerm));
-		if ((queryPrefix.equals(termPrefix) || lcs >= 4) && distance <= 2) {
 
+		if ((queryPrefix.equals(termPrefix) || lcs >= 4) && distance <= 1) {
 			return true;
 		} else {
 

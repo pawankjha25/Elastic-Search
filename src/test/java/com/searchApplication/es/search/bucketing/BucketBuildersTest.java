@@ -74,6 +74,11 @@ public class BucketBuildersTest {
 		
 		b = BucketBuilders.createFromQueryString("corn", Arrays.asList("production"));
 		Assert.assertNull(b);
+		
+		b = BucketBuilders.createFromQueryString("whey", Arrays.asList("wheat"));
+		Assert.assertEquals(b.getTotalPerfectMatches(), 0);
+		Assert.assertEquals(b.getTotalPartialMatches(), 1);
+	
 
 
 	
@@ -118,6 +123,8 @@ public class BucketBuildersTest {
 		Bucket b2 = BucketBuilders.createFromQueryString("illinois", Arrays.asList("corn production", "illinoi_LOC", "corn", "united states_LOC"));
 		Assert.assertNull(b2);
 	}
+	
+	
 	
 	
 
