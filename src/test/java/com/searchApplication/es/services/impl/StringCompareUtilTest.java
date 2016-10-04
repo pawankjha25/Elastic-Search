@@ -12,5 +12,14 @@ public class StringCompareUtilTest {
 
 	
 	}
+	
+	
+	@Test
+	public void testLCS() {
+		Assert.assertEquals(StringCompareUtil.getLongestCommonSubsequence("kitten", "sitting" ), 4);
+		Assert.assertEquals(StringCompareUtil.getLongestCommonSubsequence("123", "12" ), 2);
+
+	
+	}
 
 }

@@ -25,11 +25,11 @@ public class BucketBuilders {
 		int partialMathces = 0;
 		int totalDistance = 0;
 		String[] queryWords = query.toLowerCase().split(SPACE_DELIMITER);
+		Set<String> matchedLocations = new HashSet<String>();
 		for (String q : queryWords) {
 			if (STOP_LIST.contains(q)) {
 				continue;
 			}
-			String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
 			for (String b : bucket) {
 
 				boolean isLocation = false;
@@ -51,21 +51,35 @@ public class BucketBuilders {
 							b += LOCATION_IDENTIFIER;
 							perfectMatches++;
 							bucketWords.add(b);
+							matchedLocations.add(q);
+							System.err.println("Matched to loc " +q);
 						}
-					} else {
-						int distance = StringCompareUtil.editDistance(STEMMER.stem(q), STEMMER.stem(cleaned));
-						String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
-						if (isPerfectMatch(q, cleaned, queryPrefix, termPrefix, distance)) {
-							perfectMatches++;
-							totalDistance += distance;
-							bucketWords.add(b);
-
-						} else if (isPartialMatch(q, cleaned, queryPrefix, termPrefix, distance)) {
-							partialMathces++;
-							totalDistance += distance;
-							bucketWords.add(b);
-
-						}
+					}
+				}
+			}
+		}
+		for (String q : queryWords) {
+			if (STOP_LIST.contains(q) || matchedLocations.contains(q)) {
+				continue;
+			}
+			String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
+			for (String b : bucket) {
+				String[] bucketTerms = b.split(SPACE_DELIMITER);
+				for (String t : bucketTerms) {
+					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
+					if (STOP_LIST.contains(t)) {
+						continue;
+					}
+					int distance = StringCompareUtil.editDistance(STEMMER.stem(q), STEMMER.stem(cleaned));
+					String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
+					if (isPerfectMatch(q, cleaned, queryPrefix, termPrefix, distance)) {
+						perfectMatches++;
+						totalDistance += distance;
+						bucketWords.add(b);
+					} else if (isPartialMatch(q, cleaned, queryPrefix, termPrefix, distance)) {
+						partialMathces++;
+						totalDistance += distance;
+						bucketWords.add(b);
 					}
 				}
 			}
@@ -82,9 +96,7 @@ public class BucketBuilders {
 		int lcs = StringCompareUtil.getLongestCommonSubsequence(fullQuery, fullTerm);
 		if ((queryPrefix.equals(termPrefix) || lcs >= 3) && distance <= 3) {
 			return true;
-
 		} else {
-
 			return false;
 		}
 	}
@@ -96,6 +108,7 @@ public class BucketBuilders {
 				StringCompareUtil.getLongestCommonSubsequence(fullQuery, fullTerm));
 
 		if ((queryPrefix.equals(termPrefix) || lcs >= 4) && distance <= 1) {
+			System.out.println("perf " + fullQuery + "  " + fullTerm);
 			return true;
 		} else {
 

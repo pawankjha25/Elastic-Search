@@ -82,13 +82,19 @@ public class AttributeBucketer {
 
 			}
 		}
-		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
-		if (b != null) {
-			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
-			metaArray.add(metaData);
-			b.setBucketMetaData(metaArray);
+		try {
+			Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
+			if (b != null) {
+				List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
+				metaArray.add(metaData);
+				b.setBucketMetaData(metaArray);
+			}
+			return b;
+		} catch (Exception e) {
+
+			e.printStackTrace();
+			return null;
 		}
-		return b;
 	}
 
 	private static QueryBuilder generateQuery(String query) {
