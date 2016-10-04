@@ -25,24 +25,26 @@ public class BucketBuilders {
 		int partialMathces = 0;
 		int totalDistance = 0;
 		String[] queryWords = query.toLowerCase().split(SPACE_DELIMITER);
-	
-		
-		for (String q : queryWords) {
-			if (STOP_LIST.contains(q)) {
-				continue;
+
+		for (String b : bucket) {
+
+			boolean isLocation = false;
+			int locationMatch = 0;
+			int locationLenght = 0;
+			if (b.endsWith(LOCATION_IDENTIFIER)) {
+				isLocation = true;
+				b = b.substring(0, b.lastIndexOf(LOCATION_IDENTIFIER)).replaceAll("_", " ");
+				locationLenght = b.split(" ").length;
 			}
-			String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
-			for (String b : bucket) {
+			String[] bucketTerms = b.split(SPACE_DELIMITER);
 
-				boolean isLocation = false;
-				if (b.endsWith(LOCATION_IDENTIFIER)) {
-					isLocation = true;
-					b = b.substring(0, b.lastIndexOf(LOCATION_IDENTIFIER)).replaceAll("_", " ");
-				}
-				String[] bucketTerms = b.split(SPACE_DELIMITER);
+			for (String t : bucketTerms) {
+				for (String q : queryWords) {
+					String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
 
-				for (String t : bucketTerms) {
-
+					if (STOP_LIST.contains(q)) {
+						continue;
+					}
 					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
 					if (STOP_LIST.contains(t)) {
 						continue;
@@ -50,9 +52,8 @@ public class BucketBuilders {
 
 					if (isLocation) {
 						if (q.equals(cleaned)) {
-							b += LOCATION_IDENTIFIER;
-							perfectMatches++;
-							bucketWords.add(b);
+
+							locationMatch++;
 						}
 					} else {
 						String qStem = STEMMER.stem(q);
@@ -70,6 +71,14 @@ public class BucketBuilders {
 							bucketWords.add(b);
 
 						}
+					}
+				}
+
+				if (isLocation) {
+					if (locationLenght == locationMatch) {
+						perfectMatches++;
+						b += LOCATION_IDENTIFIER;
+						bucketWords.add(b);
 					}
 				}
 			}

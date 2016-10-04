@@ -70,7 +70,7 @@ public class Bucket implements Comparable<Bucket> {
 		for (String s : this.bucketTerms) {
 			l += s.replaceAll(" ", "").length() + 1;
 		}
-		return l;
+		return l+this.bucketTerms.size();
 	}
 
 	public int getTotalRows() {

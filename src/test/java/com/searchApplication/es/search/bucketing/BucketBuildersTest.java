@@ -113,7 +113,7 @@ public class BucketBuildersTest {
 		Assert.assertEquals(b.getTotalPartialMatches(), 0);
 		
 		Bucket b1 = BucketBuilders.createFromQueryString("corn production united states", Arrays.asList("corn production", "united_states_LOC"));
-		Assert.assertEquals(b1.getTotalPerfectMatches(), 4);
+		Assert.assertEquals(b1.getTotalPerfectMatches(), 3);
 		Assert.assertEquals(b1.getTotalPartialMatches(), 0);
 
 	
@@ -124,6 +124,14 @@ public class BucketBuildersTest {
 		Bucket b2 = BucketBuilders.createFromQueryString("illinoi",
 				Arrays.asList("corn production", "illinois_LOC", "corn", "united states_LOC"));
 		Assert.assertNull(b2);
+	}
+	
+	@Test
+	public void testOverlappingLocations() {
+		Bucket b2 = BucketBuilders.createFromQueryString("corn in new york",
+				Arrays.asList("corn production", "new york_LOC", "corn", "new jersey_LOC"));
+		Assert.assertEquals(b2.getTotalPerfectMatches(), 3);
+
 	}
 	
 	
