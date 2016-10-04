@@ -25,7 +25,7 @@ public class BucketBuildersTest {
 		Assert.assertTrue(b1.getBucketTerms().contains("production"));
 		
 		Bucket b2 = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn production", "corn"));
-		Assert.assertEquals(b2.getTotalPerfectMatches(), 2);
+		Assert.assertEquals(b2.getTotalPerfectMatches(), 3);
 		Assert.assertEquals(b2.getTotalPartialMatches(), 0);
 		Assert.assertEquals(b2.getTotalLevenstheinDistance(), 0);
 		Assert.assertTrue(b2.getBucketTerms().contains("corn production"));
@@ -103,7 +103,7 @@ public class BucketBuildersTest {
 	public void testLocation() {
 		
 		Bucket b = BucketBuilders.createFromQueryString("corn production illinois", Arrays.asList("corn production", "illinois_LOC", "corn", "united states_LOC"));
-		Assert.assertEquals(b.getTotalPerfectMatches(), 3);
+		Assert.assertEquals(b.getTotalPerfectMatches(), 4);
 		Assert.assertEquals(b.getTotalPartialMatches(), 0);
 		
 		Bucket b1 = BucketBuilders.createFromQueryString("corn production united states", Arrays.asList("corn production", "united_states_LOC"));
