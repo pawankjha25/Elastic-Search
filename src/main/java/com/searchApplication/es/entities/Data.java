@@ -1,18 +1,21 @@
 package com.searchApplication.es.entities;
 
+import java.util.Map;
 import java.util.Set;
+
+import com.searchApplication.entities.Results;
 
 public class Data {
 
-	private Set<Long> seriesId;
+	private Map<String, Set<Results>> seriesId;
 	private String details;
 
-	public Set<Long> getSeriesId()
+	public Map<String, Set<Results>> getSeriesId()
 	{
 		return seriesId;
 	}
 
-	public void setSeriesId( Set<Long> seriesId )
+	public void setSeriesId( Map<String, Set<Results>> seriesId )
 	{
 		this.seriesId = seriesId;
 	}

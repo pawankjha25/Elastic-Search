@@ -32,7 +32,7 @@ public class ElasticSearchIndexComponent {
 	@Scheduled(fixedRate = 3600000)
 	public void startApp() throws Exception {
 		try {
-			indexCSVFileData();
+			// indexCSVFileData();
 			// indexOldCSVFileData();
 		} catch (Exception e) {
 			throw e;
@@ -211,7 +211,7 @@ public class ElasticSearchIndexComponent {
 							list.add(data);
 						}
 					}
-					if (i % 300 == 0) {
+					if (i % 500 == 0) {
 						elasticSearchUtility.addDocsInBulk(elasticSearchUtility.getESClient(), "zdaly", "time_series",
 								list);
 						list.removeAll(list);
