@@ -162,11 +162,11 @@ public class AttributeBucketerTest extends SearchESTest {
 		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn production");
 		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("production", "corn");
 		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("corn", "production planning");
-		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsOnly("popcorn production", "popcorn");
+		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsOnly("production planning");
 		Assertions.assertThat(buckets.get(5).getBucketTerms()).containsOnly("iron production");
 		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsOnly("yellow corn");
+		Assertions.assertThat(buckets.get(6).getBucketTerms()).containsOnly("popcorn production");
 
-		Assertions.assertThat(buckets.get(6).getBucketTerms()).containsOnly("production planning");
 
 	}
 
@@ -205,11 +205,13 @@ public class AttributeBucketerTest extends SearchESTest {
 
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"wheat production", 10);
+		
+		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("wheat", "wheat production");
+
 		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("wheat production");
+		
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("wheat", "production");
 
-		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("wheat", "production");
-
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("wheat", "wheat production");
 
 		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsOnly("mining wheat", "iron production");
 

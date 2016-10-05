@@ -5,41 +5,53 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 
 public class ResultsAggregation {
 
-	@SuppressWarnings( "rawtypes" )
-	public static AggregationBuilder getAggregation() throws Exception
-	{
-		try
-		{
-			return AggregationBuilders.nested("attributes").path("attributes")
-					.subAggregation(AggregationBuilders.terms("attTypes").size(100).field("attributes.attribute_name").include("Details")
+	@SuppressWarnings("rawtypes")
+	public static AggregationBuilder getAggregation(String stratumName) throws Exception {
+		try {
+			return AggregationBuilders.nested("attributes").path("attributes").subAggregation(AggregationBuilders
+					.terms("attTypes").size(100).field("attributes.attribute_name").include(stratumName)
 
-							.subAggregation(AggregationBuilders.terms("attributesValues").size(100)
-									.field("attributes.attribute_value.raw")
+					.subAggregation(AggregationBuilders.terms("attributesValues").size(100)
+							.field("attributes.attribute_value.raw")
+
+							.subAggregation(AggregationBuilders.reverseNested("attReverse")
 
 									.subAggregation(AggregationBuilders.nested("database").path("db")
 											.subAggregation(AggregationBuilders.terms("dbname").field("db.db_name")
 
 													.subAggregation(AggregationBuilders.terms("dbproperties")
-															.field("db.properties")
+															.field("db.properties").size(100)
 
-															.size(100).subAggregation(AggregationBuilders
-																	.nested("locations").path("locations")
+															.subAggregation(
+																	AggregationBuilders.reverseNested("dbReverse")
 
-																	.subAggregation(AggregationBuilders
-																			.terms("locationid")
-																			.field("locations.series_id").size(100)
 																			.subAggregation(AggregationBuilders
-																					.terms("locationType")
-																					.field("locations.location_type.raw")
-																					.size(100).subAggregation(AggregationBuilders
-																							.terms("locationname")
-																							.field("locations.location_name.raw")
-																							.size(100)))
+																					.nested("locations")
+																					.path("locations")
 
-			)))))));
-		}
-		catch( Exception e )
-		{
+																					.subAggregation(AggregationBuilders
+																							.terms("locationType")
+																							.field("locations.location_type.raw")
+																							.size(100).subAggregation(
+																									AggregationBuilders
+																											.terms("locationParent")
+																											.field("locations.location_parent.raw")
+																											.size(100)
+
+																											.subAggregation(
+																													AggregationBuilders
+																															.terms("locationname")
+																															.field("locations.location_name.raw")
+																															.size(100)
+																															.size(100)
+																															.subAggregation(
+																																	AggregationBuilders
+																																			.terms("locationid")
+																																			.field("locations.series_id")
+																																			.size(100))))
+
+																	)))))))));
+		} catch (Exception e) {
 			throw e;
 		}
 	}
