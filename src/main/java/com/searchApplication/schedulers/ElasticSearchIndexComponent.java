@@ -33,7 +33,7 @@ public class ElasticSearchIndexComponent {
 	{
 		try
 		{
-			indexCSVFileData();
+			//indexCSVFileData();
 			//indexOldCSVFileData();
 		}
 		catch( Exception e )
