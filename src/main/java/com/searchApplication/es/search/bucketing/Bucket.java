@@ -11,6 +11,7 @@ public class Bucket implements Comparable<Bucket> {
 	private int totalPartialMatches;
 	private int totalLevenstheinDistance;
 	private int totalRows;
+	private int totalLength;
 	private List<BucketMetaData> bucketMetaData;
 
 	public Bucket(Set<String> bucketTerms, int totalPerfectMatches, int totalPartialMatches,
@@ -22,6 +23,7 @@ public class Bucket implements Comparable<Bucket> {
 		this.totalLevenstheinDistance = totalLevenstheinDistance;
 		this.totalRows = 1;
 		this.bucketMetaData = new ArrayList<BucketMetaData>();
+		totalLength = calucalteTotalBucketLength();
 	}
 
 	public void addMetaData(BucketMetaData meta) {
@@ -40,23 +42,15 @@ public class Bucket implements Comparable<Bucket> {
 		} else if (this.totalPerfectMatches < o.totalPerfectMatches) {
 			return 1;
 		} else {
-			if (this.totalPartialMatches > o.totalPartialMatches) {
+			if (this.totalRows > o.totalRows) {
 				return -1;
-			} else if (this.totalPartialMatches < o.totalPartialMatches) {
+			} else if (this.totalRows < o.totalRows) {
 				return 1;
 			} else {
-				if (this.totalLevenstheinDistance > o.totalLevenstheinDistance) {
-					return 1;
-				} else if (this.totalLevenstheinDistance < o.totalLevenstheinDistance) {
+				if (this.totalLength < o.totalLength) {
 					return -1;
-				} else {
-					int tc = this.calucalteTotalBucketLength();
-					int otc = o.calucalteTotalBucketLength();
-					if (tc < otc) {
-						return -1;
-					} else if (tc > otc) {
-						return 1;
-					}
+				} else if (this.totalLength > o.totalLength) {
+					return 1;
 				}
 
 			}
@@ -70,7 +64,7 @@ public class Bucket implements Comparable<Bucket> {
 		for (String s : this.bucketTerms) {
 			l += s.replaceAll(" ", "").length() + 1;
 		}
-		return l;
+		return l + this.bucketTerms.size();
 	}
 
 	public int getTotalRows() {
@@ -125,11 +119,13 @@ public class Bucket implements Comparable<Bucket> {
 		this.bucketMetaData = bucketMetaData;
 	}
 
+
 	@Override
 	public String toString() {
 		return "Bucket [bucketTerms=" + bucketTerms + ", totalPerfectMatches=" + totalPerfectMatches
 				+ ", totalPartialMatches=" + totalPartialMatches + ", totalLevenstheinDistance="
-				+ totalLevenstheinDistance + ", totalRows=" + totalRows + ", bucketMetaData=" + bucketMetaData + "]";
+				+ totalLevenstheinDistance + ", totalRows=" + totalRows + ", totalLength=" + totalLength
+				+ ", bucketMetaData=" + bucketMetaData + "]";
 	}
 
 	@Override
