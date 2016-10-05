@@ -89,9 +89,9 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 						if (keys != null) {
 							while (keys.hasNext()) {
 								String key = keys.next();
-								if (response.getStratum().get(key).size() <= 1) {
+								//if (response.getStratum().get(key).size() <= 1) {
 									stratum.put(key, response.getStratum().get(key));
-								}
+								//}
 							}
 						}
 					}
