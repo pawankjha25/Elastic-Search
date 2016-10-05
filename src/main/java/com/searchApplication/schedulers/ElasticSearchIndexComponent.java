@@ -33,7 +33,7 @@ public class ElasticSearchIndexComponent {
 	{
 		try
 		{
-			//indexCSVFileData();
+			indexCSVFileData();
 			//indexOldCSVFileData();
 		}
 		catch( Exception e )
@@ -246,7 +246,7 @@ public class ElasticSearchIndexComponent {
 								description[7].trim());
 						if( data != null && data.getLocations() != null && data.getLocations().size() > 1000 )
 						{
-							if( data.getLocations().size() < 50000 )
+							if( data.getLocations().size() < 100000 )
 								elasticSearchUtility.addDoc(elasticSearchUtility.getESClient(), "zdaly", "time_series",
 										data);
 						}
