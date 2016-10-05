@@ -43,13 +43,14 @@ public class BucketBuilders {
 					continue;
 				}
 				for (String q : queryWords) {
-					String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
-
 					if (STOP_LIST.contains(q)) {
 						continue;
 					}
+					String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
 					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
-
+					if (cleaned.length() < 2) {
+						continue;
+					}
 					if (isLocation) {
 						if (q.equals(cleaned)) {
 
