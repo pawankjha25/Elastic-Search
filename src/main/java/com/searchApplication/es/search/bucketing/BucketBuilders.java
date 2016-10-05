@@ -39,6 +39,9 @@ public class BucketBuilders {
 			String[] bucketTerms = b.split(SPACE_DELIMITER);
 
 			for (String t : bucketTerms) {
+				String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
+				String termStem = STEMMER.stem(cleaned);
+
 				if (STOP_LIST.contains(t)) {
 					continue;
 				}
@@ -47,7 +50,6 @@ public class BucketBuilders {
 						continue;
 					}
 					String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
-					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
 					if (cleaned.length() < 2) {
 						continue;
 					}
@@ -58,7 +60,6 @@ public class BucketBuilders {
 						}
 					} else {
 						String qStem = STEMMER.stem(q);
-						String termStem = STEMMER.stem(cleaned);
 						int distance = StringCompareUtil.editDistance(qStem, termStem);
 						String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
 						if (isPerfectMatch(qStem, termStem, queryPrefix, termPrefix, distance)) {
