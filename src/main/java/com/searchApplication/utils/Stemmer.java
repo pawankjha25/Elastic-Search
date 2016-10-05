@@ -562,12 +562,16 @@ public class Stemmer {
 	 */
 
 	public String stem(String s) {
-		char[] characters = s.toCharArray();
-		for (char character : characters) {
-			add(character);
+		try {
+			char[] characters = s.toCharArray();
+			for (char character : characters) {
+				add(character);
+			}
+			stem();
+			return toString();
+		} catch (Exception e) {
+			return s;
 		}
-		stem();
-		return toString();
 	}
 
 }
