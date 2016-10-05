@@ -13,10 +13,14 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.searchApplication.es.entities.BucketResponseList;
 
+
 public class AttributeBucketer {
+	private static final Logger LOGGER = LoggerFactory.getLogger(AttributeBucketer.class);
 
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
@@ -32,18 +36,23 @@ public class AttributeBucketer {
 
 	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops) {
 
+		LOGGER.debug("Start query ");
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
 				.setQuery(generateQuery(query)).setFetchSource(new String[] { "description",
 						"attributes.attribute_value", "sector", "sub_sector", "super_region" }, null)
-				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(60000));
+				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(160000));
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
+		LOGGER.debug(" query {}", srb.toString() );
+
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		while (hitCounter < HITS_IN_SCROLL * loops && sr.getHits().getHits().length > 0) {
+			LOGGER.debug(" response {} {}", hitCounter,  sr );
+
 			for (SearchHit hit : sr.getHits()) {
 				try {
 					Bucket b = processHitsToBuckets(hit, query);
-
+					
 					if (b != null) {
 						if (bucketList.contains(b)) {
 							bucketList.get(bucketList.indexOf(b)).incrementCount();
@@ -55,11 +64,11 @@ public class AttributeBucketer {
 						hitCounter++;
 					}
 				} catch (Exception e) {
-					System.out.println("ERROR PROCESSING ROW");
+					LOGGER.error("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
 				}
 			}
-			sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(60000)).get();
+			sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 		}
 
 		Collections.sort(bucketList);
