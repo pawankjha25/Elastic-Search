@@ -111,9 +111,13 @@ public class BucketBuildersTest {
 		Assert.assertEquals(b.getTotalPerfectMatches(), 3);
 		Assert.assertEquals(b.getTotalPartialMatches(), 0);
 		
-		Bucket b1 = BucketBuilders.createFromQueryString("corn production united states", Arrays.asList("corn production", "united_states_LOC"));
+		Bucket b1 = BucketBuilders.createFromQueryString("corn production united states", Arrays.asList("corn production", "united states_LOC"));
 		Assert.assertEquals(b1.getTotalPerfectMatches(), 3);
 		Assert.assertEquals(b1.getTotalPartialMatches(), 0);
+		
+		Bucket b2 = BucketBuilders.createFromQueryString("corn production united states", Arrays.asList("corn production", "united states_LOC", "states_LOC"));
+		Assert.assertEquals(b2.getTotalPerfectMatches(), 4);
+		Assert.assertEquals(b2.getTotalPartialMatches(), 0);
 
 	
 	}
