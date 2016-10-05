@@ -1,9 +1,7 @@
 package com.searchApplication.es.search.bucketing;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +11,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.search.SearchHit;
 
 import com.searchApplication.es.entities.BucketResponseList;
@@ -33,16 +32,15 @@ public class AttributeBucketer {
 
 	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops) {
 
-		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
-				.setFetchSource(new String[] { "description", "attributes.attribute_value", "sector", "sub_sector",
-						"super_region", "locations.location_name" }, null)
+		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
+				.setQuery(generateQuery(query)).setFetchSource(new String[] { "description",
+						"attributes.attribute_value", "sector", "sub_sector", "super_region" }, null)
 				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(60000));
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		while (hitCounter < HITS_IN_SCROLL * loops && sr.getHits().getHits().length > 0) {
 			for (SearchHit hit : sr.getHits()) {
-
 				try {
 					Bucket b = processHitsToBuckets(hit, query);
 
@@ -76,12 +74,12 @@ public class AttributeBucketer {
 			bucketTerms.add(attributeData.get("attribute_value"));
 
 		}
-		if (hit.getSource().containsKey(LOCATIONS)) {
-			for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get(LOCATIONS)) {
-				bucketTerms.add(attributeData.get(LOCATION_NAME) + "_LOC");
-
+		if (hit.getInnerHits().containsKey(LOCATIONS)) {
+			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
+				bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
 			}
 		}
+
 		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
 		if (b != null) {
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
@@ -92,10 +90,16 @@ public class AttributeBucketer {
 	}
 
 	private static QueryBuilder generateQuery(String query) {
-		return QueryBuilders.boolQuery()
-				.should(QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER).defaultField(SEARCH_FIELD))
-				.should(QueryBuilders.nestedQuery(LOCATIONS,
-						QueryBuilders.matchQuery("locations.location_name.shingles", query.toLowerCase().split(" "))
-								.analyzer("shingle_analyzer")));
+		
+		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
+		q.setFetchSource("location_name", null);
+		q.setSize(10);
+		return QueryBuilders
+				.boolQuery().should(
+						QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
+								.defaultField(SEARCH_FIELD))
+				.should(QueryBuilders.nestedQuery(LOCATIONS, QueryBuilders
+						.matchQuery("locations.location_name", query.toLowerCase()).analyzer("n_gram_analyzer"))
+						.innerHit(new QueryInnerHitBuilder()));
 	}
 }
