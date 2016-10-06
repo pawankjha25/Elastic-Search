@@ -108,7 +108,7 @@ public class AttributeBucketer {
 						QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
 								.defaultField(SEARCH_FIELD))
 				.should(QueryBuilders.nestedQuery(LOCATIONS, QueryBuilders
-						.matchQuery("locations.location_name", query.toLowerCase()).analyzer("shingle_analyzer"))
+						.matchQuery("locations.location_name.shingled", query.toLowerCase()).analyzer("shingle_analyzer"))
 						.innerHit(new QueryInnerHitBuilder()));
 	}
 }

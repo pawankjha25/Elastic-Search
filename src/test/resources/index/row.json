@@ -64,7 +64,20 @@
 					},
 					"location_name": {
 						"type": "string",
-						"analyzer": "n_gram_analyzer"
+						"fields": {
+							"ngramed": {
+								"type": "string",
+								"analyzer": "n_gram_analyzer"
+							},
+							"raw": {
+								"type": "string",
+								"index": "not_analyzed"
+							},
+							"shingled": {
+								"type": "string",
+								"analyzer": "shingle_analyzer"
+							}
+						}
 					},
 					"location_type": {
 						"type": "string",
