@@ -1,5 +1,7 @@
 package com.searchApplication.es.search.bucketing;
 
+import com.google.gson.Gson;
+
 public class BucketMetaData {
 
 	private String superRegion;

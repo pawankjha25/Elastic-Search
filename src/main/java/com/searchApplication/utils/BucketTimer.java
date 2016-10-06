@@ -1,10 +1,13 @@
 package com.searchApplication.utils;
 
 import org.elasticsearch.client.Client;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.searchApplication.es.search.bucketing.AttributeBucketer;
 
+
 public class BucketTimer {
+	private static final Logger LOGGER = LoggerFactory.getLogger(BucketTimer.class);
 
 	private static void getTimeForQuery(String query, Client client, String index, String type, int loops) {
 

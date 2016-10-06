@@ -1,6 +1,8 @@
 package com.searchApplication.es.services.impl;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -75,11 +77,50 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 				response = QueryFilterResponse.getResponse(tFdocs);
 
-				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
-						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
-						.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
+				Map<String, List<String>> stratum = new HashMap<>();
 
-				response.setLocations(QueryFilterResponse.getLocationAggregation(tFdocs, request.getLocations()));
+				if( request.getReqAttList() != null && !request.getReqAttList().isEmpty()
+						&& response.getStratum() != null && !response.getStratum().isEmpty()
+						&& response.getStratum().keySet() != null )
+				{
+					Iterator<String> keys = response.getStratum().keySet().iterator();
+					while( keys.hasNext() )
+					{
+						String key = keys.next();
+						if( response.getStratum().get(key).size() <= 1 || request.getReqAttList().contains(key) )
+						{
+							stratum.put(key, response.getStratum().get(key));
+						}
+					}
+				}
+				else
+				{
+					if( response != null && response.getStratum() != null && !response.getStratum().isEmpty() )
+					{
+						Iterator<String> keys = response.getStratum().keySet().iterator();
+						if( keys != null )
+						{
+							while( keys.hasNext() )
+							{
+								String key = keys.next();
+								//if (response.getStratum().get(key).size() <= 1) {
+								stratum.put(key, response.getStratum().get(key));
+								//}
+							}
+						}
+					}
+				}
+
+				response.setStratum(stratum);
+
+				if( request.getLocation() )
+				{
+					tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
+							.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
+							.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
+
+					response.setLocations(QueryFilterResponse.getLocationAggregation(tFdocs, request.getLocations()));
+				}
 
 			}
 
@@ -103,7 +144,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 			{
 				booleanQuery = FilterQuery.getQuery(request);
 
-				AggregationBuilder aggregation = ResultsAggregation.getAggregation();
+				AggregationBuilder aggregation = ResultsAggregation.getAggregation(request.getStratumName());
 
 				SearchResponse tFdocs = null;
 
@@ -112,6 +153,12 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 						.addAggregation(aggregation).execute().actionGet();
 
 				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()));
+
+				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
+						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
+						.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
+
+				response.setLocations(QueryFilterResponse.getLocationAggregation(tFdocs, request.getLocations()));
 			}
 
 		}
@@ -129,19 +176,26 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		{
 			if( map != null && map.keySet() != null )
 			{
+				Set<String> parent = new TreeSet<>();
 				for( String locationType : map.keySet() )
 				{
 					Set<String> loc = new TreeSet<>();
 					for( String locName : map.get(locationType) )
 					{
 						String[] locString = locName.split(":");
-						if( locString[1] != null )
+						if( locString[1] != null && locString[0] != null )
 						{
 							loc.add(locString[1]);
+							parent.add(locString[0]);
 						}
 					}
 					res.put(locationType, loc);
 				}
+				res.put("parent", parent);
+			}
+			else
+			{
+				return null;
 			}
 		}
 		catch( Exception e )
