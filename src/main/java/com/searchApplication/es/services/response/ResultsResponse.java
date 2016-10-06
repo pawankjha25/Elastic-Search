@@ -66,7 +66,6 @@ public class ResultsResponse {
 										InternalNested sectorTerms = reverseDb.getAggregations().get("locations");
 										Terms locationTypeBuckets = sectorTerms.getAggregations().get("locationType");
 
-										
 										for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
 										{
 											Terms locationParentBuckets = locationTypeBucket.getAggregations()
@@ -84,13 +83,14 @@ public class ResultsResponse {
 												for( Terms.Bucket locationNameBucket : locationNameBuckets
 														.getBuckets() )
 												{
-													
+
 													locationName = locationNameBucket.getKeyAsString();
 													if( locationMap != null && locationMap.keySet() != null )
 													{
 														if( locationMap.get(locationTypeBucket.getKeyAsString()) != null
 																&& locationMap.get(locationTypeBucket.getKeyAsString())
-																		.contains(locationNameBucket.getKeyAsString()) )
+																		.contains(locationNameBucket.getKeyAsString())
+																&& locationMap.get("parent").contains(locationParent) )
 														{
 															Terms seriesIdBuckets = locationNameBucket.getAggregations()
 																	.get("locationid");
