@@ -159,7 +159,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"corn production", 1);
-
+		System.out.println(buckets);
 		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn production");
 		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("production", "corn");
 		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("corn", "production planning");

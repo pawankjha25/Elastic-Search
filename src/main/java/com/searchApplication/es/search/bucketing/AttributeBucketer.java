@@ -23,7 +23,7 @@ public class AttributeBucketer {
 
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
-	private static final int HITS_IN_SCROLL = 1;
+	private static final int HITS_IN_SCROLL = 10;
 	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
@@ -82,11 +82,11 @@ public class AttributeBucketer {
 			bucketTerms.add(attributeData.get("attribute_value"));
 
 		}
-//		if (hit.getInnerHits().containsKey(LOCATIONS)) {
-//			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
-//				bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
-//			}
-//		}
+		// if (hit.getInnerHits().containsKey(LOCATIONS)) {
+		// for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
+		// bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
+		// }
+		// }
 
 		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
 		if (b != null) {
@@ -102,8 +102,7 @@ public class AttributeBucketer {
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);
 		q.setSize(10);
-		return QueryBuilders.boolQuery()
-				.must(QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
+		return (QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
 						.defaultField(SEARCH_FIELD));
 //				.should(QueryBuilders.nestedQuery(LOCATIONS,
 //						QueryBuilders.matchQuery("locations.location_name.shingled", query.toLowerCase().replaceAll("apple", ""))
