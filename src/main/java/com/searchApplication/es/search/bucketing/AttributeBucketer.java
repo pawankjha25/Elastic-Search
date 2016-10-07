@@ -68,7 +68,7 @@ public class AttributeBucketer {
 				}
 			}
 	//		sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
-		}
+		//}
 
 		Collections.sort(bucketList);
 		return bucketList;
