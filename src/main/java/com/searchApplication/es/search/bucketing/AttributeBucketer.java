@@ -23,7 +23,7 @@ public class AttributeBucketer {
 
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
-	private static final int HITS_IN_SCROLL = 1000;
+	private static final int HITS_IN_SCROLL = 100;
 	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
@@ -43,11 +43,9 @@ public class AttributeBucketer {
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
-
 		List<Bucket> bucketList = new ArrayList<Bucket>();
-		while (hitCounter < HITS_IN_SCROLL * loops || sr.getHits().getHits().length > 0) {
-			LOGGER.debug(" response {} {}", hitCounter, sr);
-
+		while ((hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0)) {
+			LOGGER.debug(" response {} {}", hitCounter, sr.getHits().getHits().length);
 			for (SearchHit hit : sr.getHits()) {
 				try {
 					Bucket b = processHitsToBuckets(hit, query);
