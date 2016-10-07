@@ -45,8 +45,8 @@ public class AttributeBucketer {
 		LOGGER.debug(" query {}", srb.toString());
 
 		List<Bucket> bucketList = new ArrayList<Bucket>();
-//		while (hitCounter < HITS_IN_SCROLL * loops  sr.getHits().getHits().length > 0) {
-//			LOGGER.debug(" response {} {}", hitCounter, sr);
+		while (hitCounter < HITS_IN_SCROLL * loops || sr.getHits().getHits().length > 0) {
+			LOGGER.debug(" response {} {}", hitCounter, sr);
 
 			for (SearchHit hit : sr.getHits()) {
 				try {
@@ -60,15 +60,16 @@ public class AttributeBucketer {
 						} else {
 							bucketList.add(b);
 						}
-						hitCounter++;
+
 					}
 				} catch (Exception e) {
 					LOGGER.error("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
 				}
+				hitCounter++;
 			}
-	//		sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
-		//}
+			sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
+		}
 
 		Collections.sort(bucketList);
 		return bucketList;
@@ -82,11 +83,11 @@ public class AttributeBucketer {
 			bucketTerms.add(attributeData.get("attribute_value"));
 
 		}
-		// if (hit.getInnerHits().containsKey(LOCATIONS)) {
-		// for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
-		// bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
-		// }
-		// }
+		if (hit.getInnerHits().containsKey(LOCATIONS)) {
+			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
+				bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
+			}
+		}
 
 		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
 		if (b != null) {
@@ -102,11 +103,17 @@ public class AttributeBucketer {
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);
 		q.setSize(10);
-		return (QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER).defaultField(SEARCH_FIELD));
-		// .should(QueryBuilders.nestedQuery(LOCATIONS,
-		// QueryBuilders.matchQuery("locations.location_name.shingled",
-		// query.toLowerCase().replaceAll("apple", ""))
-		// .analyzer("shingle_analyzer"))
-		// .innerHit(new QueryInnerHitBuilder()));
+		return QueryBuilders
+				.boolQuery().should(
+						QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
+								.defaultField(
+										SEARCH_FIELD))
+								.should(QueryBuilders
+										.nestedQuery(LOCATIONS,
+												QueryBuilders
+														.matchQuery("locations.location_name.shingled",
+																query.toLowerCase().replaceAll("apple", ""))
+														.analyzer("shingle_analyzer"))
+										.innerHit(new QueryInnerHitBuilder()));
 	}
 }
