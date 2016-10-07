@@ -23,7 +23,7 @@ public class AttributeBucketer {
 
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
-	private static final int HITS_IN_SCROLL = 10;
+	private static final int HITS_IN_SCROLL = 1000;
 	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
@@ -45,8 +45,8 @@ public class AttributeBucketer {
 		LOGGER.debug(" query {}", srb.toString());
 
 		List<Bucket> bucketList = new ArrayList<Bucket>();
-		while (hitCounter < HITS_IN_SCROLL * loops && sr.getHits().getHits().length > 0) {
-			LOGGER.debug(" response {} {}", hitCounter, sr);
+//		while (hitCounter < HITS_IN_SCROLL * loops  sr.getHits().getHits().length > 0) {
+//			LOGGER.debug(" response {} {}", hitCounter, sr);
 
 			for (SearchHit hit : sr.getHits()) {
 				try {
@@ -67,7 +67,7 @@ public class AttributeBucketer {
 					e.printStackTrace();
 				}
 			}
-			sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
+	//		sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 		}
 
 		Collections.sort(bucketList);
@@ -102,11 +102,11 @@ public class AttributeBucketer {
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);
 		q.setSize(10);
-		return (QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
-						.defaultField(SEARCH_FIELD));
-//				.should(QueryBuilders.nestedQuery(LOCATIONS,
-//						QueryBuilders.matchQuery("locations.location_name.shingled", query.toLowerCase().replaceAll("apple", ""))
-//								.analyzer("shingle_analyzer"))
-//						.innerHit(new QueryInnerHitBuilder()));
+		return (QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER).defaultField(SEARCH_FIELD));
+		// .should(QueryBuilders.nestedQuery(LOCATIONS,
+		// QueryBuilders.matchQuery("locations.location_name.shingled",
+		// query.toLowerCase().replaceAll("apple", ""))
+		// .analyzer("shingle_analyzer"))
+		// .innerHit(new QueryInnerHitBuilder()));
 	}
 }
