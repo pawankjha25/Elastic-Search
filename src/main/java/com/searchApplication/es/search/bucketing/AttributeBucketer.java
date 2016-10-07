@@ -82,11 +82,11 @@ public class AttributeBucketer {
 			bucketTerms.add(attributeData.get("attribute_value"));
 
 		}
-		if (hit.getInnerHits().containsKey(LOCATIONS)) {
-			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
-				bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
-			}
-		}
+//		if (hit.getInnerHits().containsKey(LOCATIONS)) {
+//			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
+//				bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
+//			}
+//		}
 
 		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
 		if (b != null) {
@@ -103,11 +103,11 @@ public class AttributeBucketer {
 		q.setFetchSource("location_name", null);
 		q.setSize(10);
 		return QueryBuilders.boolQuery()
-				.should(QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
-						.defaultField(SEARCH_FIELD))
-				.should(QueryBuilders.nestedQuery(LOCATIONS,
-						QueryBuilders.matchQuery("locations.location_name.shingled", query.toLowerCase().replaceAll("apple", ""))
-								.analyzer("shingle_analyzer"))
-						.innerHit(new QueryInnerHitBuilder()));
+				.must(QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
+						.defaultField(SEARCH_FIELD));
+//				.should(QueryBuilders.nestedQuery(LOCATIONS,
+//						QueryBuilders.matchQuery("locations.location_name.shingled", query.toLowerCase().replaceAll("apple", ""))
+//								.analyzer("shingle_analyzer"))
+//						.innerHit(new QueryInnerHitBuilder()));
 	}
 }

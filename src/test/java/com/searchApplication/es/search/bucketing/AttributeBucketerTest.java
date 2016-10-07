@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.fest.assertions.api.Assertions;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.searchApplication.es.entities.BucketResponseList;
@@ -242,7 +243,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 	
-	@Test
+	@Ignore
 	public void testLocations() throws IOException {
 		
 		createTestIndex();
@@ -286,7 +287,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 	
-	@Test
+	@Ignore
 	public void testLocationsOnly() throws IOException {
 		createTestIndex();
 		LocationData loc = new LocationData();
