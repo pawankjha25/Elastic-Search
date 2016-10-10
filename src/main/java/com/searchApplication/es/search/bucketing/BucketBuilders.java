@@ -26,6 +26,7 @@ public class BucketBuilders {
 		int totalDistance = 0;
 		String[] queryWords = query.toLowerCase().split(SPACE_DELIMITER);
 		Set<String> matchedQueries = new HashSet<String>();
+		Set<String> matchedTerms = new HashSet<String>();
 
 		for (String b : bucket) {
 			boolean isLocation = false;
@@ -40,9 +41,9 @@ public class BucketBuilders {
 			String[] bucketTerms = b.split(SPACE_DELIMITER);
 			for (String t : bucketTerms) {
 				if (hits.contains(t)) {
-					if (!matchedQueries.contains(t)) {
+					if (!matchedTerms.contains(t)) {
 						perfectMatches++;
-						matchedQueries.add(t);
+						matchedTerms.add(t);
 					}
 					bucketWords.add(b);
 				} else {
@@ -71,9 +72,11 @@ public class BucketBuilders {
 							int distance = StringCompareUtil.editDistance(qStem, termStem);
 							String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
 							if (isPerfectMatch(qStem, termStem, queryPrefix, termPrefix, distance)) {
-								if (!matchedQueries.contains(t)) {
+								if (!matchedQueries.contains(qStem)) {
 									perfectMatches++;
-									matchedQueries.add(t);
+									matchedQueries.add(qStem);
+									matchedTerms.add(t);
+
 								}
 								totalDistance += distance;
 								bucketWords.add(b);

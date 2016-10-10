@@ -9,6 +9,7 @@ import org.junit.Test;
 
 public class BucketBuildersTest {
 
+
 	@Test
 	public void testPerfectMatch() {
 		Bucket b = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn production", "xs"),
@@ -46,8 +47,7 @@ public class BucketBuildersTest {
 
 	@Test
 	public void testStopWords() {
-		Bucket b = BucketBuilders.createFromQueryString("production in us", Arrays.asList("production in us"),
-				new HashSet<String>());
+		Bucket b = BucketBuilders.createFromQueryString("production in us", Arrays.asList("production in us"), new HashSet<String>());
 		Assert.assertEquals(b.getTotalPerfectMatches(), 2);
 
 		Bucket b1 = BucketBuilders.createFromQueryString("production in us", Arrays.asList("corn production in china"),
@@ -77,8 +77,7 @@ public class BucketBuildersTest {
 	@Test
 	public void testStrange() {
 
-		Bucket b = BucketBuilders.createFromQueryString("corn production", Arrays.asList("tons", "1000 acers"),
-				new HashSet<String>());
+		Bucket b = BucketBuilders.createFromQueryString("corn production", Arrays.asList("tons", "1000 acers"), new HashSet<String>());
 		Assert.assertNull(b);
 
 		b = BucketBuilders.createFromQueryString("corn", Arrays.asList("production"), new HashSet<String>());
@@ -110,8 +109,7 @@ public class BucketBuildersTest {
 	@Test
 	public void testShort() {
 
-		Bucket b = BucketBuilders.createFromQueryString("row", Arrays.asList("toe", "popcorn production"),
-				new HashSet<String>());
+		Bucket b = BucketBuilders.createFromQueryString("row", Arrays.asList("toe", "popcorn production"), new HashSet<String>());
 		Assert.assertNull(b);
 	}
 
@@ -147,6 +145,15 @@ public class BucketBuildersTest {
 		Bucket b2 = BucketBuilders.createFromQueryString("corn in new york",
 				Arrays.asList("corn production", "new york_LOC", "corn", "new jersey_LOC"), new HashSet<String>());
 		Assert.assertEquals(b2.getTotalPerfectMatches(), 2);
+
+	}
+	
+	@Test
+	public void testMultiAttr() {
+		Bucket b = BucketBuilders.createFromQueryString("corn production",
+				Arrays.asList("ALL PRODUCTION PRACTICES", "CORN", "FOR ALCOHOL & OTHER PRODUCTS"),
+				new HashSet<String>());
+		Assert.assertEquals(2, b.getTotalPerfectMatches());
 
 	}
 
