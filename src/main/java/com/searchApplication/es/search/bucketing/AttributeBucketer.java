@@ -74,7 +74,7 @@ public class AttributeBucketer {
 		}
 
 		Collections.sort(bucketList);
-		LOGGER.debug(" list", bucketList);
+		LOGGER.debug(" list {}", bucketList);
 
 		return bucketList;
 	}
