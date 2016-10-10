@@ -2,8 +2,10 @@ package com.searchApplication.es.search.bucketing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -44,11 +46,13 @@ public class AttributeBucketer {
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
 		List<Bucket> bucketList = new ArrayList<Bucket>();
+		Set<String> hits = new HashSet<String>();
+		Set<String> misses = new HashSet<String>();
 		while ((hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0)) {
 			LOGGER.debug(" response {} {}", hitCounter, sr.getHits().getHits().length);
 			for (SearchHit hit : sr.getHits()) {
 				try {
-					Bucket b = processHitsToBuckets(hit, query);
+					Bucket b = processHitsToBuckets(hit, query, hits, misses);
 
 					if (b != null) {
 						if (bucketList.contains(b)) {
@@ -73,22 +77,35 @@ public class AttributeBucketer {
 		return bucketList;
 	}
 
-	private static Bucket processHitsToBuckets(SearchHit hit, String query) {
+	private static Bucket processHitsToBuckets(SearchHit hit, String query, Set<String> checked, Set<String> misses) {
 		List<String> bucketTerms = new ArrayList<String>();
 		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
 				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
+		Set<String> localOK = new HashSet<String>();
 		for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes")) {
-			bucketTerms.add(attributeData.get("attribute_value"));
-
+			if (!misses.contains(attributeData.get("attribute_value"))) {
+				bucketTerms.add(attributeData.get("attribute_value"));
+			}
 		}
 		if (hit.getInnerHits().containsKey(LOCATIONS)) {
 			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
-				bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
+				if (!misses.contains(innerHit.getSource().get(LOCATION_NAME))) {
+					bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
+				}
 			}
 		}
 
-		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
+		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
+
 		if (b != null) {
+			for (String terms : b.getBucketTerms()) {
+				if (!bucketTerms.contains(terms)) {
+					misses.add(terms);
+				} else {
+					checked.add(terms);
+				}
+			}
+			b.getBucketTerms().addAll(localOK);
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
@@ -101,17 +118,14 @@ public class AttributeBucketer {
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);
 		q.setSize(10);
-		return QueryBuilders
-				.boolQuery().should(
-						QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER)
-								.defaultField(
-										SEARCH_FIELD))
-								.should(QueryBuilders
-										.nestedQuery(LOCATIONS,
-												QueryBuilders
-														.matchQuery("locations.location_name.shingled",
-																query.toLowerCase().replaceAll("apple", ""))
-														.analyzer("shingle_analyzer"))
-										.innerHit(new QueryInnerHitBuilder()));
+		return QueryBuilders.boolQuery()
+				.should(QueryBuilders.queryStringQuery(query)
+						.analyzer(
+								N_GRAM_ANALYZER)
+						.defaultField(SEARCH_FIELD))
+				.should(QueryBuilders.nestedQuery(LOCATIONS,
+						QueryBuilders.matchQuery("locations.location_name.shingled",
+								query.toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
+						.innerHit(new QueryInnerHitBuilder()));
 	}
 }

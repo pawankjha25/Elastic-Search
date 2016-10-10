@@ -18,7 +18,7 @@ public class BucketBuilders {
 
 	private static Stemmer STEMMER = new Stemmer();
 
-	public static Bucket createFromQueryString(String query, List<String> bucket) {
+	public static Bucket createFromQueryString(String query, List<String> bucket, Set<String> hits) {
 
 		Set<String> bucketWords = new HashSet<String>();
 		int perfectMatches = 0;
@@ -26,8 +26,8 @@ public class BucketBuilders {
 		int totalDistance = 0;
 		String[] queryWords = query.toLowerCase().split(SPACE_DELIMITER);
 		Set<String> matchedQueries = new HashSet<String>();
-		for (String b : bucket) {
 
+		for (String b : bucket) {
 			boolean isLocation = false;
 			int locationMatch = 0;
 			int locationLenght = 0;
@@ -35,55 +35,67 @@ public class BucketBuilders {
 				isLocation = true;
 				b = b.substring(0, b.lastIndexOf(LOCATION_IDENTIFIER)).replaceAll("_", " ");
 				locationLenght = b.split(" ").length;
+
 			}
 			String[] bucketTerms = b.split(SPACE_DELIMITER);
-
 			for (String t : bucketTerms) {
-				String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
-				String termStem = STEMMER.stem(cleaned);
-
-				if (STOP_LIST.contains(t)) {
-					continue;
-				}
-				for (String q : queryWords) {
-					if (STOP_LIST.contains(q)) {
-						continue;
-					}
-					String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
-					if (cleaned.length() < 2) {
-						continue;
-					}
-					if (isLocation) {
-						if (q.equals(cleaned)) {
-
-							locationMatch++;
-						}
-					} else {
-						String qStem = STEMMER.stem(q);
-						int distance = StringCompareUtil.editDistance(qStem, termStem);
-						String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
-						if (isPerfectMatch(qStem, termStem, queryPrefix, termPrefix, distance)) {
-							if (!matchedQueries.contains(qStem)) {
-								perfectMatches++;
-								matchedQueries.add(qStem);
-							}
-							totalDistance += distance;
-							bucketWords.add(b);
-
-						} 
-					}
-				}
-
-				if (isLocation) {
-					if (locationLenght == locationMatch) {
+				if (hits.contains(t)) {
+					if (!matchedQueries.contains(t)) {
 						perfectMatches++;
-						b += LOCATION_IDENTIFIER;
-						bucketWords.add(b);
+						matchedQueries.add(t);
+					}
+					bucketWords.add(b);
+				} else {
+
+					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
+					String termStem = STEMMER.stem(cleaned);
+
+					if (STOP_LIST.contains(t)) {
+						continue;
+					}
+					for (String q : queryWords) {
+						if (STOP_LIST.contains(q)) {
+							continue;
+						}
+						String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;
+						if (cleaned.length() < 2) {
+							continue;
+						}
+						if (isLocation) {
+							if (q.equals(cleaned)) {
+
+								locationMatch++;
+							}
+						} else {
+							String qStem = STEMMER.stem(q);
+							int distance = StringCompareUtil.editDistance(qStem, termStem);
+							String termPrefix = cleaned.length() > 2 ? cleaned.substring(0, 3) : cleaned;
+							if (isPerfectMatch(qStem, termStem, queryPrefix, termPrefix, distance)) {
+								if (!matchedQueries.contains(t)) {
+									perfectMatches++;
+									matchedQueries.add(t);
+								}
+								totalDistance += distance;
+								bucketWords.add(b);
+								hits.add(t);
+
+							}
+						}
+					}
+
+					if (isLocation) {
+						if (locationLenght == locationMatch) {
+							perfectMatches++;
+							b += LOCATION_IDENTIFIER;
+							bucketWords.add(b);
+							hits.add(b);
+
+						}
 					}
 				}
 			}
 		}
-		if (perfectMatches > 0 || partialMathces > 0) {
+		if (perfectMatches > 0) {
 			return new Bucket(bucketWords, perfectMatches, partialMathces, totalDistance);
 		} else {
 			return null;
