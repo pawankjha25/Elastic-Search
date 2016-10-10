@@ -100,11 +100,9 @@ public class AttributeBucketer {
 		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
 		if (b != null) {
-			for (String terms : b.getBucketTerms()) {
-				if (!bucketTerms.contains(terms)) {
+			for (String terms : bucketTerms) {
+				if (!b.getBucketTerms().contains(terms)) {
 					misses.add(terms);
-				} else {
-					checked.add(terms);
 				}
 			}
 			b.getBucketTerms().addAll(localOK);

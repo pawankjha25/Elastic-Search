@@ -154,6 +154,24 @@ public class BucketBuildersTest {
 				Arrays.asList("ALL PRODUCTION PRACTICES", "CORN", "FOR ALCOHOL & OTHER PRODUCTS"),
 				new HashSet<String>());
 		Assert.assertEquals(2, b.getTotalPerfectMatches());
+		
+		Bucket b1 = BucketBuilders.createFromQueryString("corn production",
+				Arrays.asList("DAIRY PRODUCT TOTALS",  "ALL PRODUCTION PRACTICES",  "ANIMALS & PRODUCTS"),
+				new HashSet<String>());
+		
+		Assert.assertEquals(1, b1.getTotalPerfectMatches());
+
+		
+
+	}
+	
+	@Test
+	public void testWithHits() {
+		Bucket b = BucketBuilders.createFromQueryString("corn production",
+				Arrays.asList("corn porduction", "CORN", "FOR ALCOHOL & OTHER PRODUCTS"),
+				new HashSet<String>(Arrays.asList("corn", "production")));
+		Assert.assertEquals(2, b.getTotalPerfectMatches());
+		
 
 	}
 

@@ -40,20 +40,20 @@ public class BucketBuilders {
 			}
 			String[] bucketTerms = b.split(SPACE_DELIMITER);
 			for (String t : bucketTerms) {
-				if (hits.contains(t)) {
-					if (!matchedTerms.contains(t)) {
+				if (STOP_LIST.contains(t)) {
+					continue;
+				}
+				String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
+				String termStem = STEMMER.stem(cleaned);
+
+				if (hits.contains(termStem)) {
+					if (!matchedTerms.contains(termStem)) {
 						perfectMatches++;
-						matchedTerms.add(t);
+						matchedTerms.add(termStem);
 					}
 					bucketWords.add(b);
 				} else {
 
-					String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
-					String termStem = STEMMER.stem(cleaned);
-
-					if (STOP_LIST.contains(t)) {
-						continue;
-					}
 					for (String q : queryWords) {
 						if (STOP_LIST.contains(q)) {
 							continue;
@@ -75,7 +75,7 @@ public class BucketBuilders {
 								if (!matchedQueries.contains(qStem)) {
 									perfectMatches++;
 									matchedQueries.add(qStem);
-									matchedTerms.add(t);
+									matchedTerms.add(termStem);
 
 								}
 								totalDistance += distance;
