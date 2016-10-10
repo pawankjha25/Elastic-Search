@@ -49,7 +49,7 @@ public class AttributeBucketer {
 		Set<String> hits = new HashSet<String>();
 		Set<String> misses = new HashSet<String>();
 		while ((hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0)) {
-			LOGGER.debug(" response {} {}", hitCounter, sr.getHits().getHits().length);
+			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
 			for (SearchHit hit : sr.getHits()) {
 				try {
 					Bucket b = processHitsToBuckets(hit, query, hits, misses);
@@ -74,6 +74,8 @@ public class AttributeBucketer {
 		}
 
 		Collections.sort(bucketList);
+		LOGGER.debug(" list", bucketList);
+
 		return bucketList;
 	}
 
