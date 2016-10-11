@@ -30,12 +30,12 @@ public class AttributeBucketer {
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query,
-			int loops) {
-		List<Bucket> buckets = createBucketList(client, index, type, query, loops);
+			int loops, int hitsInScroll) {
+		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll);
 		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
-	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops) {
+	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops, int hitsInScroll) {
 
 		LOGGER.debug("Start query ");
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
