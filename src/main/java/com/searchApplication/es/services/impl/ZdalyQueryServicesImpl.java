@@ -13,7 +13,9 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import com.google.gson.Gson;
 import com.searchApplication.entities.FilterRequest;
+import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.es.aggregations.FilterAggregation;
@@ -63,11 +65,23 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	public SearchOutput queryWithFilters( FilterRequest request ) throws Exception
 	{
 		SearchOutput response = new SearchOutput();
-		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
+		BoolQueryBuilder booleanQuery = null;
 		try
 		{
 			if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
 			{
+
+				String[] queryString = request.getSearchText().trim().split("\\|");
+
+				String location = "";
+				for( String query : queryString )
+				{
+					if( query.contains("_LOC") || query.contains("_loc") )
+					{
+						location = query.replace("_LOC", "").replace("_loc", "");
+					}
+				}
+
 				booleanQuery = FilterQuery.getQuery(request);
 
 				SearchResponse tFdocs = null;
@@ -119,7 +133,48 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 							.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
 							.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
 
-					response.setLocations(QueryFilterResponse.getLocationAggregation(tFdocs, request.getLocations()));
+					Map<String, Set<LocationAggrigation>> loc = QueryFilterResponse.getLocationAggregation(tFdocs,
+							request.getLocations());
+					if( location != "" && !location.isEmpty() )
+					{
+						Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
+
+						for( String keys : loc.keySet() )
+						{
+							Set<LocationAggrigation> locAgg = loc.get(keys);
+							Set<LocationAggrigation> newLocAgg = new TreeSet<>();
+
+							for( LocationAggrigation locationDetails : locAgg )
+							{
+								if( locationDetails != null && locationDetails.getLocationParent() != null
+										&& locationDetails.getLocationParent().equalsIgnoreCase(location) )
+								{
+									newLocAgg.add(locationDetails);
+									newLoc.put(keys, newLocAgg);
+								}
+								else if( locationDetails != null && locationDetails.getLocations() != null
+										&& !locationDetails.getLocations().isEmpty()
+										&& (locationDetails.getLocations().contains(location.toLowerCase())
+												|| locationDetails.getLocations().contains(location.toUpperCase())) )
+								{
+									LocationAggrigation newLocationDetails = new LocationAggrigation();
+									newLocationDetails.setLocationParent(locationDetails.getLocationParent());
+									Set<String> place = new TreeSet<>();
+									place.add(location);
+									newLocationDetails.setLocations(place);
+
+									newLocAgg.add(newLocationDetails);
+									newLoc.put(keys, newLocAgg);
+								}
+							}
+						}
+
+						response.setLocations(newLoc);
+					}
+					else
+					{
+						response.setLocations(loc);
+					}
 				}
 
 			}
@@ -145,7 +200,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 				booleanQuery = FilterQuery.getQuery(request);
 
 				AggregationBuilder aggregation = ResultsAggregation.getAggregation(request.getStratumName());
-
+				
 				SearchResponse tFdocs = null;
 
 				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))

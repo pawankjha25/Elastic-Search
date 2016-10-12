@@ -16,7 +16,7 @@ public class FilterQuery {
 
 			for( String query : queryString )
 			{
-				if( !query.contains("_LOC") )
+				if( !query.endsWith("_LOC") && !query.endsWith("_loc") )
 				{
 					NestedQueryBuilder q = QueryBuilders.nestedQuery("attributes",
 							QueryBuilders.matchQuery("attributes.attribute_value.raw", query));
@@ -24,8 +24,8 @@ public class FilterQuery {
 				}
 				else
 				{
-					NestedQueryBuilder q = QueryBuilders.nestedQuery("locations",
-							QueryBuilders.matchQuery("locations.location_name.raw", query.replace("_LOC", "")));
+					NestedQueryBuilder q = QueryBuilders.nestedQuery("locations", QueryBuilders
+							.matchQuery("locations.location_name.raw", query.replace("_LOC", "").replace("_loc", "")));
 					booleanQuery.must(q);
 				}
 			}
