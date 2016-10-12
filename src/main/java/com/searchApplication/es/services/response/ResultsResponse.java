@@ -46,6 +46,7 @@ public class ResultsResponse {
 							Data d = new Data();
 							Map<String, Set<Results>> seriesId = new HashMap();
 							d.setDetails(attValuesBucket.getKeyAsString());
+							d.setStratumName(attTypeBucket.getKeyAsString());
 
 							ReverseNested reverseAtt = attValuesBucket.getAggregations().get("attReverse");
 							InternalNested database = reverseAtt.getAggregations().get("database");
