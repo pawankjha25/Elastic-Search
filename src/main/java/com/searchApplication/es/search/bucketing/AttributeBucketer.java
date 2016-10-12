@@ -2,9 +2,10 @@ package com.searchApplication.es.search.bucketing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
+import java.util.Set;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -23,18 +24,19 @@ public class AttributeBucketer {
 
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
-	private static final int HITS_IN_SCROLL = 1000;
+	private static final int HITS_IN_SCROLL = 500;
 	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
-	public static BucketResponseList generateBuckets( Client client, String index, String type, String query,
-			int loops )
+	public static BucketResponseList generateBuckets( Client client, String index, String type, String query, int loops,
+			int hitsInScroll )
 	{
-		List<Bucket> buckets = createBucketList(client, index, type, query, loops);
+		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll);
 		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
-	public static List<Bucket> createBucketList( Client client, String index, String type, String query, int loops )
+	public static List<Bucket> createBucketList( Client client, String index, String type, String query, int loops,
+			int hitsInScroll )
 	{
 
 		LOGGER.debug("Start query ");
@@ -45,66 +47,85 @@ public class AttributeBucketer {
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
-
 		List<Bucket> bucketList = new ArrayList<Bucket>();
-		//		while (hitCounter < HITS_IN_SCROLL * loops  sr.getHits().getHits().length > 0) {
-		//			LOGGER.debug(" response {} {}", hitCounter, sr);
-
-		for( SearchHit hit : sr.getHits() )
+		Set<String> hits = new HashSet<String>();
+		Set<String> misses = new HashSet<String>();
+		while( (hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0) )
 		{
-			try
+			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
+			for( SearchHit hit : sr.getHits() )
 			{
-				Bucket b = processHitsToBuckets(hit, query);
-
-				if( b != null )
+				try
 				{
-					if( bucketList.contains(b) )
-					{
-						bucketList.get(bucketList.indexOf(b)).incrementCount();
-						bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
+					Bucket b = processHitsToBuckets(hit, query, hits, misses);
 
-					}
-					else
+					if( b != null )
 					{
-						bucketList.add(b);
+						if( bucketList.contains(b) )
+						{
+							bucketList.get(bucketList.indexOf(b)).incrementCount();
+							bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
+
+						}
+						else
+						{
+							bucketList.add(b);
+						}
+						hitCounter++;
 					}
 					hitCounter++;
 				}
+				catch( Exception e )
+				{
+					LOGGER.error("Error processing row {}", e.getCause().getMessage());
+					e.printStackTrace();
+				}
 			}
-			catch( Exception e )
-			{
-				LOGGER.error("Error processing row {}", e.getCause().getMessage());
-				e.printStackTrace();
-			}
+			sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 		}
-		//		sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
-		//}
 
 		Collections.sort(bucketList);
+		LOGGER.debug(" list {}", bucketList);
+
 		return bucketList;
 	}
 
-	private static Bucket processHitsToBuckets( SearchHit hit, String query )
+	private static Bucket processHitsToBuckets( SearchHit hit, String query, Set<String> checked, Set<String> misses )
 	{
 		List<String> bucketTerms = new ArrayList<String>();
 		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
 				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
+		Set<String> localOK = new HashSet<String>();
 		for( Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes") )
 		{
-			bucketTerms.add(attributeData.get("attribute_value"));
-
+			if( !misses.contains(attributeData.get("attribute_value")) )
+			{
+				bucketTerms.add(attributeData.get("attribute_value"));
+			}
 		}
-		//		if( hit.getInnerHits().containsKey(LOCATIONS) )
-		//		{
-		//			for( SearchHit innerHit : hit.getInnerHits().get(LOCATIONS) )
-		//			{
-		//				bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
-		//			}
-		//		}
+		if( hit.getInnerHits().containsKey(LOCATIONS) )
+		{
+			for( SearchHit innerHit : hit.getInnerHits().get(LOCATIONS) )
+			{
+				if( !misses.contains(innerHit.getSource().get(LOCATION_NAME)) )
+				{
+					bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
+				}
+			}
+		}
 
-		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms);
+		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
+
 		if( b != null )
 		{
+			for( String terms : bucketTerms )
+			{
+				if( !b.getBucketTerms().contains(terms) )
+				{
+					misses.add(terms);
+				}
+			}
+			b.getBucketTerms().addAll(localOK);
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
@@ -118,11 +139,14 @@ public class AttributeBucketer {
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);
 		q.setSize(10);
-		return (QueryBuilders.queryStringQuery(query).analyzer(N_GRAM_ANALYZER).defaultField(SEARCH_FIELD));
-		//		.should(QueryBuilders.nestedQuery(LOCATIONS,
-		//				QueryBuilders.matchQuery("locations.location_name.shingled",
-		//						query.toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
-		//				.innerHit(new QueryInnerHitBuilder())));
-
+		return QueryBuilders.boolQuery()
+				.should(QueryBuilders.queryStringQuery(query)
+						.analyzer(
+								N_GRAM_ANALYZER)
+						.defaultField(SEARCH_FIELD))
+				.should(QueryBuilders.nestedQuery(LOCATIONS,
+						QueryBuilders.matchQuery("locations.location_name.shingled",
+								query.toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
+						.innerHit(new QueryInnerHitBuilder()));
 	}
 }

@@ -19,11 +19,11 @@ public class BucketTest {
 
 		Bucket b4 = new Bucket(new HashSet<String>(Arrays.asList("a4")), 0, 2, 0);
 		Bucket b5 = new Bucket(new HashSet<String>(Arrays.asList("a5")), 1, 0, 1);
-		
+
 		List<Bucket> list = Arrays.asList(b, b1, b2, b3, b4, b5);
 
 		Collections.sort(list);
-		
+
 		Assert.assertEquals(list.get(0).getBucketTerms().toArray()[0], "a3");
 		Assert.assertEquals(list.get(1).getBucketTerms().toArray()[0], "a");
 		Assert.assertEquals(list.get(2).getBucketTerms().toArray()[0], "a1");
@@ -31,9 +31,8 @@ public class BucketTest {
 		Assert.assertEquals(list.get(4).getBucketTerms().toArray()[0], "a5");
 		Assert.assertEquals(list.get(5).getBucketTerms().toArray()[0], "a4");
 
-
 	}
-	
+
 	@Test
 	public void testResults() {
 		Bucket b = new Bucket(new HashSet<String>(Arrays.asList("a", "b")), 1, 0, 0);
@@ -46,8 +45,8 @@ public class BucketTest {
 		Assert.assertTrue(b2.equals(b1));
 		Assert.assertFalse(b.equals(b3));
 
-
 	}
+
 	@Test
 	public void testIncremenet() {
 		Bucket b = new Bucket(new HashSet<String>(Arrays.asList("a", "b")), 1, 0, 0);
@@ -55,34 +54,37 @@ public class BucketTest {
 		b.incrementCount();
 		Assert.assertEquals(2, b.getTotalRows());
 	}
-	
+
 	@Test
 	public void testMeta() {
 		Bucket b = new Bucket(new HashSet<String>(Arrays.asList("a", "b")), 1, 0, 0);
 		BucketMetaData meta = new BucketMetaData("superRegion", "sector", "subSector");
 		BucketMetaData meta1 = new BucketMetaData("superRegion", "sector", "subSector");
 		BucketMetaData meta2 = new BucketMetaData("region", "sector", "subSector");
-		
+
 		b.addMetaData(meta);
 		b.addMetaData(meta1);
 		b.addMetaData(meta2);
-		
+
 		List<BucketMetaData> metaList = b.getBucketMetaData();
 		Assert.assertEquals(2, metaList.size());
-		Assert.assertEquals( new BucketMetaData("superRegion", "sector", "subSector"), metaList.get(0));
-		Assert.assertEquals( 2, metaList.get(0).getTotal());
+		Assert.assertEquals(new BucketMetaData("superRegion", "sector", "subSector"), metaList.get(0));
+		Assert.assertEquals(2, metaList.get(0).getTotal());
 
-		Assert.assertEquals( 1, metaList.get(1).getTotal());
-		
+		Assert.assertEquals(1, metaList.get(1).getTotal());
+
 	}
-	
+
 	@Test
 	public void testCompare() {
-		Bucket b = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn", "production"));
-		Bucket b1 = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn production"));
-		List<Bucket> lb = Arrays.asList(b,b1);
+		Bucket b = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn", "production"),
+				new HashSet<String>());
+		Bucket b1 = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn production"),
+				new HashSet<String>());
+		List<Bucket> lb = Arrays.asList(b, b1);
 		Collections.sort(lb);
-		System.err.println(lb);
 	}
+
+	
 
 }
