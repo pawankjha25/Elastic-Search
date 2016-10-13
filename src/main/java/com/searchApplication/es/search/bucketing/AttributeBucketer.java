@@ -17,6 +17,7 @@ import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.searchApplication.es.entities.BucketResponseList;
+import com.searchApplication.es.entities.PerformanceBucket;
 
 public class AttributeBucketer {
 
@@ -24,7 +25,7 @@ public class AttributeBucketer {
 
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
-	private static final int HITS_IN_SCROLL = 500;
+	private static final int HITS_IN_SCROLL = 100;
 	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
@@ -58,11 +59,9 @@ public class AttributeBucketer {
 				"Service took - " + (endTime - startTime) + " milliseconds to get first set of results from scroll");
 
 		int hitCounter = 0;
-		System.out.println("Service took - " + (startTime - System.currentTimeMillis())
-				+ " milliseconds to come here");
+		System.out.println("Service took - " + (startTime - System.currentTimeMillis()) + " milliseconds to come here");
 		SearchResponse sr = srb.get();
-		System.out.println("Service took - " + (startTime - System.currentTimeMillis())
-				+ " milliseconds to come here");
+		System.out.println("Service took - " + (startTime - System.currentTimeMillis()) + " milliseconds to come here");
 		LOGGER.debug(" query {}", srb.toString());
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		Set<String> hits = new HashSet<String>();
@@ -71,7 +70,7 @@ public class AttributeBucketer {
 		{
 			System.out.println("Fetched size : " + sr.getHits().getHits().length);
 			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
-			
+
 			for( SearchHit hit : sr.getHits() )
 			{
 				try
@@ -115,6 +114,93 @@ public class AttributeBucketer {
 		LOGGER.debug(" list {}", bucketList);
 
 		return bucketList;
+	}
+
+	public static PerformanceBucket createBucketListPerformanceCheck( Client client, String index, String type,
+			String query, int loops, int hitsInScroll )
+	{
+
+		LOGGER.debug("Start query ");
+		PerformanceBucket performanceBucket = new PerformanceBucket();
+		performanceBucket.setQueryString(query);
+		performanceBucket.setFetchSize(hitsInScroll);
+
+		long startTime = System.currentTimeMillis();
+
+		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
+				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
+						null)
+				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
+		System.out.println("fetch size :" + hitsInScroll);
+
+		long endTime = System.currentTimeMillis();
+		performanceBucket.setTimeTakenToHitES(endTime - startTime);
+
+		int hitCounter = 0;
+
+		long startTimeEsResults = System.currentTimeMillis();
+		SearchResponse sr = srb.get();
+		long endTimeEsResults = System.currentTimeMillis();
+		performanceBucket.setTimeTakenToGetEsResults(endTimeEsResults - startTimeEsResults);
+
+		LOGGER.debug(" query {}", srb.toString());
+		List<Bucket> bucketList = new ArrayList<Bucket>();
+		Set<String> hits = new HashSet<String>();
+		Set<String> misses = new HashSet<String>();
+		while( (hitCounter < hitsInScroll * loops) && (sr.getHits().getHits().length > 0) )
+		{
+			System.out.println("Fetched size : " + sr.getHits().getHits().length);
+			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
+
+			long startTimeProcessEsResults = System.currentTimeMillis();
+			for( SearchHit hit : sr.getHits() )
+			{
+				try
+				{
+					Bucket b = processHitsToBuckets(hit, query, hits, misses);
+					if( b != null )
+					{
+						if( bucketList.contains(b) )
+						{
+							bucketList.get(bucketList.indexOf(b)).incrementCount();
+							bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
+
+						}
+						else
+						{
+							bucketList.add(b);
+						}
+						hitCounter++;
+					}
+					else
+						hitCounter++;
+				}
+				catch( Exception e )
+				{
+					LOGGER.error("Error processing row {}", e.getCause().getMessage());
+					e.printStackTrace();
+				}
+			}
+			long endTimeProcessEsResults = System.currentTimeMillis();
+			performanceBucket.setTimeTakenToProcessBuckets(performanceBucket.getTimeTakenToProcessBuckets()
+					+ (endTimeProcessEsResults - startTimeProcessEsResults));
+			if( hitCounter < hitsInScroll * loops )
+			{
+				long startTim = System.currentTimeMillis();
+				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
+				long endTim = System.currentTimeMillis();
+				performanceBucket.setTimeTakenToGetEsResults(
+						performanceBucket.getTimeTakenToGetEsResults() + (endTim - startTim));
+			}
+		}
+
+		long startTimeSort = System.currentTimeMillis();
+		Collections.sort(bucketList);
+		long endTimeSort = System.currentTimeMillis();
+		performanceBucket.setTimeTakenToSortBuckets(endTimeSort - startTimeSort);
+		LOGGER.debug(" list {}", bucketList);
+
+		return performanceBucket;
 	}
 
 	private static Bucket processHitsToBuckets( SearchHit hit, String query, Set<String> checked, Set<String> misses )

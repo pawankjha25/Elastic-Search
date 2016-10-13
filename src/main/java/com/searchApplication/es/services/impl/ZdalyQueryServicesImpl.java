@@ -33,7 +33,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	@Resource
 	private Environment env;
 
-	private static Client client = null;
+	public static Client client = null;
 
 	public ZdalyQueryServicesImpl() {
 		ZdalyQueryServicesImpl.client = ElasticSearchUtility.addClient();
