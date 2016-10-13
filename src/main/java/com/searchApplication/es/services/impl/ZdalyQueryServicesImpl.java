@@ -187,7 +187,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(0)
 						.addAggregation(aggregation).execute().actionGet();
 
-				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()));
+				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()),request.getLevel100());
 
 				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
 						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)

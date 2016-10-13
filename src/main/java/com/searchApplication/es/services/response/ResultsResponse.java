@@ -19,8 +19,8 @@ import com.searchApplication.es.entities.Data;
 
 public class ResultsResponse {
 
-	public static QueryResultsList getResults( SearchResponse tFdocs, Map<String, Set<String>> locationMap )
-			throws Exception
+	public static QueryResultsList getResults( SearchResponse tFdocs, Map<String, Set<String>> locationMap,
+			Boolean level100 ) throws Exception
 	{
 		QueryResultsList response = new QueryResultsList();
 		Set<QueryResults> results = new TreeSet<QueryResults>();
@@ -28,70 +28,107 @@ public class ResultsResponse {
 		{
 
 			InternalNested attributes = tFdocs.getAggregations().get("attributes");
-			Terms attTypes = attributes.getAggregations().get("attTypes");
-			for( Terms.Bucket attTypeBucket : attTypes.getBuckets() )
+			Terms attLevels = attributes.getAggregations().get("attLevels");
+			for( Terms.Bucket attLevelBucket : attLevels.getBuckets() )
 			{
-				if( attTypeBucket != null && attTypeBucket.getAggregations() != null
-						&& attTypeBucket.getAggregations().get("attributesValues") != null )
+				if( attLevelBucket != null && attLevelBucket.getAggregations() != null
+						&& (!attLevelBucket.getKeyAsString().equals("100") || level100)
+						&& attLevelBucket.getAggregations().get("attTypes") != null )
 				{
-					Terms attValues = attTypeBucket.getAggregations().get("attributesValues");
-					Collection<Bucket> attValuesBuckets = attValues.getBuckets();
-					for( Terms.Bucket attValuesBucket : attValuesBuckets )
+					Terms attTypes = attLevelBucket.getAggregations().get("attTypes");
+					Collection<Bucket> attTypeBuckets = attTypes.getBuckets();
+					for( Terms.Bucket attTypeBucket : attTypeBuckets )
 					{
-						if( attValuesBucket.getKeyAsString() != null
-								&& !attValuesBucket.getKeyAsString().equals("null") )
+						Terms attValues = attTypeBucket.getAggregations().get("attributesValues");
+						Collection<Bucket> attValuesBuckets = attValues.getBuckets();
+						for( Terms.Bucket attValuesBucket : attValuesBuckets )
 						{
-							QueryResults qr = new QueryResults();
-							List<Data> data = new ArrayList<Data>();
-							Data d = new Data();
-							Map<String, Set<Results>> seriesId = new HashMap();
-							d.setDetails(attValuesBucket.getKeyAsString());
-							d.setStratumName(attTypeBucket.getKeyAsString());
-
-							ReverseNested reverseAtt = attValuesBucket.getAggregations().get("attReverse");
-							InternalNested database = reverseAtt.getAggregations().get("database");
-							Terms dbNameBuckets = database.getAggregations().get("dbname");
-
-							for( Terms.Bucket dbNameBucket : dbNameBuckets.getBuckets() )
+							if( attValuesBucket.getKeyAsString() != null
+									&& !attValuesBucket.getKeyAsString().equals("null") )
 							{
-								qr.setDbName(dbNameBucket.getKeyAsString());
-								if( dbNameBucket != null && dbNameBucket.getAggregations() != null
-										&& dbNameBucket.getAggregations().get("dbproperties") != null )
+								QueryResults qr = new QueryResults();
+								List<Data> data = new ArrayList<Data>();
+								Data d = new Data();
+								Map<String, Set<Results>> seriesId = new HashMap();
+								d.setDetails(attValuesBucket.getKeyAsString());
+								d.setStratumName(attTypeBucket.getKeyAsString());
+
+								ReverseNested reverseAtt = attValuesBucket.getAggregations().get("attReverse");
+								InternalNested database = reverseAtt.getAggregations().get("database");
+								Terms dbNameBuckets = database.getAggregations().get("dbname");
+
+								for( Terms.Bucket dbNameBucket : dbNameBuckets.getBuckets() )
 								{
-									Terms db_properties = dbNameBucket.getAggregations().get("dbproperties");
-									Collection<Bucket> dbPropertiesBuckets = db_properties.getBuckets();
-									for( Terms.Bucket dbPropertiesBucket : dbPropertiesBuckets )
+									qr.setDbName(dbNameBucket.getKeyAsString());
+									if( dbNameBucket != null && dbNameBucket.getAggregations() != null
+											&& dbNameBucket.getAggregations().get("dbproperties") != null )
 									{
-										qr.setPropertyId(new Long(dbPropertiesBucket.getKeyAsString()));
-										ReverseNested reverseDb = dbPropertiesBucket.getAggregations().get("dbReverse");
-										InternalNested sectorTerms = reverseDb.getAggregations().get("locations");
-										Terms locationTypeBuckets = sectorTerms.getAggregations().get("locationType");
-
-										for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
+										Terms db_properties = dbNameBucket.getAggregations().get("dbproperties");
+										Collection<Bucket> dbPropertiesBuckets = db_properties.getBuckets();
+										for( Terms.Bucket dbPropertiesBucket : dbPropertiesBuckets )
 										{
-											Terms locationParentBuckets = locationTypeBucket.getAggregations()
-													.get("locationParent");
-											String locationType = locationTypeBucket.getKeyAsString();
-											String locationName = "";
-											String locationParent = "";
-											for( Terms.Bucket locationParentBucket : locationParentBuckets
-													.getBuckets() )
-											{
-												locationParent = locationParentBucket.getKeyAsString();
-												Terms locationNameBuckets = locationParentBucket.getAggregations()
-														.get("locationname");
+											qr.setPropertyId(new Long(dbPropertiesBucket.getKeyAsString()));
+											ReverseNested reverseDb = dbPropertiesBucket.getAggregations()
+													.get("dbReverse");
+											InternalNested sectorTerms = reverseDb.getAggregations().get("locations");
+											Terms locationTypeBuckets = sectorTerms.getAggregations()
+													.get("locationType");
 
-												for( Terms.Bucket locationNameBucket : locationNameBuckets
+											for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
+											{
+												Terms locationParentBuckets = locationTypeBucket.getAggregations()
+														.get("locationParent");
+												String locationType = locationTypeBucket.getKeyAsString();
+												String locationName = "";
+												String locationParent = "";
+												for( Terms.Bucket locationParentBucket : locationParentBuckets
 														.getBuckets() )
 												{
+													locationParent = locationParentBucket.getKeyAsString();
+													Terms locationNameBuckets = locationParentBucket.getAggregations()
+															.get("locationname");
 
-													locationName = locationNameBucket.getKeyAsString();
-													if( locationMap != null && locationMap.keySet() != null )
+													for( Terms.Bucket locationNameBucket : locationNameBuckets
+															.getBuckets() )
 													{
-														if( locationMap.get(locationTypeBucket.getKeyAsString()) != null
-																&& locationMap.get(locationTypeBucket.getKeyAsString())
-																		.contains(locationNameBucket.getKeyAsString())
-																&& locationMap.get("parent").contains(locationParent) )
+
+														locationName = locationNameBucket.getKeyAsString();
+														if( locationMap != null && locationMap.keySet() != null )
+														{
+															if( locationMap
+																	.get(locationTypeBucket.getKeyAsString()) != null
+																	&& locationMap
+																			.get(locationTypeBucket.getKeyAsString())
+																			.contains(
+																					locationNameBucket.getKeyAsString())
+																	&& locationMap.get("parent")
+																			.contains(locationParent) )
+															{
+																Terms seriesIdBuckets = locationNameBucket
+																		.getAggregations().get("locationid");
+
+																Set<Results> res = new TreeSet<>();
+																Results result = new Results();
+																result.setLocationName(locationName);
+																result.setLocationParent(locationParent);
+																for( Terms.Bucket seriesIdBucket : seriesIdBuckets
+																		.getBuckets() )
+																{
+																	result.setSeriesId(
+																			new Long(seriesIdBucket.getKeyAsString()));
+																	res.add(result);
+																}
+
+																if( locationType != null
+																		&& seriesId.get(locationType) != null )
+																{
+																	res.addAll(seriesId.get(locationType));
+																	res.add(result);
+																}
+																seriesId.put(locationType, res);
+															}
+														}
+														else
 														{
 															Terms seriesIdBuckets = locationNameBucket.getAggregations()
 																	.get("locationid");
@@ -117,41 +154,18 @@ public class ResultsResponse {
 															seriesId.put(locationType, res);
 														}
 													}
-													else
-													{
-														Terms seriesIdBuckets = locationNameBucket.getAggregations()
-																.get("locationid");
-
-														Set<Results> res = new TreeSet<>();
-														Results result = new Results();
-														result.setLocationName(locationName);
-														result.setLocationParent(locationParent);
-														for( Terms.Bucket seriesIdBucket : seriesIdBuckets
-																.getBuckets() )
-														{
-															result.setSeriesId(
-																	new Long(seriesIdBucket.getKeyAsString()));
-															res.add(result);
-														}
-
-														if( locationType != null && seriesId.get(locationType) != null )
-														{
-															res.addAll(seriesId.get(locationType));
-															res.add(result);
-														}
-														seriesId.put(locationType, res);
-													}
 												}
 											}
+											d.setSeriesId(seriesId);
 										}
-										d.setSeriesId(seriesId);
 									}
 								}
+								data.add(d);
+								qr.setData(data);
+								results.add(qr);
 							}
-							data.add(d);
-							qr.setData(data);
-							results.add(qr);
 						}
+
 					}
 				}
 			}
