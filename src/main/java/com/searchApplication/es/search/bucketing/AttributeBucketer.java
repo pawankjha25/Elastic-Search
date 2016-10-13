@@ -58,7 +58,6 @@ public class AttributeBucketer {
 				try
 				{
 					Bucket b = processHitsToBuckets(hit, query, hits, misses);
-
 					if( b != null )
 					{
 						if( bucketList.contains(b) )
@@ -73,7 +72,8 @@ public class AttributeBucketer {
 						}
 						hitCounter++;
 					}
-					hitCounter++;
+					else
+						hitCounter++;
 				}
 				catch( Exception e )
 				{
@@ -81,7 +81,10 @@ public class AttributeBucketer {
 					e.printStackTrace();
 				}
 			}
-			sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
+			if( hitCounter < HITS_IN_SCROLL * loops )
+			{
+				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
+			}
 		}
 
 		Collections.sort(bucketList);
