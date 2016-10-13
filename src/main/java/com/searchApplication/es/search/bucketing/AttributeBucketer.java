@@ -31,7 +31,11 @@ public class AttributeBucketer {
 	public static BucketResponseList generateBuckets( Client client, String index, String type, String query, int loops,
 			int hitsInScroll )
 	{
+		long startTime = System.currentTimeMillis();
 		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll);
+		long endTime = System.currentTimeMillis();
+		System.out.println("Service took - " + (endTime - startTime) + " milliseconds to createBucketList");
+
 		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
@@ -40,25 +44,39 @@ public class AttributeBucketer {
 	{
 
 		LOGGER.debug("Start query ");
+
+		long startTime = System.currentTimeMillis();
+
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
 				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(160000));
+		System.out.println("fetch size :" + HITS_IN_SCROLL);
+
+		long endTime = System.currentTimeMillis();
+		System.out.println(
+				"Service took - " + (endTime - startTime) + " milliseconds to get first set of results from scroll");
+
 		int hitCounter = 0;
+		System.out.println("Service took - " + (startTime - System.currentTimeMillis())
+				+ " milliseconds to come here");
 		SearchResponse sr = srb.get();
+		System.out.println("Service took - " + (startTime - System.currentTimeMillis())
+				+ " milliseconds to come here");
 		LOGGER.debug(" query {}", srb.toString());
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		Set<String> hits = new HashSet<String>();
 		Set<String> misses = new HashSet<String>();
 		while( (hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0) )
 		{
+			System.out.println("Fetched size : " + sr.getHits().getHits().length);
 			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
+			
 			for( SearchHit hit : sr.getHits() )
 			{
 				try
 				{
 					Bucket b = processHitsToBuckets(hit, query, hits, misses);
-
 					if( b != null )
 					{
 						if( bucketList.contains(b) )
@@ -73,7 +91,8 @@ public class AttributeBucketer {
 						}
 						hitCounter++;
 					}
-					hitCounter++;
+					else
+						hitCounter++;
 				}
 				catch( Exception e )
 				{
@@ -81,7 +100,15 @@ public class AttributeBucketer {
 					e.printStackTrace();
 				}
 			}
-			sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
+			if( hitCounter < HITS_IN_SCROLL * loops )
+			{
+				long startTim = System.currentTimeMillis();
+				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
+				long endTim = System.currentTimeMillis();
+				System.out.println("Service took - " + (endTim - startTim)
+						+ " milliseconds to get next set of results from scroll");
+				System.out.println(hitCounter + "<" + HITS_IN_SCROLL * loops);
+			}
 		}
 
 		Collections.sort(bucketList);
@@ -135,6 +162,7 @@ public class AttributeBucketer {
 
 	private static QueryBuilder generateQuery( String query )
 	{
+		long startTime = System.currentTimeMillis();
 
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);
