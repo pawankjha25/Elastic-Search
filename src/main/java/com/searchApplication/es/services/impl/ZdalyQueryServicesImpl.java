@@ -13,7 +13,6 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import com.google.gson.Gson;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.QueryResultsList;
@@ -36,27 +35,34 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 	private static Client client = null;
 
-	public ZdalyQueryServicesImpl() {
+	public ZdalyQueryServicesImpl()
+	{
 		ZdalyQueryServicesImpl.client = ElasticSearchUtility.addClient();
 	}
 
 	@Override
-	public BucketResponseList produceBuckets(String queryText) throws Exception {
-		try {
+	public BucketResponseList produceBuckets( String queryText ) throws Exception
+	{
+		try
+		{
 			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
 					env.getProperty("es.search_object"), queryText, 1, 1000);
-		} catch (Exception e) {
+		}
+		catch( Exception e )
+		{
 			throw e;
 		}
 	}
 
 	@Override
-	public SearchOutput matchQuery(String queryText) throws Exception {
+	public SearchOutput matchQuery( String queryText ) throws Exception
+	{
 		return null;
 	}
 
 	@Override
-	public SearchOutput queryWithFilters(FilterRequest request) throws Exception {
+	public SearchOutput queryWithFilters( FilterRequest request ) throws Exception
+	{
 		SearchOutput response = new SearchOutput();
 		BoolQueryBuilder booleanQuery = null;
 		try
@@ -86,21 +92,29 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 				Map<String, List<String>> stratum = new HashMap<>();
 
-				if (request.getReqAttList() != null && !request.getReqAttList().isEmpty()
+				if( request.getReqAttList() != null && !request.getReqAttList().isEmpty()
 						&& response.getStratum() != null && !response.getStratum().isEmpty()
-						&& response.getStratum().keySet() != null) {
+						&& response.getStratum().keySet() != null )
+				{
 					Iterator<String> keys = response.getStratum().keySet().iterator();
-					while (keys.hasNext()) {
+					while( keys.hasNext() )
+					{
 						String key = keys.next();
-						if (response.getStratum().get(key).size() <= 1 || request.getReqAttList().contains(key)) {
+						if( response.getStratum().get(key).size() <= 1 || request.getReqAttList().contains(key) )
+						{
 							stratum.put(key, response.getStratum().get(key));
 						}
 					}
-				} else {
-					if (response != null && response.getStratum() != null && !response.getStratum().isEmpty()) {
+				}
+				else
+				{
+					if( response != null && response.getStratum() != null && !response.getStratum().isEmpty() )
+					{
 						Iterator<String> keys = response.getStratum().keySet().iterator();
-						if (keys != null) {
-							while (keys.hasNext()) {
+						if( keys != null )
+						{
+							while( keys.hasNext() )
+							{
 								String key = keys.next();
 								// if (response.getStratum().get(key).size() <=
 								// 1) {
@@ -113,7 +127,8 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 				response.setStratum(stratum);
 
-				if (request.getLocation()) {
+				if( request.getLocation() )
+				{
 					tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
 							.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
 							.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
@@ -164,54 +179,73 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 			}
 
-		} catch (Exception e) {
+		}
+		catch( Exception e )
+		{
 			throw e;
 		}
 		return response;
 	}
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings( "rawtypes" )
 	@Override
-	public QueryResultsList queryResults(FilterRequest request) throws Exception {
+	public QueryResultsList queryResults( FilterRequest request ) throws Exception
+	{
 		QueryResultsList response = new QueryResultsList();
 		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
-		try {
-			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
+		try
+		{
+			if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
+			{
 				booleanQuery = FilterQuery.getQuery(request);
 
 				AggregationBuilder aggregation = ResultsAggregation.getAggregation(request.getStratumName());
-				
+
 				SearchResponse tFdocs = null;
 
 				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
 						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(0)
 						.addAggregation(aggregation).execute().actionGet();
 
-				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()));
+				long start = System.currentTimeMillis();
+				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()),
+						request.getStratumName());
+				long end = System.currentTimeMillis();
+				System.out.println(end - start);
 
-				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
-						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
-						.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
-
-				response.setLocations(QueryFilterResponse.getLocationAggregation(tFdocs, request.getLocations()));
+				/* tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
+				 * .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
+				 * .addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet()
+				 * ;
+				 * 
+				 * response.setLocations(QueryFilterResponse.getLocationAggregation(tFdocs,
+				 * request.getLocations())); */
 			}
 
-		} catch (Exception e) {
+		}
+		catch( Exception e )
+		{
 			throw e;
 		}
 		return response;
 	}
 
-	private Map<String, Set<String>> getLocationMap(Map<String, Set<String>> map) {
+	private Map<String, Set<String>> getLocationMap( Map<String, Set<String>> map )
+	{
 		Map<String, Set<String>> res = new HashMap<>();
-		try {
-			if (map != null && map.keySet() != null) {
+		try
+		{
+			if( map != null && map.keySet() != null )
+			{
 				Set<String> parent = new TreeSet<>();
-				for (String locationType : map.keySet()) {
+				for( String locationType : map.keySet() )
+				{
 					Set<String> loc = new TreeSet<>();
-					for (String locName : map.get(locationType)) {
+					for( String locName : map.get(locationType) )
+					{
 						String[] locString = locName.split(":");
-						if (locString[1] != null && locString[0] != null) {
+						if( locString[1] != null && locString[0] != null )
+						{
 							loc.add(locString[1]);
 							parent.add(locString[0]);
 						}
@@ -219,10 +253,14 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 					res.put(locationType, loc);
 				}
 				res.put("parent", parent);
-			} else {
+			}
+			else
+			{
 				return null;
 			}
-		} catch (Exception e) {
+		}
+		catch( Exception e )
+		{
 			throw e;
 		}
 		return res;
