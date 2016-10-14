@@ -15,25 +15,17 @@ public class ResultsAggregation {
 			{
 				return AggregationBuilders.nested("attributes").path("attributes").subAggregation(AggregationBuilders
 						.terms("attTypes").size(100).field("attributes.attribute_name").include(stratumName).size(100)
-
 						.subAggregation(AggregationBuilders.terms("attributesValues").size(100)
-								.field("attributes.attribute_value.raw")
-
-								.subAggregation(AggregationBuilders.reverseNested("attReverse")
-
-										.subAggregation(AggregationBuilders.nested("database").path("db")
+								.field("attributes.attribute_value.raw").subAggregation(AggregationBuilders
+										.reverseNested("attReverse").subAggregation(AggregationBuilders
+												.nested("database").path("db")
 												.subAggregation(AggregationBuilders.terms("dbname").field("db.db_name")
-
 														.subAggregation(AggregationBuilders.terms("dbproperties")
-																.field("db.properties").size(100)
-
-																.subAggregation(
+																.field("db.properties").size(100).subAggregation(
 																		AggregationBuilders.reverseNested("dbReverse")
-
 																				.subAggregation(AggregationBuilders
-																						.nested("locations")
-																						.path("locations")
-
+																						.nested("locations").path(
+																								"locations")
 																						.subAggregation(
 																								AggregationBuilders
 																										.terms("locationType")
@@ -44,7 +36,6 @@ public class ResultsAggregation {
 																														.terms("locationParent")
 																														.field("locations.location_parent.raw")
 																														.size(100)
-
 																														.subAggregation(
 																																AggregationBuilders
 																																		.terms("locationname")
@@ -62,7 +53,7 @@ public class ResultsAggregation {
 			else if( stratumName != null && !stratumName.isEmpty() && stratumName.contains("*") )
 			{
 				int length = 100;
-				if( !stratumName.replaceAll("\\*", "").isEmpty() )
+				if( stratumName.contains("*") && !stratumName.replaceAll("\\*", "").isEmpty() )
 				{
 					length = Integer.parseInt(stratumName.replaceAll("\\*", ""));
 				}
@@ -75,11 +66,11 @@ public class ResultsAggregation {
 										.subAggregation(AggregationBuilders.reverseNested("attReverse")
 
 												.subAggregation(AggregationBuilders.nested("database").path("db")
-														.subAggregation(
-																AggregationBuilders.terms("dbname").field("db.db_name").size(100)
+														.subAggregation(AggregationBuilders.terms("dbname")
+																.field("db.db_name").size(100)
 
-																		.subAggregation(AggregationBuilders
-																				.terms("dbproperties")
+																.subAggregation(
+																		AggregationBuilders.terms("dbproperties")
 																				.field("db.properties").size(100)
 
 																				.subAggregation(AggregationBuilders
@@ -99,7 +90,7 @@ public class ResultsAggregation {
 																																AggregationBuilders
 																																		.terms("locationParent")
 																																		.field("locations.location_parent.raw")
-																																		.size(length)
+																																		.size(100)
 
 																																		.subAggregation(
 																																				AggregationBuilders

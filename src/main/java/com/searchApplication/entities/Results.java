@@ -29,7 +29,7 @@ public class Results implements Comparable<Results> {
 	@Override
 	public int compareTo( Results o )
 	{
-		return seriesId.compareTo(o.seriesId);
+		return 1;
 	}
 
 	public String getLocationParent()

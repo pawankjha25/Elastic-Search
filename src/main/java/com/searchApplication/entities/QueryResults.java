@@ -32,7 +32,7 @@ public class QueryResults implements Comparable<QueryResults> {
 	@Override
 	public int compareTo( QueryResults o )
 	{
-		return propertyId.compareTo(o.propertyId);
+		return 1;
 	}
 
 	public List<Data> getData()
