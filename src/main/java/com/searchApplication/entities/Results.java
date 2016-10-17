@@ -1,45 +1,64 @@
 package com.searchApplication.entities;
 
-public class Results implements Comparable<Results> {
+import java.util.List;
 
-	private Long seriesId;
-	private String locationName;
-	private String locationParent;
+public class Results {
 
-	public Long getSeriesId()
+	private List<Long> seriesId;
+
+	private String superRegion;
+	private String country;
+	private String state;
+	private String county;
+
+	public String getCountry()
+	{
+		return country;
+	}
+
+	public void setCountry( String country )
+	{
+		this.country = country;
+	}
+
+	public String getState()
+	{
+		return state;
+	}
+
+	public void setState( String state )
+	{
+		this.state = state;
+	}
+
+	public String getCounty()
+	{
+		return county;
+	}
+
+	public void setCounty( String county )
+	{
+		this.county = county;
+	}
+
+	public List<Long> getSeriesId()
 	{
 		return seriesId;
 	}
 
-	public void setSeriesId( Long seriesId )
+	public void setSeriesId( List<Long> seriesId )
 	{
 		this.seriesId = seriesId;
 	}
 
-	public String getLocationName()
+	public String getSuperRegion()
 	{
-		return locationName;
+		return superRegion;
 	}
 
-	public void setLocationName( String locationName )
+	public void setSuperRegion( String superRegion )
 	{
-		this.locationName = locationName;
-	}
-
-	@Override
-	public int compareTo( Results o )
-	{
-		return 1;
-	}
-
-	public String getLocationParent()
-	{
-		return locationParent;
-	}
-
-	public void setLocationParent( String locationParent )
-	{
-		this.locationParent = locationParent;
+		this.superRegion = superRegion;
 	}
 
 }

@@ -13,6 +13,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import com.google.gson.Gson;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.QueryResultsList;
@@ -192,12 +193,11 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	public QueryResultsList queryResults( FilterRequest request ) throws Exception
 	{
 		QueryResultsList response = new QueryResultsList();
-		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
 		try
 		{
 			if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
 			{
-				booleanQuery = FilterQuery.getQuery(request);
+				BoolQueryBuilder booleanQuery = FilterQuery.getQuery(request);
 
 				AggregationBuilder aggregation = ResultsAggregation.getAggregation(request.getStratumName());
 
@@ -207,11 +207,8 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(0)
 						.addAggregation(aggregation).execute().actionGet();
 
-				long start = System.currentTimeMillis();
 				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()),
 						request.getStratumName());
-				long end = System.currentTimeMillis();
-				System.out.println(end - start);
 
 				/* tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
 				 * .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
@@ -235,7 +232,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		Map<String, Set<String>> res = new HashMap<>();
 		try
 		{
-			if( map != null && map.keySet() != null )
+			if( map != null && !map.isEmpty() && map.keySet() != null )
 			{
 				Set<String> parent = new TreeSet<>();
 				for( String locationType : map.keySet() )
