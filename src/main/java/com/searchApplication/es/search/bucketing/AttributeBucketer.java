@@ -17,6 +17,7 @@ import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.searchApplication.es.entities.BucketResponseList;
+import com.searchApplication.utils.StopWords;
 
 public class AttributeBucketer {
 
@@ -24,65 +25,53 @@ public class AttributeBucketer {
 
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
-	private static final int HITS_IN_SCROLL = 500;
+	private static final int HITS_IN_SCROLL = 1000;
 	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
-	public static BucketResponseList generateBuckets( Client client, String index, String type, String query, int loops,
-			int hitsInScroll )
-	{
+	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
+			int hitsInScroll) {
 		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll);
 		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
-	public static List<Bucket> createBucketList( Client client, String index, String type, String query, int loops,
-			int hitsInScroll )
-	{
+	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops,
+			int hitsInScroll) {
 
+		hitsInScroll = correctLoops(query, hitsInScroll);
+		LOGGER.debug("Fetch {} rows", hitsInScroll );
 		LOGGER.debug("Start query ");
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
-				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(160000));
+				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		Set<String> hits = new HashSet<String>();
 		Set<String> misses = new HashSet<String>();
-		while( (hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0) )
-		{
+		while ((hitCounter < hitsInScroll * loops) && (sr.getHits().getHits().length > 0)) {
 			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
-			for( SearchHit hit : sr.getHits() )
-			{
-				try
-				{
+			for (SearchHit hit : sr.getHits()) {
+				try {
 					Bucket b = processHitsToBuckets(hit, query, hits, misses);
-					if( b != null )
-					{
-						if( bucketList.contains(b) )
-						{
+					if (b != null) {
+						if (bucketList.contains(b)) {
 							bucketList.get(bucketList.indexOf(b)).incrementCount();
 							bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
-
-						}
-						else
-						{
+						} else {
 							bucketList.add(b);
 						}
 						hitCounter++;
-					}
-					else
+					} else
 						hitCounter++;
-				}
-				catch( Exception e )
-				{
+				} catch (Exception e) {
 					LOGGER.error("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
 				}
 			}
-			if( hitCounter < HITS_IN_SCROLL * loops )
-			{
+			if (hitCounter < hitsInScroll * loops) {
 				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 			}
 		}
@@ -93,25 +82,31 @@ public class AttributeBucketer {
 		return bucketList;
 	}
 
-	private static Bucket processHitsToBuckets( SearchHit hit, String query, Set<String> checked, Set<String> misses )
-	{
+	private static int correctLoops(String query, int hits) {
+		String[] queries = query.split(" ");
+		int count = 0;
+		for (String q : queries) {
+			if (!StopWords.STOP_LIST.contains(q.toLowerCase())) {
+				count++;
+			}
+		}
+
+		return hits/count;
+	}
+
+	private static Bucket processHitsToBuckets(SearchHit hit, String query, Set<String> checked, Set<String> misses) {
 		List<String> bucketTerms = new ArrayList<String>();
 		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
 				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
 		Set<String> localOK = new HashSet<String>();
-		for( Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes") )
-		{
-			if( !misses.contains(attributeData.get("attribute_value")) )
-			{
+		for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes")) {
+			if (!misses.contains(attributeData.get("attribute_value"))) {
 				bucketTerms.add(attributeData.get("attribute_value"));
 			}
 		}
-		if( hit.getInnerHits().containsKey(LOCATIONS) )
-		{
-			for( SearchHit innerHit : hit.getInnerHits().get(LOCATIONS) )
-			{
-				if( !misses.contains(innerHit.getSource().get(LOCATION_NAME)) )
-				{
+		if (hit.getInnerHits().containsKey(LOCATIONS)) {
+			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
+				if (!misses.contains(innerHit.getSource().get(LOCATION_NAME))) {
 					bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
 				}
 			}
@@ -119,12 +114,9 @@ public class AttributeBucketer {
 
 		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
-		if( b != null )
-		{
-			for( String terms : bucketTerms )
-			{
-				if( !b.getBucketTerms().contains(terms) )
-				{
+		if (b != null) {
+			for (String terms : bucketTerms) {
+				if (!b.getBucketTerms().contains(terms)) {
 					misses.add(terms);
 				}
 			}
@@ -136,8 +128,7 @@ public class AttributeBucketer {
 		return b;
 	}
 
-	private static QueryBuilder generateQuery( String query )
-	{
+	private static QueryBuilder generateQuery(String query) {
 
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);

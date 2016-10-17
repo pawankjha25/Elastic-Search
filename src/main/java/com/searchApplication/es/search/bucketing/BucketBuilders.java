@@ -7,14 +7,12 @@ import java.util.Set;
 
 import com.searchApplication.es.services.impl.StringCompareUtil;
 import com.searchApplication.utils.Stemmer;
+import com.searchApplication.utils.StopWords;
 
 public class BucketBuilders {
 
 	private static final String LOCATION_IDENTIFIER = "_LOC";
 	private static final String SPACE_DELIMITER = " ";
-	private static List<String> STOP_LIST = Arrays.asList("a", "an", "and", "are", "as", "at", "be", "but", "by", "for",
-			"if", "in", "into", "is", "it", "no", "not", "of", "on", "or", "such", "that", "the", "their", "then",
-			"there", "these", "they", "this", "to", "was", "will", "with", "more");
 
 	private static Stemmer STEMMER = new Stemmer();
 
@@ -40,7 +38,7 @@ public class BucketBuilders {
 			}
 			String[] bucketTerms = b.split(SPACE_DELIMITER);
 			for (String t : bucketTerms) {
-				if (STOP_LIST.contains(t)) {
+				if (StopWords.STOP_LIST.contains(t)) {
 					continue;
 				}
 				String cleaned = t.toLowerCase().trim().replaceAll("\\p{P}", "");
@@ -55,7 +53,7 @@ public class BucketBuilders {
 				} else {
 
 					for (String q : queryWords) {
-						if (STOP_LIST.contains(q)) {
+						if (StopWords.STOP_LIST.contains(q)) {
 							continue;
 						}
 						String queryPrefix = q.length() > 2 ? q.substring(0, 3) : q;

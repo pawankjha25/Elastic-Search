@@ -171,6 +171,38 @@ public class AttributeBucketerTest extends SearchESTest {
 		Assertions.assertThat(buckets.get(6).getBucketTerms()).containsOnly("popcorn production");
 
 	}
+	
+	public void testMatchesWithLoopCorrection() throws Exception {
+		createTestIndex();
+
+		index(createAtrributeFromList("production planning|corn|x"), 1);
+
+		index(createAtrributeFromList("iron production|mining"), 2);
+
+		index(createAtrributeFromList("popcorn|popcorn production"), 3);
+
+		index(createAtrributeFromList("soccer|transfer data"), 4);
+
+		index(createAtrributeFromList("a|corn production|x"), 5);
+
+		index(createAtrributeFromList("corn|production|x"), 6);
+
+		index(createAtrributeFromList("yellow corn|a|x"), 7);
+		index(createAtrributeFromList("prouction| corn|x"), 8);
+
+		index(createAtrributeFromList("a|production planning"), 9);
+		index(createAtrributeFromList("a|production planning|metal"), 10);
+
+		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
+				"corn production", 1, 4);
+		Assertions.assertThat(buckets).hasSize(2);
+		
+
+		buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
+				"corn", 1, 4);
+		Assertions.assertThat(buckets).hasSize(3);
+
+	}
 
 	/*
 	 * row_1 wheat|production|x
@@ -244,7 +276,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Ignore
+	@Test
 	public void testLocations() throws IOException {
 
 		createTestIndex();
@@ -286,7 +318,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Ignore
+	@Test
 	public void testLocationsOnly() throws IOException {
 		createTestIndex();
 		LocationData loc = new LocationData();
