@@ -1,20 +1,19 @@
 package com.searchApplication.entities;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class QueryResultsList {
 
-	private List<QueryResults> results;
+	private Set<QueryResults> results;
 	private Map<String, Set<LocationAggrigation>> locations;
 
-	public List<QueryResults> getResults()
+	public Set<QueryResults> getResults()
 	{
 		return results;
 	}
 
-	public void setResults( List<QueryResults> results )
+	public void setResults( Set<QueryResults> results )
 	{
 		this.results = results;
 	}

@@ -13,7 +13,6 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import com.google.gson.Gson;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.QueryResultsList;
@@ -130,12 +129,24 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 				if( request.getLocation() )
 				{
-					tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
-							.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
-							.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
+					String[] locations = null;
+					if( request.getLocations() != null && !request.getLocations().isEmpty() )
+					{
+						Set<String> locationsSet = getLocationList(request.getLocations(), 1);
+						locations = new String[locationsSet.size()];
+						int i = 0;
+						for( String loc : locationsSet )
+						{
+							locations[i] = loc;
+							i++;
+						}
+					}
 
-					Map<String, Set<LocationAggrigation>> loc = QueryFilterResponse.getLocationAggregation(tFdocs,
-							request.getLocations());
+					tFdocs = client.prepareSearch(env.getProperty("es.index_name")).setSize(0)
+							.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
+							.addAggregation(FilterAggregation.getLocationAggregation(locations)).execute().actionGet();
+
+					Map<String, Set<LocationAggrigation>> loc = QueryFilterResponse.getLocationAggregation(tFdocs,request.getLocations());
 					if( location != "" && !location.isEmpty() )
 					{
 						Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
@@ -193,22 +204,47 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	public QueryResultsList queryResults( FilterRequest request ) throws Exception
 	{
 		QueryResultsList response = new QueryResultsList();
+		Boolean location = false;
 		try
 		{
 			if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
 			{
 				BoolQueryBuilder booleanQuery = FilterQuery.getQuery(request);
 
-				AggregationBuilder aggregation = ResultsAggregation.getAggregation(request.getStratumName());
+				if( request.getLocations() != null && !request.getLocations().isEmpty()
+						&& request.getLocations().keySet().size() > 1 )
+				{
+					location = true;
+				}
+
+				String[] locations = null;
+				if( request.getLocations() != null && !request.getLocations().isEmpty() )
+				{
+					Set<String> locationsSet = getLocationList(request.getLocations(), 1);
+					locations = new String[locationsSet.size()];
+					int i = 0;
+					for( String loc : locationsSet )
+					{
+						locations[i] = loc;
+						i++;
+					}
+				}
+
+				AggregationBuilder aggregation = ResultsAggregation.getAggregation(request.getStratumName(), location,
+						locations);
 
 				SearchResponse tFdocs = null;
 
+				long startTime = System.currentTimeMillis();
 				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
 						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery).setSize(0)
 						.addAggregation(aggregation).execute().actionGet();
+				long endTime = System.currentTimeMillis();
+
+				System.out.println("Service took - " + (endTime - startTime) + " milliseconds to query");
 
 				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()),
-						request.getStratumName());
+						request.getStratumName(), location);
 
 				/* tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
 				 * .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
@@ -253,6 +289,38 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 			}
 			else
 			{
+				return null;
+			}
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+		return res;
+	}
+
+	private Set<String> getLocationList( Map<String, Set<String>> map, int loc )
+	{
+		Set<String> res = new TreeSet<>();
+		try
+		{
+			if( map != null && !map.isEmpty() && map.keySet() != null )
+			{
+				for( String locationType : map.keySet() )
+				{
+					for( String locName : map.get(locationType) )
+					{
+						String[] locString = locName.split(":");
+						if( locString[1] != null && locString[0] != null )
+						{
+							res.add(locString[loc]);
+						}
+					}
+				}
+			}
+			else
+			{
+				System.out.println("returning null");
 				return null;
 			}
 		}

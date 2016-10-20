@@ -4,12 +4,12 @@ import java.util.List;
 
 public class Results {
 
-	private List<Long> seriesId;
+	private Long seriesId;
 
-	private String superRegion;
 	private String country;
 	private String state;
 	private String county;
+	private String zipcode;
 
 	public String getCountry()
 	{
@@ -41,24 +41,24 @@ public class Results {
 		this.county = county;
 	}
 
-	public List<Long> getSeriesId()
+	public Long getSeriesId()
 	{
 		return seriesId;
 	}
 
-	public void setSeriesId( List<Long> seriesId )
+	public void setSeriesId( Long seriesId )
 	{
 		this.seriesId = seriesId;
 	}
 
-	public String getSuperRegion()
+	public String getZipcode()
 	{
-		return superRegion;
+		return zipcode;
 	}
 
-	public void setSuperRegion( String superRegion )
+	public void setZipcode( String zipcode )
 	{
-		this.superRegion = superRegion;
+		this.zipcode = zipcode;
 	}
 
 }

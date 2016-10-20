@@ -2,7 +2,7 @@ package com.searchApplication.entities;
 
 import java.util.Map;
 
-public class QueryResults {
+public class QueryResults implements Comparable<QueryResults> {
 
 	private Results data;
 	private String dbName;
@@ -47,5 +47,15 @@ public class QueryResults {
 	public void setData( Results data )
 	{
 		this.data = data;
+	}
+
+	@Override
+	public int compareTo( QueryResults o )
+	{
+		if( this.data.getSeriesId() == o.data.getSeriesId() )
+		{
+			return 0;
+		}
+		return 1;
 	}
 }

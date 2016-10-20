@@ -121,6 +121,7 @@ public class QueryFilterResponse {
 					for( String locations : map.get(locationType) )
 					{
 						String[] location = locations.split(":");
+						System.out.println(locations);
 						if( locationBucket.get(locationType) != null && location[0] != null
 								&& !location[0].equals("null") )
 						{
