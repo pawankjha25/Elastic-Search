@@ -57,71 +57,65 @@ public class ResultsResponse {
 						Terms locationParentBuckets = locations.getAggregations().get("locationParent");
 						for( Terms.Bucket locationParentBucket : locationParentBuckets.getBuckets() )
 						{
+							System.out.println(locationParentBucket.getKeyAsString());
 							Terms locationnameBuckets = locationParentBucket.getAggregations().get("locationname");
 							for( Terms.Bucket locationnameBucket : locationnameBuckets.getBuckets() )
 							{
+								//System.out.println(locationnameBucket.getKeyAsString());
 								Terms locationidBuckets = locationnameBucket.getAggregations().get("locationid");
 								for( Terms.Bucket locationidBucket : locationidBuckets.getBuckets() )
 								{
 									Results data = null;
+									Map<String, String> locationData = null;
 									long seriesId = new Long(locationidBucket.getKeyAsString());
 									if( mapData.containsKey(seriesId) )
 									{
 										data = mapData.get(seriesId);
+										locationData = data.getLocations();
 									}
 									else
 									{
 										data = new Results();
+										locationData = new HashMap<>();
 										data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
 									}
 
 									Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
+									boolean valid = true;
 									for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
 									{
-										if( locationTypeBucket.getKeyAsString().equalsIgnoreCase("Country") )
+										if( (locationMap.get(locationTypeBucket.getKeyAsString()) != null
+												&& locationMap.get(locationTypeBucket.getKeyAsString())
+														.contains(locationnameBucket.getKeyAsString())
+												|| locationMap.get(locationTypeBucket.getKeyAsString()) == null) )
 										{
-											data.setCountry(locationnameBucket.getKeyAsString());
+											locationData.put(locationTypeBucket.getKeyAsString(),
+													locationnameBucket.getKeyAsString());
 										}
-										else if( locationTypeBucket.getKeyAsString().equalsIgnoreCase("State") )
+										else
 										{
-											data.setState(locationnameBucket.getKeyAsString());
+											valid = false;
 										}
-										else if( locationTypeBucket.getKeyAsString().equalsIgnoreCase("County") )
-										{
-											data.setCounty(locationnameBucket.getKeyAsString());
-										}
-										else if( locationTypeBucket.getKeyAsString().equalsIgnoreCase("Zipcode") )
-										{
-											data.setZipcode(locationnameBucket.getKeyAsString());
-										}
-
 									}
-									mapData.put(seriesId, data);
+									if( valid )
+									{
+										data.setLocations(locationData);
+										mapData.put(seriesId, data);
+									}
 								}
 							}
 						}
 						for( Long key : mapData.keySet() )
 						{
 							boolean valid = true;
-							Results data = mapData.get(key);/*
+							Results data = mapData.get(key);
 							for( String locationType : locationMap.keySet() )
 							{
-								if( locationType.equalsIgnoreCase("Country") && (data.getCountry() == null
-										|| !locationMap.get(locationType).contains(data.getCountry())) )
+								if( !locationType.equals("parent") && data.getLocations().get(locationType) == null )
 								{
 									valid = false;
 								}
-								else if( locationType.equalsIgnoreCase("State") && (data.getState() == null
-										|| !locationMap.get(locationType).contains(data.getState())) )
-								{
-									valid = false;
-								}
-								else if( locationType.equalsIgnoreCase("County") && (data.getCounty() == null
-										|| !locationMap.get(locationType).contains(data.getCounty())) )
-								{
-									valid = false;
-								}
-							}*/
+							}
 							if( results.size() < length && valid )
 							{
 								QueryResults qr = new QueryResults();
@@ -140,6 +134,7 @@ public class ResultsResponse {
 						for( Terms.Bucket locationidBucket : locationidBuckets.getBuckets() )
 						{
 							Results data = new Results();
+							Map<String, String> locationData = new HashMap<>();
 							data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
 
 							Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
@@ -148,22 +143,8 @@ public class ResultsResponse {
 								Terms locationname = locationTypeBucket.getAggregations().get("locationname");
 								for( Terms.Bucket locationnameBucket : locationname.getBuckets() )
 								{
-									if( locationTypeBucket.getKeyAsString().equalsIgnoreCase("Country") )
-									{
-										data.setCountry(locationnameBucket.getKeyAsString());
-									}
-									else if( locationTypeBucket.getKeyAsString().equalsIgnoreCase("State") )
-									{
-										data.setState(locationnameBucket.getKeyAsString());
-									}
-									else if( locationTypeBucket.getKeyAsString().equalsIgnoreCase("County") )
-									{
-										data.setCounty(locationnameBucket.getKeyAsString());
-									}
-									else if( locationTypeBucket.getKeyAsString().equalsIgnoreCase("Zipcode") )
-									{
-										data.setZipcode(locationnameBucket.getKeyAsString());
-									}
+									locationData.put(locationTypeBucket.getKeyAsString(),
+											locationnameBucket.getKeyAsString());
 								}
 
 							}
@@ -173,6 +154,7 @@ public class ResultsResponse {
 								qr.setDbName(dbNameBucket.getKeyAsString());
 								qr.setPropertyId(new Long(dbpropertiesBucket.getKeyAsString()));
 								qr.setStratums(stratums);
+								data.setLocations(locationData);
 								qr.setData(data);
 								results.add(qr);
 							}

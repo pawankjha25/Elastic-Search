@@ -221,7 +221,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 				if( request.getLocations() != null && !request.getLocations().isEmpty() )
 				{
 					Set<String> locationsSet = getLocationList(request.getLocations(), 1);
-					locations = new String[locationsSet.size()];
+					locations = new String[3*locationsSet.size()];
 					int i = 0;
 					for( String loc : locationsSet )
 					{
@@ -245,16 +245,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 				response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()),
 						request.getStratumName(), location);
-
-				/* tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
-				 * .setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
-				 * .addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet()
-				 * ;
-				 * 
-				 * response.setLocations(QueryFilterResponse.getLocationAggregation(tFdocs,
-				 * request.getLocations())); */
 			}
-
 		}
 		catch( Exception e )
 		{
