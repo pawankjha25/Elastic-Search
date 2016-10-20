@@ -1,64 +1,29 @@
 package com.searchApplication.entities;
 
-import java.util.List;
+import java.util.Map;
 
 public class Results {
 
 	private Long seriesId;
-
-	private String country;
-	private String state;
-	private String county;
-	private String zipcode;
-
-	public String getCountry()
-	{
-		return country;
-	}
-
-	public void setCountry( String country )
-	{
-		this.country = country;
-	}
-
-	public String getState()
-	{
-		return state;
-	}
-
-	public void setState( String state )
-	{
-		this.state = state;
-	}
-
-	public String getCounty()
-	{
-		return county;
-	}
-
-	public void setCounty( String county )
-	{
-		this.county = county;
-	}
-
+	private Map<String,String> locations;
+	
 	public Long getSeriesId()
 	{
 		return seriesId;
 	}
-
+	
 	public void setSeriesId( Long seriesId )
 	{
 		this.seriesId = seriesId;
 	}
-
-	public String getZipcode()
+	
+	public Map<String, String> getLocations()
 	{
-		return zipcode;
+		return locations;
 	}
-
-	public void setZipcode( String zipcode )
+	
+	public void setLocations( Map<String, String> locations )
 	{
-		this.zipcode = zipcode;
+		this.locations = locations;
 	}
-
 }

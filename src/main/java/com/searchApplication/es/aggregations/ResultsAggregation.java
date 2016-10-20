@@ -92,8 +92,8 @@ public class ResultsAggregation {
 							.subAggregation(AggregationBuilders.reverseNested("attReverse")))))
 							
 							.subAggregation(AggregationBuilders.nested("locations").path("locations")
-							.subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").include(locations).size(10000)
-							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw").include(locations).size(10000)
+							.subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").size(100000)
+							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw").size(100000)
 							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(100)
 							.subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw")
 							)))))
