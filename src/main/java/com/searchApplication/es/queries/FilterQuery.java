@@ -58,9 +58,9 @@ public class FilterQuery {
 
 			if( request.getLocations() != null )
 			{
-				BoolQueryBuilder locationQuery = new BoolQueryBuilder();
 				for( String key : request.getLocations().keySet() )
 				{
+					BoolQueryBuilder locationQuery = new BoolQueryBuilder();
 					for( String locList : request.getLocations().get(key) )
 					{
 						String parent = locList.split(":")[0];
@@ -83,8 +83,8 @@ public class FilterQuery {
 						}
 						locationQuery.should(booleanQuery1);
 					}
+					booleanQuery.must(locationQuery);
 				}
-				booleanQuery.must(locationQuery);
 			}
 		}
 		catch( Exception e )
