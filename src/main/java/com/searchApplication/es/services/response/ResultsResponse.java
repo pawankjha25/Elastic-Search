@@ -8,6 +8,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
 import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import com.google.gson.Gson;
 import com.searchApplication.entities.QueryResults;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.Results;
@@ -27,6 +28,8 @@ public class ResultsResponse {
 
 		try
 		{
+			Set<String> type=new TreeSet<>();
+
 			InternalNested database = tFdocs.getAggregations().get("database");
 			Terms dbName = database.getAggregations().get("dbname");
 			for( Terms.Bucket dbNameBucket : dbName.getBuckets() )
@@ -48,61 +51,119 @@ public class ResultsResponse {
 						}
 					}
 
-					InternalNested locations = reverseDb.getAggregations().get("locations");
-					Terms locationidBuckets = locations.getAggregations().get("locationid");
-					for( Terms.Bucket locationidBucket : locationidBuckets.getBuckets() )
+					if( location )
 					{
-						Results data = new Results();
-						Map<String, String> locationData = new HashMap<>();
-						data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
-
-						Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
-						for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
+						Map<Long, Results> mapData = new HashMap<>();
+						InternalNested locations = reverseDb.getAggregations().get("locations");
+						Terms locationParentBuckets = locations.getAggregations().get("locationParent");
+						for( Terms.Bucket locationParentBucket : locationParentBuckets.getBuckets() )
 						{
-							Terms locationname = locationTypeBucket.getAggregations().get("locationname");
-							for( Terms.Bucket locationnameBucket : locationname.getBuckets() )
+							Terms locationnameBuckets = locationParentBucket.getAggregations().get("locationname");
+							for( Terms.Bucket locationnameBucket : locationnameBuckets.getBuckets() )
 							{
-								locationData.put(locationTypeBucket.getKeyAsString(),
-										locationnameBucket.getKeyAsString());
-							}
-							data.setLocations(locationData);
-
-						}
-						boolean valid = true;
-						if( location )
-						{
-							for( String locationType : locationMap.keySet() )
-							{
-								if( !locationType.equals("parent") && data.getLocations().get(locationType) != null )
+								//System.out.println(locationnameBucket.getKeyAsString());
+								Terms locationidBuckets = locationnameBucket.getAggregations().get("locationid");
+								for( Terms.Bucket locationidBucket : locationidBuckets.getBuckets() )
 								{
-									String actualLocName = data.getLocations().get(locationType);
-									if( !locationMap.get(locationType).contains(actualLocName) )
+									Results data = null;
+									Map<String, String> locationData = null;
+									long seriesId = new Long(locationidBucket.getKeyAsString());
+									if( mapData.containsKey(seriesId) )
 									{
-										valid = false;
-										break;
+										data = mapData.get(seriesId);
+										locationData = data.getLocations();
+									}
+									else
+									{
+										data = new Results();
+										locationData = new HashMap<>();
+										data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
 									}
 
-								}
-								else if( !locationType.equals("parent") )
-								{
-									valid = false;
-									break;
+									Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
+									boolean valid = true;
+									for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
+									{
+										if( (locationMap.get(locationTypeBucket.getKeyAsString()) != null
+												&& locationMap.get(locationTypeBucket.getKeyAsString())
+														.contains(locationnameBucket.getKeyAsString())
+												|| locationMap.get(locationTypeBucket.getKeyAsString()) == null) )
+										{
+											type.add(locationTypeBucket.getKeyAsString());
+											locationData.put(locationTypeBucket.getKeyAsString(),
+													locationnameBucket.getKeyAsString());
+										}
+										else
+										{
+											valid = false;
+										}
+									}
+									if( valid )
+									{
+										data.setLocations(locationData);
+										mapData.put(seriesId, data);
+									}
 								}
 							}
 						}
-						if( results.size() < length && valid )
+						for( Long key : mapData.keySet() )
 						{
-							QueryResults qr = new QueryResults();
-							qr.setDbName(dbNameBucket.getKeyAsString());
-							qr.setPropertyId(new Long(dbpropertiesBucket.getKeyAsString()));
-							qr.setStratums(stratums);
-							data.setLocations(locationData);
-							qr.setData(data);
-							results.add(qr);
+							boolean valid = true;
+							Results data = mapData.get(key);
+							for( String locationType : locationMap.keySet() )
+							{
+								if( !locationType.equals("parent")
+										&& data.getLocations().get(locationType) == null )
+								{
+									valid = false;
+								}
+							}
+							if( results.size() < length && valid )
+							{
+								QueryResults qr = new QueryResults();
+								qr.setDbName(dbNameBucket.getKeyAsString());
+								qr.setPropertyId(new Long(dbpropertiesBucket.getKeyAsString()));
+								qr.setStratums(stratums);
+								qr.setData(data);
+								results.add(qr);
+							}
 						}
-						else
+					}
+					else
+					{
+						InternalNested locations = reverseDb.getAggregations().get("locations");
+						Terms locationidBuckets = locations.getAggregations().get("locationid");
+						for( Terms.Bucket locationidBucket : locationidBuckets.getBuckets() )
 						{
-							break;
+							Results data = new Results();
+							Map<String, String> locationData = new HashMap<>();
+							data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
+
+							Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
+							for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
+							{
+								Terms locationname = locationTypeBucket.getAggregations().get("locationname");
+								for( Terms.Bucket locationnameBucket : locationname.getBuckets() )
+								{
+									locationData.put(locationTypeBucket.getKeyAsString(),
+											locationnameBucket.getKeyAsString());
+								}
+
+							}
+							if( results.size() < length )
+							{
+								QueryResults qr = new QueryResults();
+								qr.setDbName(dbNameBucket.getKeyAsString());
+								qr.setPropertyId(new Long(dbpropertiesBucket.getKeyAsString()));
+								qr.setStratums(stratums);
+								data.setLocations(locationData);
+								qr.setData(data);
+								results.add(qr);
+							}
+							else
+							{
+								break;
+							}
 						}
 					}
 				}

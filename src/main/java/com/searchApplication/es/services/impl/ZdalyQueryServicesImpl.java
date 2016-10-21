@@ -13,6 +13,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import com.google.gson.Gson;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.QueryResultsList;
@@ -141,15 +142,14 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 							i++;
 						}
 					}
-					
-					System.out.println(booleanQuery.toString());
 
 					SearchResponse tFdocs1 = null;
 					tFdocs1 = client.prepareSearch(env.getProperty("es.index_name")).setSize(0)
 							.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
 							.addAggregation(FilterAggregation.getLocationAggregation(locations)).execute().actionGet();
 
-					Map<String, Set<LocationAggrigation>> loc = QueryFilterResponse.getLocationAggregation(tFdocs1,request.getLocations());
+					Map<String, Set<LocationAggrigation>> loc = QueryFilterResponse.getLocationAggregation(tFdocs1,
+							request.getLocations(), getLocationMap(request.getLocations()));
 					if( location != "" && !location.isEmpty() )
 					{
 						Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
