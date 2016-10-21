@@ -81,7 +81,14 @@ public class FilterQuery {
 									QueryBuilders.matchQuery("locations.location_parent", parent));
 							booleanQuery1.must(q3);
 						}
-						locationQuery.should(booleanQuery1);
+						if( request.getLocations().get(key).size() > 1 )
+						{
+							locationQuery.should(booleanQuery1);
+						}
+						else
+						{
+							locationQuery.must(booleanQuery1);
+						}
 					}
 					booleanQuery.must(locationQuery);
 				}

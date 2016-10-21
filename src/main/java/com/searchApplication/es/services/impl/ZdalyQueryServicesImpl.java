@@ -84,7 +84,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 				booleanQuery = FilterQuery.getQuery(request);
 
 				SearchResponse tFdocs = null;
-				tFdocs = client.prepareSearch(env.getProperty("es.index_name"))
+				tFdocs = client.prepareSearch(env.getProperty("es.index_name")).setSize(0)
 						.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
 						.addAggregation(FilterAggregation.getAggregation()).execute().actionGet();
 
@@ -141,12 +141,15 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 							i++;
 						}
 					}
+					
+					System.out.println(booleanQuery.toString());
 
-					tFdocs = client.prepareSearch(env.getProperty("es.index_name")).setSize(0)
+					SearchResponse tFdocs1 = null;
+					tFdocs1 = client.prepareSearch(env.getProperty("es.index_name")).setSize(0)
 							.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery)
 							.addAggregation(FilterAggregation.getLocationAggregation(locations)).execute().actionGet();
 
-					Map<String, Set<LocationAggrigation>> loc = QueryFilterResponse.getLocationAggregation(tFdocs,request.getLocations());
+					Map<String, Set<LocationAggrigation>> loc = QueryFilterResponse.getLocationAggregation(tFdocs1,request.getLocations());
 					if( location != "" && !location.isEmpty() )
 					{
 						Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
@@ -221,7 +224,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 				if( request.getLocations() != null && !request.getLocations().isEmpty() )
 				{
 					Set<String> locationsSet = getLocationList(request.getLocations(), 1);
-					locations = new String[3*locationsSet.size()];
+					locations = new String[locationsSet.size()];
 					int i = 0;
 					for( String loc : locationsSet )
 					{

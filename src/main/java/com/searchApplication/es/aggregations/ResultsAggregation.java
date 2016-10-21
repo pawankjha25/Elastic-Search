@@ -44,11 +44,9 @@ public class ResultsAggregation {
 							.subAggregation(AggregationBuilders.reverseNested("attReverse")))))
 							
 							.subAggregation(AggregationBuilders.nested("locations").path("locations")
-							.subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").include(locations).size(10000)
-							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw").include(locations).size(10000)
-							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(100)
+							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(1000000)
 							.subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw")
-							)))))
+							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw")))))
 							
 							)));
 				}
@@ -56,12 +54,14 @@ public class ResultsAggregation {
 			else if( stratumName != null && !stratumName.isEmpty() && stratumName.contains("*") )
 			{
 				int length = 500;
+				
 				if( stratumName.contains("*") && !stratumName.replaceAll("\\*", "").isEmpty() )
 				{
 					length = Integer.parseInt(stratumName.replaceAll("\\*", ""));
 				}
 				if(!location)
 				{
+					System.out.println(length);
 					return AggregationBuilders.nested("database").path("db")
 							.subAggregation(AggregationBuilders.terms("dbname").field("db.db_name").size(100)
 							.subAggregation(AggregationBuilders.terms("dbproperties").field("db.properties").size(100)
@@ -92,11 +92,9 @@ public class ResultsAggregation {
 							.subAggregation(AggregationBuilders.reverseNested("attReverse")))))
 							
 							.subAggregation(AggregationBuilders.nested("locations").path("locations")
-							.subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").size(100000)
-							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw").size(100000)
-							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(100)
+							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(1000000)
 							.subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw")
-							)))))
+							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw")))))
 							
 							)));
 				}
