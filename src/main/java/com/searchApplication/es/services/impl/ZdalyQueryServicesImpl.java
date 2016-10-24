@@ -199,7 +199,24 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 					}
 					else
 					{
-						response.setLocations(loc);
+						if( request.getLocations() == null || request.getLocations().keySet() == null
+								|| request.getLocations().keySet().isEmpty() )
+						{
+							Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
+							for( String keys : loc.keySet() )
+							{
+								if( keys.equalsIgnoreCase("Country") )
+								{
+									newLoc.put(keys, loc.get(keys));
+									break;
+								}
+							}
+							response.setLocations(newLoc);
+						}
+						else
+						{
+							response.setLocations(loc);
+						}
 					}
 				}
 				response.setTotalRows(tFdocs.getHits().getTotalHits());
