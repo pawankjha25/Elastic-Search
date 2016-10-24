@@ -13,7 +13,6 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import com.google.gson.Gson;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.QueryResultsList;
@@ -97,12 +96,24 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 						&& response.getStratum() != null && !response.getStratum().isEmpty()
 						&& response.getStratum().keySet() != null )
 				{
+					BoolQueryBuilder booleanQuery1 = FilterQuery.getNotQuery(request, request.getReqAttList());
+					long hits = client.prepareSearch(env.getProperty("es.index_name"))
+							.setTypes(env.getProperty("es.search_object")).setQuery(booleanQuery1).execute().actionGet()
+							.getHits().getTotalHits();
 					Iterator<String> keys = response.getStratum().keySet().iterator();
 					while( keys.hasNext() )
 					{
 						String key = keys.next();
-						if( response.getStratum().get(key).size() <= 1 || request.getReqAttList().contains(key) )
+						if( response.getStratum().get(key).size() <= 1 )
 						{
+							stratum.put(key, response.getStratum().get(key));
+						}
+						else if( request.getReqAttList().equals(key) )
+						{
+							if( hits > 0 )
+							{
+								response.getStratum().get(key).add("NULL");
+							}
 							stratum.put(key, response.getStratum().get(key));
 						}
 					}
@@ -191,7 +202,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 						response.setLocations(loc);
 					}
 				}
-
+				response.setTotalRows(tFdocs.getHits().getTotalHits());
 			}
 
 		}

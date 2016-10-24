@@ -8,7 +8,6 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
 import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import com.google.gson.Gson;
 import com.searchApplication.entities.QueryResults;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.Results;

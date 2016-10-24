@@ -11,7 +11,7 @@ public class FilterRequest {
 	private Map<String, List<String>> filters;
 	private Map<String, Set<String>> locations;
 	private String stratumName;
-	private List<String> reqAttList;
+	private String reqAttList;
 	private Boolean location;
 
 	public Boolean getLevel100()
@@ -74,12 +74,12 @@ public class FilterRequest {
 		this.location = location;
 	}
 
-	public List<String> getReqAttList()
+	public String getReqAttList()
 	{
 		return reqAttList;
 	}
 
-	public void setReqAttList( List<String> reqAttList )
+	public void setReqAttList( String reqAttList )
 	{
 		this.reqAttList = reqAttList;
 	}

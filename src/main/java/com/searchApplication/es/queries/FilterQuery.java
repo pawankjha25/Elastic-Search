@@ -37,7 +37,7 @@ public class FilterQuery {
 					BoolQueryBuilder booleanQuery2 = new BoolQueryBuilder();
 					for( String value : request.getFilters().get(key) )
 					{
-						if( value != null && !value.isEmpty() )
+						if( value != null && !value.isEmpty() && !value.equalsIgnoreCase("NULL") )
 						{
 							BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
 
@@ -48,6 +48,16 @@ public class FilterQuery {
 							NestedQueryBuilder q2 = QueryBuilders.nestedQuery("attributes",
 									QueryBuilders.matchQuery("attributes.attribute_name", key));
 							booleanQuery1.must(q2);
+
+							booleanQuery2.should(booleanQuery1);
+						}
+						else if( value != null && !value.isEmpty() && value.equalsIgnoreCase("NULL") )
+						{
+							BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
+
+							NestedQueryBuilder q2 = QueryBuilders.nestedQuery("attributes",
+									QueryBuilders.matchQuery("attributes.attribute_name", key));
+							booleanQuery1.mustNot(q2);
 
 							booleanQuery2.should(booleanQuery1);
 						}
@@ -93,6 +103,24 @@ public class FilterQuery {
 					booleanQuery.must(locationQuery);
 				}
 			}
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+		return booleanQuery;
+	}
+
+	public static BoolQueryBuilder getNotQuery( FilterRequest request, String attributeName ) throws Exception
+	{
+		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
+		try
+		{
+			booleanQuery = getQuery(request);
+			NestedQueryBuilder q2 = QueryBuilders.nestedQuery("attributes",
+					QueryBuilders.matchQuery("attributes.attribute_name", attributeName));
+			booleanQuery.mustNot(q2);
+
 		}
 		catch( Exception e )
 		{
