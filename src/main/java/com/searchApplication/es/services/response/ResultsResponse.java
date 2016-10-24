@@ -8,7 +8,6 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
 import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import com.google.gson.Gson;
 import com.searchApplication.entities.QueryResults;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.Results;
@@ -28,6 +27,7 @@ public class ResultsResponse {
 
 		try
 		{
+			Set<String> type=new TreeSet<>();
 
 			InternalNested database = tFdocs.getAggregations().get("database");
 			Terms dbName = database.getAggregations().get("dbname");
@@ -57,7 +57,6 @@ public class ResultsResponse {
 						Terms locationParentBuckets = locations.getAggregations().get("locationParent");
 						for( Terms.Bucket locationParentBucket : locationParentBuckets.getBuckets() )
 						{
-							System.out.println(locationParentBucket.getKeyAsString());
 							Terms locationnameBuckets = locationParentBucket.getAggregations().get("locationname");
 							for( Terms.Bucket locationnameBucket : locationnameBuckets.getBuckets() )
 							{
@@ -89,6 +88,7 @@ public class ResultsResponse {
 														.contains(locationnameBucket.getKeyAsString())
 												|| locationMap.get(locationTypeBucket.getKeyAsString()) == null) )
 										{
+											type.add(locationTypeBucket.getKeyAsString());
 											locationData.put(locationTypeBucket.getKeyAsString(),
 													locationnameBucket.getKeyAsString());
 										}
@@ -111,7 +111,8 @@ public class ResultsResponse {
 							Results data = mapData.get(key);
 							for( String locationType : locationMap.keySet() )
 							{
-								if( !locationType.equals("parent") && data.getLocations().get(locationType) == null )
+								if( !locationType.equals("parent")
+										&& data.getLocations().get(locationType) == null )
 								{
 									valid = false;
 								}

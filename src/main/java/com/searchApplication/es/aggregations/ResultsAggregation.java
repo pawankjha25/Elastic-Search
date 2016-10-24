@@ -56,6 +56,7 @@ public class ResultsAggregation {
 			else if( stratumName != null && !stratumName.isEmpty() && stratumName.contains("*") )
 			{
 				int length = 500;
+				
 				if( stratumName.contains("*") && !stratumName.replaceAll("\\*", "").isEmpty() )
 				{
 					length = Integer.parseInt(stratumName.replaceAll("\\*", ""));
@@ -93,8 +94,8 @@ public class ResultsAggregation {
 							
 							.subAggregation(AggregationBuilders.nested("locations").path("locations")
 							.subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").size(100000)
-							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw").size(100000)
-							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(100)
+							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw").size(1000000000)
+							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(1000000000)
 							.subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw")
 							)))))
 							

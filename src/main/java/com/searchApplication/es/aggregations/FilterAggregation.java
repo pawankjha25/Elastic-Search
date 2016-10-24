@@ -35,32 +35,16 @@ public class FilterAggregation {
 	{
 		try
 		{
-			if( locations != null && locations.length != 0 )
-			{
-				return AggregationBuilders.nested("locations").path("locations")
+			return AggregationBuilders.nested("locations").path("locations")
 
-						.subAggregation(
-								AggregationBuilders.terms("locationType").field("locations.location_type.raw").size(100)
+					.subAggregation(
+							AggregationBuilders.terms("locationType").field("locations.location_type.raw").size(100)
 
-										.subAggregation(AggregationBuilders.terms("locationParent")
-												.field("locations.location_parent.raw").include(locations).size(100)
+									.subAggregation(AggregationBuilders.terms("locationParent")
+											.field("locations.location_parent.raw").size(100)
 
-												.subAggregation(AggregationBuilders.terms("locationName")
-														.field("locations.location_name.raw").size(100))));
-			}
-			else
-			{
-				return AggregationBuilders.nested("locations").path("locations")
-
-						.subAggregation(
-								AggregationBuilders.terms("locationType").field("locations.location_type.raw").size(100)
-
-										.subAggregation(AggregationBuilders.terms("locationParent")
-												.field("locations.location_parent.raw").size(100)
-
-												.subAggregation(AggregationBuilders.terms("locationName")
-														.field("locations.location_name.raw").size(100))));
-			}
+											.subAggregation(AggregationBuilders.terms("locationName")
+													.field("locations.location_name.raw").size(100))));
 		}
 		catch( Exception e )
 		{
