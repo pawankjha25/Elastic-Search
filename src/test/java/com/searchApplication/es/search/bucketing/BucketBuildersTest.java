@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.fest.assertions.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -111,6 +112,16 @@ public class BucketBuildersTest {
 
 		Bucket b = BucketBuilders.createFromQueryString("row", Arrays.asList("toe", "popcorn production"), new HashSet<String>());
 		Assert.assertNull(b);
+	}
+	
+	@Test
+	public void testBucketOrder() {
+		Bucket b = BucketBuilders.createFromQueryString("corn production illinois",
+				Arrays.asList("corn production", "illinois_LOC", "corn", "all production practices", "united states_LOC"), new HashSet<String>());
+		Assert.assertEquals(b.getTotalPerfectMatches(), 3);
+		Assert.assertEquals(b.getTotalPartialMatches(), 0);
+		Assertions.assertThat(b.getBucketTerms()).containsExactly("corn production", "corn", "all production practices", "illinois_LOC");
+
 	}
 
 	@Test
