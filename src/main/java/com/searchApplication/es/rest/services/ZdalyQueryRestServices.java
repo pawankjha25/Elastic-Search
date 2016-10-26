@@ -13,6 +13,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,21 +155,19 @@ public class ZdalyQueryRestServices {
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/get-time-series-data")
-	public List<TimeSeriesEntity> getTimeSeriesData() throws UnknownHostException {
+	public List<TimeSeriesEntity> getTimeSeriesData(@QueryParam("seriesId") String seriesId,
+			@QueryParam("dbName") String dbName) throws UnknownHostException {
 		List<TimeSeriesEntity> list = new ArrayList<>();
+		BigInteger series_Id = new BigInteger(seriesId);
+		String db_name = dbName;
 		Session session = ZdalyCassandraConnection.getCassandraSession();
-		ResultSet rs = session.execute("select * from time_series_data");
+		ResultSet rs = session.execute(
+				"select * from time_series_data where series_id = ? and db_name= ? and period='d'", series_Id, db_name);
 		Iterator<Row> itr = rs.iterator();
 		int i = 0;
-		while (itr.hasNext() && i < 10) {
-			i++;
+		while (itr.hasNext()) {
 			Row row = itr.next();
-			
-			System.out.println(row.getVarint(0));
-			System.out.println(row.getString(1));
-			System.out.println(row.getDouble(5));
 			list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(5)));
-
 		}
 		return list;
 	}
