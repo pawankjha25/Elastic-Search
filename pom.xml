@@ -24,6 +24,29 @@
 	</parent>
 
 	<dependencies>
+		<!-- <dependency> <groupId>org.springframework.data</groupId> <artifactId>spring-data-cassandra</artifactId> 
+			<version>1.4.4.RELEASE</version> </dependency> -->
+
+		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>18.0</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.datastax.cassandra/cassandra-driver-core -->
+		<dependency>
+			<groupId>com.datastax.cassandra</groupId>
+			<artifactId>cassandra-driver-core</artifactId>
+			<version>3.1.1</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>com.google.guava</artifactId>
+					<groupId>guava</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
 
 		<dependency>
 			<groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -160,7 +183,7 @@
 			<version>2.8.3</version>
 			<scope>compile</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.glassfish.jersey.media</groupId>
 			<artifactId>jersey-media-json-jackson</artifactId>

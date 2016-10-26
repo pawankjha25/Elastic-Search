@@ -208,15 +208,17 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"wheat production", 10, 1000);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsExactly("wheat", "production");
+		System.out.println(buckets);
 
-		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsExactly("wheat production");
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("wheat", "production");
 
-		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsExactly("wheat production","wheat");
+		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("wheat production");
 
-		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsExactly("mining wheat", "iron production");
+		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("wheat", "wheat production");
 
-		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsExactly("wheat");
+		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsOnly("mining wheat", "iron production");
+
+		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsOnly("wheat");
 
 	}
 

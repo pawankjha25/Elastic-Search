@@ -1,5 +1,11 @@
 package com.searchApplication.es.rest.services;
 
+import java.math.BigInteger;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -12,12 +18,17 @@ import javax.ws.rs.core.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
+import com.searchApplication.entities.TimeSeriesEntity;
 import com.searchApplication.entities.TransactionResponse;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
+import com.searchApplication.utils.ZdalyCassandraConnection;
 
 @Path("/zdaly")
 @RestController
@@ -138,4 +149,28 @@ public class ZdalyQueryRestServices {
 		}
 		return transactionResponse;
 	}
+
+	@GET
+	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Path("/get-time-series-data")
+	public List<TimeSeriesEntity> getTimeSeriesData() throws UnknownHostException {
+		List<TimeSeriesEntity> list = new ArrayList<>();
+		Session session = ZdalyCassandraConnection.getCassandraSession();
+		ResultSet rs = session.execute("select * from time_series_data");
+		Iterator<Row> itr = rs.iterator();
+		int i = 0;
+		while (itr.hasNext() && i < 10) {
+			i++;
+			Row row = itr.next();
+			
+			System.out.println(row.getVarint(0));
+			System.out.println(row.getString(1));
+			System.out.println(row.getDouble(5));
+			list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(5)));
+
+		}
+		return list;
+	}
+
 }
