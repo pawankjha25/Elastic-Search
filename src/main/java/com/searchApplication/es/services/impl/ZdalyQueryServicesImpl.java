@@ -26,6 +26,7 @@ import com.searchApplication.es.search.bucketing.AttributeBucketer;
 import com.searchApplication.es.services.response.QueryFilterResponse;
 import com.searchApplication.es.services.response.ResultsResponse;
 import com.searchApplication.utils.ElasticSearchUtility;
+import com.searchApplication.utils.LocationLoader;
 
 @Service
 public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
@@ -43,10 +44,11 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	@Override
 	public BucketResponseList produceBuckets( String queryText ) throws Exception
 	{
+		Set<String> locations =  LocationLoader.getLocationsFromFile( env.getProperty("es.index_name"));
 		try
 		{
 			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
-					env.getProperty("es.search_object"), queryText, 1, 1000);
+					env.getProperty("es.search_object"), queryText, 1, 1000, locations);
 		}
 		catch( Exception e )
 		{
