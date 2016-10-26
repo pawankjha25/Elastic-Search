@@ -48,7 +48,6 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	@Override
 	public SearchOutput queryWithFilters( FilterRequest request ) throws Exception
 	{
-		System.out.println(request);
 		SearchOutput response = new SearchOutput();
 		try
 		{

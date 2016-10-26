@@ -8,7 +8,6 @@ import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.searchApplication.es.entities.Row;
 import com.searchApplication.es.entities.TimeSeriesData;
 import com.searchApplication.utils.IOUtils;
 

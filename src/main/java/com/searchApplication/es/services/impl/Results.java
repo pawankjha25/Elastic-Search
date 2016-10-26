@@ -16,6 +16,7 @@ import com.searchApplication.es.services.response.ResultsResponse;
 
 public class Results {
 
+	@SuppressWarnings( "rawtypes" )
 	public static QueryResultsList getResults( FilterRequest request, String indexName, String objectType,
 			Client client ) throws Exception
 	{
