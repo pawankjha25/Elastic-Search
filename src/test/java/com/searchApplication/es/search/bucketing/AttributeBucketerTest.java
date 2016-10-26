@@ -242,7 +242,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Ignore
+	@Test
 	public void testLocations() throws IOException {
 
 		createTestIndex();
@@ -284,7 +284,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Ignore
+	@Test
 	public void testLocationsOnly() throws IOException {
 		createTestIndex();
 		LocationData loc = new LocationData();

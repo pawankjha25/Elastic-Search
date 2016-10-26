@@ -28,16 +28,14 @@ public class AttributeBucketer {
 	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
-	public static BucketResponseList generateBuckets( Client client, String index, String type, String query, int loops,
-			int hitsInScroll )
-	{
+	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
+			int hitsInScroll) {
 		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll);
 		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
-	public static List<Bucket> createBucketList( Client client, String index, String type, String query, int loops,
-			int hitsInScroll )
-	{
+	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops,
+			int hitsInScroll) {
 
 		LOGGER.debug("Start query ");
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
@@ -50,39 +48,30 @@ public class AttributeBucketer {
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		Set<String> hits = new HashSet<String>();
 		Set<String> misses = new HashSet<String>();
-		while( (hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0) )
-		{
+		while ((hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0)) {
+			LOGGER.debug(" query {}", sr.toString());
+
 			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
-			for( SearchHit hit : sr.getHits() )
-			{
-				try
-				{
+			for (SearchHit hit : sr.getHits()) {
+				try {
 					Bucket b = processHitsToBuckets(hit, query, hits, misses);
-					if( b != null )
-					{
-						if( bucketList.contains(b) )
-						{
+					if (b != null) {
+						if (bucketList.contains(b)) {
 							bucketList.get(bucketList.indexOf(b)).incrementCount();
 							bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
 
-						}
-						else
-						{
+						} else {
 							bucketList.add(b);
 						}
 						hitCounter++;
-					}
-					else
+					} else
 						hitCounter++;
-				}
-				catch( Exception e )
-				{
+				} catch (Exception e) {
 					LOGGER.error("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
 				}
 			}
-			if( hitCounter < HITS_IN_SCROLL * loops )
-			{
+			if (hitCounter < HITS_IN_SCROLL * loops) {
 				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 			}
 		}
@@ -93,51 +82,40 @@ public class AttributeBucketer {
 		return bucketList;
 	}
 
-	private static Bucket processHitsToBuckets( SearchHit hit, String query, Set<String> checked, Set<String> misses )
-	{
+	private static Bucket processHitsToBuckets(SearchHit hit, String query, Set<String> checked, Set<String> misses) {
 		List<String> bucketTerms = new ArrayList<String>();
 		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
 				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
-		Set<String> localOK = new HashSet<String>();
-		for( Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes") )
-		{
-			if( !misses.contains(attributeData.get("attribute_value")) )
-			{
+		for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes")) {
+			if (!misses.contains(attributeData.get("attribute_value"))) {
 				bucketTerms.add(attributeData.get("attribute_value"));
 			}
 		}
-		if( hit.getInnerHits().containsKey(LOCATIONS) )
-		{
-			for( SearchHit innerHit : hit.getInnerHits().get(LOCATIONS) )
-			{
-				if( !misses.contains(innerHit.getSource().get(LOCATION_NAME)) )
-				{
-					bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
-				}
+		Set<String> locations = new HashSet<String>();
+		LOGGER.debug(hit.getSourceAsString());
+		if (hit.getInnerHits().containsKey(LOCATIONS)) {
+			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
+				locations.add((String) innerHit.getSource().get(LOCATION_NAME) + "_LOC");
 			}
 		}
 
-		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
+		Bucket b = BucketBuilders.createFromQueryString(query, locations,  bucketTerms, checked);
 
-		if( b != null )
-		{
-			for( String terms : bucketTerms )
-			{
-				if( !b.getBucketTerms().contains(terms) )
-				{
+		if (b != null) {
+			for (String terms : bucketTerms) {
+				if (!b.getBucketTerms().contains(terms)) {
 					misses.add(terms);
 				}
 			}
-			b.getBucketTerms().addAll(localOK);
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
 		}
+		
 		return b;
 	}
 
-	private static QueryBuilder generateQuery( String query )
-	{
+	private static QueryBuilder generateQuery(String query) {
 
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);
