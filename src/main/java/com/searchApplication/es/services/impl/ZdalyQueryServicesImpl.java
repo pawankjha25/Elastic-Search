@@ -23,65 +23,49 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 	private static Client client = null;
 
-	public ZdalyQueryServicesImpl()
-	{
+	public ZdalyQueryServicesImpl() {
 		ZdalyQueryServicesImpl.client = ElasticSearchUtility.addClient();
 	}
 
 	@Override
-	public BucketResponseList produceBuckets( String queryText ) throws Exception
-	{
-		try
-		{
+	public BucketResponseList produceBuckets(String queryText) throws Exception {
+		try {
 			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
 					env.getProperty("es.search_object"), queryText, 1, 1000, App.LOCATIONS);
-		}
-		catch( Exception e )
-		{
+		} catch (Exception e) {
 			throw e;
 		}
 	}
 
 	@Override
-	public SearchOutput matchQuery( String queryText ) throws Exception
-	{
+	public SearchOutput matchQuery(String queryText) throws Exception {
 		return null;
 	}
 
 	@Override
-	public SearchOutput queryWithFilters( FilterRequest request ) throws Exception
-	{
+	public SearchOutput queryWithFilters(FilterRequest request) throws Exception {
 		SearchOutput response = new SearchOutput();
-		try
-		{
-			if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
-			{
+		try {
+			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
 				response = Filtering.getFilteringResults(request, env.getProperty("es.index_name"),
 						env.getProperty("es.search_object"), client);
 			}
 
-		}
-		catch( Exception e )
-		{
+		} catch (Exception e) {
 			throw e;
 		}
 		return response;
 	}
 
 	@Override
-	public QueryResultsList queryResults( FilterRequest request ) throws Exception
-	{
+	public QueryResultsList queryResults(FilterRequest request) throws Exception {
 		QueryResultsList response = new QueryResultsList();
-		try
-		{
-			if( request.getSearchText() != null && !request.getSearchText().isEmpty() )
-			{
+		try {
+			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
 				response = Results.getResults(request, env.getProperty("es.index_name"),
 						env.getProperty("es.search_object"), client);
 			}
-		}
-		catch( Exception e )
-		{
+		} catch (Exception e) {
 			throw e;
 		}
 		return response;
