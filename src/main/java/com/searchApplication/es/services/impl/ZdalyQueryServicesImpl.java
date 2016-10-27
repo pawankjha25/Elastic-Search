@@ -13,6 +13,8 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+
+import com.searchApplication.App;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.QueryResultsList;
@@ -44,11 +46,10 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	@Override
 	public BucketResponseList produceBuckets( String queryText ) throws Exception
 	{
-		Set<String> locations =  LocationLoader.getLocationsFromFile( env.getProperty("es.index_name"));
 		try
 		{
 			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
-					env.getProperty("es.search_object"), queryText, 1, 1000, locations);
+					env.getProperty("es.search_object"), queryText, 1, 1000, App.LOCATIONS);
 		}
 		catch( Exception e )
 		{
