@@ -27,7 +27,7 @@ public class ResultsResponse {
 
 		try
 		{
-			Set<String> type=new TreeSet<>();
+			Set<String> type = new TreeSet<>();
 
 			InternalNested database = tFdocs.getAggregations().get("database");
 			Terms dbName = database.getAggregations().get("dbname");
@@ -109,14 +109,14 @@ public class ResultsResponse {
 						{
 							boolean valid = true;
 							Results data = mapData.get(key);
-							for( String locationType : locationMap.keySet() )
+							/*for( String locationType : locationMap.keySet() )
 							{
-								if( !locationType.equals("parent")
+								if( !locationType.equals("parent") && !locationMap.get(locationType).contains("OVERALL")
 										&& data.getLocations().get(locationType) == null )
 								{
 									valid = false;
 								}
-							}
+							}*/
 							if( results.size() < length && valid )
 							{
 								QueryResults qr = new QueryResults();

@@ -84,7 +84,7 @@ public class ResultsAggregation {
 				{
 					return AggregationBuilders.nested("database").path("db")
 							.subAggregation(AggregationBuilders.terms("dbname").field("db.db_name").size(100)
-							.subAggregation(AggregationBuilders.terms("dbproperties").field("db.properties").size(100)
+							.subAggregation(AggregationBuilders.terms("dbproperties").field("db.properties").size(500)
 							.subAggregation(AggregationBuilders.reverseNested("dbReverse")
 									
 							.subAggregation(AggregationBuilders.nested("attributes").path("attributes")

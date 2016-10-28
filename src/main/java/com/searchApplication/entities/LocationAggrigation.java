@@ -7,6 +7,10 @@ public class LocationAggrigation implements Comparable<LocationAggrigation>
 {
 
     private String locationParent;
+    
+    private long seriesIds;
+    
+    private int level;
 
     private Set<String> locations;
 
@@ -35,5 +39,25 @@ public class LocationAggrigation implements Comparable<LocationAggrigation>
     {
         return 1;
     }
+
+	public long getSeriesIds()
+	{
+		return seriesIds;
+	}
+
+	public void setSeriesIds( long seriesIds )
+	{
+		this.seriesIds = seriesIds;
+	}
+
+	public int getLevel()
+	{
+		return level;
+	}
+
+	public void setLevel( int level )
+	{
+		this.level = level;
+	}
 
 }
