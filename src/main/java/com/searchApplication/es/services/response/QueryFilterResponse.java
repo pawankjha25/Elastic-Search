@@ -13,6 +13,7 @@ import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
+import com.google.gson.Gson;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.SearchOutput;
@@ -63,11 +64,10 @@ public class QueryFilterResponse {
 				}
 
 			}
-/*			ReverseNested reverseAtt = nestedAttributes.getAggregations().get("attReverse");
-			InternalNested locations = reverseAtt.getAggregations().get("locations");
-			ValueCount locationIds = locations.getAggregations().get("locationid");
-			response.setTotalSeriesIds(locationIds.getValue());
-*/			response.setStratum(stratum);
+			/* ReverseNested reverseAtt = nestedAttributes.getAggregations().get("attReverse");
+			 * InternalNested locations = reverseAtt.getAggregations().get("locations"); ValueCount
+			 * locationIds = locations.getAggregations().get("locationid");
+			 * response.setTotalSeriesIds(locationIds.getValue()); */ response.setStratum(stratum);
 			response.setStratumList(stratumList);
 		}
 		catch( Exception e )
@@ -86,6 +86,7 @@ public class QueryFilterResponse {
 		Map<String, Set<LocationAggrigation>> locationBucketFinal = new HashMap<String, Set<LocationAggrigation>>();
 		try
 		{
+			System.out.println(new Gson().toJson(map));
 			InternalNested location_terms = tFdocs.getAggregations().get("locations");
 
 			Terms locType = location_terms.getAggregations().get("locationType");
@@ -125,7 +126,15 @@ public class QueryFilterResponse {
 							locationName.add(bucket6.getKeyAsString());
 
 							ValueCount locationIds = bucket6.getAggregations().get("locationid");
-							seriesIds = seriesIds + locationIds.getValue();
+							if( map != null && map.get(locTypeBucket.getKeyAsString()) != null
+									&& mapParents.get("all").contains(bucket6.getKeyAsString()) )
+							{
+								seriesIds = seriesIds + locationIds.getValue();
+							}
+							else if( map != null && map.get(locTypeBucket.getKeyAsString()) == null)
+							{
+								seriesIds = seriesIds + locationIds.getValue();
+							}
 						}
 						if( locationName != null && !locationName.isEmpty() )
 						{
