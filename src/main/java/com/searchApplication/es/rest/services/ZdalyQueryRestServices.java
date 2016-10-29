@@ -187,7 +187,6 @@ public class ZdalyQueryRestServices {
 				sql.append("  and dttm < " + "\'" + toDate + "\'");
 			}
 			LOG.debug(sql.toString());
-			LOG.info(sql.toString());
 			ResultSet rs = session.execute(sql.toString(), series_Id, db_name);
 			Iterator<Row> itr = rs.iterator();
 			while (itr.hasNext())
