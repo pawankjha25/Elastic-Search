@@ -3,9 +3,12 @@ package com.searchApplication.es.search.bucketing;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.lucene.util.AttributeReflector;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -20,6 +23,10 @@ import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.utils.StopWords;
 
 public class AttributeBucketer {
+
+	private static final String ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED = "attributes.attribute_value.shingled";
+
+	private static final String ATTRIBUTES = "attributes";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AttributeBucketer.class);
 
@@ -39,23 +46,22 @@ public class AttributeBucketer {
 			int hitsInScroll) {
 
 		hitsInScroll = correctLoops(query, hitsInScroll);
-		LOGGER.debug("Fetch {} rows", hitsInScroll );
+		LOGGER.debug("Fetch {} rows", hitsInScroll);
 		LOGGER.debug("Start query ");
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
-				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
-						null)
-				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
+				.setFetchSource(new String[] { "sector", "sub_sector", "super_region" }, null).setSize(hitsInScroll)
+				.setScroll(new TimeValue(160000));
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
-		List<Bucket> bucketList = new ArrayList<Bucket>();
-		Set<String> hits = new HashSet<String>();
-		Set<String> misses = new HashSet<String>();
+		LOGGER.debug(" response {}", sr.toString());
+
+		List<Bucket> bucketList = new LinkedList<Bucket>();
 		while ((hitCounter < hitsInScroll * loops) && (sr.getHits().getHits().length > 0)) {
 			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
 			for (SearchHit hit : sr.getHits()) {
 				try {
-					Bucket b = processHitsToBuckets(hit, query, hits, misses);
+					Bucket b = processHitsToBuckets(hit, query, hitCounter);
 					if (b != null) {
 						if (bucketList.contains(b)) {
 							bucketList.get(bucketList.indexOf(b)).incrementCount();
@@ -75,7 +81,7 @@ public class AttributeBucketer {
 				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 			}
 		}
-
+		System.out.println(bucketList);
 		Collections.sort(bucketList);
 		LOGGER.debug(" list {}", bucketList);
 
@@ -91,36 +97,27 @@ public class AttributeBucketer {
 			}
 		}
 
-		return hits/count;
+		return hits / count;
 	}
 
-	private static Bucket processHitsToBuckets(SearchHit hit, String query, Set<String> checked, Set<String> misses) {
-		List<String> bucketTerms = new ArrayList<String>();
+	private static Bucket processHitsToBuckets(SearchHit hit, String query, int counter) {
+		Set<String> bucketTerms = new HashSet<String>();
 		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
 				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
-		Set<String> localOK = new HashSet<String>();
-		for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes")) {
-			if (!misses.contains(attributeData.get("attribute_value"))) {
-				bucketTerms.add(attributeData.get("attribute_value"));
+
+		if (hit.getInnerHits().containsKey(ATTRIBUTES)) {
+			for (SearchHit innerHit : hit.getInnerHits().get(ATTRIBUTES)) {
+				bucketTerms.add((String) innerHit.getSource().get("attribute_value"));
 			}
 		}
 		if (hit.getInnerHits().containsKey(LOCATIONS)) {
 			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
-				if (!misses.contains(innerHit.getSource().get(LOCATION_NAME))) {
-					bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
-				}
+				bucketTerms.add(innerHit.getSource().get(LOCATION_NAME) + "_LOC");
 			}
 		}
 
-		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
-
-		if (b != null) {
-			for (String terms : bucketTerms) {
-				if (!b.getBucketTerms().contains(terms)) {
-					misses.add(terms);
-				}
-			}
-			b.getBucketTerms().addAll(localOK);
+		Bucket b = new Bucket(bucketTerms, Integer.MAX_VALUE - counter, 0, bucketTerms.size() / 3);
+		if (bucketTerms.size() > 0) {
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
@@ -133,14 +130,22 @@ public class AttributeBucketer {
 		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 		q.setFetchSource("location_name", null);
 		q.setSize(10);
-		return QueryBuilders.boolQuery()
-				.should(QueryBuilders.queryStringQuery(query)
-						.analyzer(
-								N_GRAM_ANALYZER)
-						.defaultField(SEARCH_FIELD))
-				.should(QueryBuilders.nestedQuery(LOCATIONS,
-						QueryBuilders.matchQuery("locations.location_name.shingled",
-								query.toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
-						.innerHit(new QueryInnerHitBuilder()));
+
+		QueryInnerHitBuilder qi = new QueryInnerHitBuilder();
+		qi.setFetchSource("attribute_value", null);
+		qi.setSize(50);
+
+		QueryBuilder b = QueryBuilders.boolQuery().must(
+				QueryBuilders
+						.nestedQuery(ATTRIBUTES, QueryBuilders.boolQuery()
+								.must(QueryBuilders.queryStringQuery(query).field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED)
+										.analyzer("shingle_analyzer").boost(10))
+								.must(QueryBuilders.queryStringQuery(query).field("attributes.attribute_value.ngramed")
+										.analyzer("n_gram_analyzer")))
+						.innerHit(qi).scoreMode("sum"))
+				.should(QueryBuilders.nestedQuery(LOCATIONS, QueryBuilders.termsQuery("locations.location_name.raw",
+						query.toLowerCase().replaceAll("apple", "").split(" "))).innerHit(q));
+		return b;
 	}
+
 }

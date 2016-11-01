@@ -20,8 +20,23 @@
 					},
 					"attribute_value": {
 						"type": "string",
-						"index": "not_analyzed"
+						"fields": {
+							"ngramed": {
+								"type": "string",
+								"analyzer": "n_gram_analyzer"
+							},
+							"raw": {
+								"type": "string",
+								"index": "not_analyzed"
+							},
+							"shingled": {
+								"type": "string",
+								"analyzer": "shingle_analyzer"
+							}
+
+						}
 					}
+
 				}
 			},
 			"db": {
