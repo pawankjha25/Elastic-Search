@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -17,6 +18,8 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.internal.InternalSearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +81,13 @@ public class AttributeBucketer {
 				} catch (Exception e) {
 					System.out.println(hitCounter);
 					System.out.println(hit.getSourceAsString());
+					
 					System.out.println(hit.getInnerHits());
+					for(Map.Entry<String, SearchHits> h: hit.getInnerHits().entrySet()) {
+						for (SearchHit s: h.getValue().getHits()) {
+							System.out.println(s.getSourceAsString());
+						}
+					}
 
 					LOGGER.error("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
