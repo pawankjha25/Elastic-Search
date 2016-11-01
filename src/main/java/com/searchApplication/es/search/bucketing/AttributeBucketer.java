@@ -76,7 +76,8 @@ public class AttributeBucketer {
 					} else
 						hitCounter++;
 				} catch (Exception e) {
-					System.out.println(hit);
+					System.out.println(hitCounter);
+					System.out.println(hit.getSourceAsString());
 					LOGGER.error("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
 				}
