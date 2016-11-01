@@ -162,7 +162,7 @@ public class AttributeBucketer {
 									.field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED).analyzer("shingle_analyzer").boost(10))
 									.must(QueryBuilders.queryStringQuery(query[0])
 											.field("attributes.attribute_value.ngramed").analyzer("n_gram_analyzer")))
-					.innerHit(qi).scoreMode("max");
+					.innerHit(qi).scoreMode("avg");
 			bool.must(attQuery);
 			srb.setQuery(bool);
 		}
