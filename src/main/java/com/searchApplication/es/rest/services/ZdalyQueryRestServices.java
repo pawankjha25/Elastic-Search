@@ -1,9 +1,12 @@
 package com.searchApplication.es.rest.services;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,9 +20,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,38 +42,47 @@ import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
 import com.searchApplication.utils.ZdalyCassandraConnection;
 
+import zdaly.etl.util.HashUtil;
+
 @Path("/zdaly")
 @RestController
-public class ZdalyQueryRestServices {
+@PropertySource("sample-key.properties")
+public class ZdalyQueryRestServices
+{
+	@Value("${zDaly.salt}")
+	private String salt;
 
 	@Autowired
 	private ZdalyQueryServices zdalyQueryServices;
 	static final Logger LOG = LoggerFactory.getLogger(ZdalyQueryRestServices.class);
 
-
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/wilcard-search/{queryString}")
-	public TransactionResponse produceBucekts(
-			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
+	public TransactionResponse produceBucekts(@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception
+	{
 
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
 		transactionResponse.setResponseMessage("Successfull");
 		transactionResponse.setResponseType("Object");
-		try {
+		try
+		{
 			long startTime = System.currentTimeMillis();
 			BucketResponseList results = zdalyQueryServices.produceBuckets(queryString);
 
-			if (results != null) {
+			if (results != null)
+			{
 				transactionResponse.setResponseEntity(results);
-			} else {
+			} else
+			{
 				transactionResponse.setResponseMessage("No results found");
 			}
 			long endTime = System.currentTimeMillis();
 
 			System.out.println("Service took - " + (endTime - startTime) + " milliseconds to execute");
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			e.printStackTrace();
 			throw e;
 		}
@@ -77,25 +92,29 @@ public class ZdalyQueryRestServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/match-query/{queryString}")
-	public TransactionResponse matchQuery(
-			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
+	public TransactionResponse matchQuery(@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception
+	{
 
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
 		transactionResponse.setResponseMessage("Successfull");
 		transactionResponse.setResponseType("Object");
-		try {
+		try
+		{
 			long startTime = System.currentTimeMillis();
 			SearchOutput results = zdalyQueryServices.matchQuery(queryString);
-			if (results != null) {
+			if (results != null)
+			{
 				transactionResponse.setResponseEntity(results);
-			} else {
+			} else
+			{
 				transactionResponse.setResponseMessage("No results found");
 			}
 			long endTime = System.currentTimeMillis();
 
 			System.out.println("Service took - " + (endTime - startTime) + " milliseconds to execute");
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			e.printStackTrace();
 			throw e;
 		}
@@ -103,27 +122,34 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
-	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Consumes(
+	{ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Produces(
+	{ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/query-with-filters")
-	public TransactionResponse queryWithFilters(FilterRequest filterRequest) throws Exception {
+	public TransactionResponse queryWithFilters(FilterRequest filterRequest) throws Exception
+	{
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
 		transactionResponse.setResponseMessage("Successfull");
 		transactionResponse.setResponseType("Object");
-		try {
+		try
+		{
 			long startTime = System.currentTimeMillis();
 			SearchOutput results = zdalyQueryServices.queryWithFilters(filterRequest);
-			if (results != null) {
+			if (results != null)
+			{
 				transactionResponse.setResponseEntity(results);
-			} else {
+			} else
+			{
 				transactionResponse.setResponseMessage("No results found");
 			}
 			long endTime = System.currentTimeMillis();
 
 			System.out.println("Service took - " + (endTime - startTime) + " milliseconds to execute");
 
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			e.printStackTrace();
 			throw e;
 		}
@@ -131,38 +157,47 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
-	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Consumes(
+	{ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Produces(
+	{ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/query-results")
-	public TransactionResponse queryResults(FilterRequest filterRequest) throws Exception {
+	public TransactionResponse queryResults(FilterRequest filterRequest) throws Exception
+	{
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
 		transactionResponse.setResponseMessage("Successfull");
 		transactionResponse.setResponseType("Object");
-		try {
+		try
+		{
 			long startTime = System.currentTimeMillis();
 			QueryResultsList results = zdalyQueryServices.queryResults(filterRequest);
-			if (results != null) {
+			if (results != null)
+			{
 				transactionResponse.setResponseEntity(results);
-			} else {
+			} else
+			{
 				transactionResponse.setResponseMessage("No results found");
 			}
 			long endTime = System.currentTimeMillis();
 
 			System.out.println("Service took - " + (endTime - startTime) + " milliseconds to execute");
 
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			e.printStackTrace();
 			throw e;
 		}
 		return transactionResponse;
 	}
-	
+
 	@POST
-	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Consumes(
+	{ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Produces(
+	{ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/get-time-series-data")
-	public TransactionResponse getTimeSeriesData(CassandraFilterRequest request) throws UnknownHostException
+	public TransactionResponse getTimeSeriesData(CassandraFilterRequest request) throws Exception
 	{
 		List<TimeSeriesEntity> list = new ArrayList<>();
 		TransactionResponse transactionResponse = new TransactionResponse();
@@ -172,7 +207,6 @@ public class ZdalyQueryRestServices {
 		try
 		{
 			LOG.info(request.toString());
-			BigInteger series_Id = new BigInteger(request.getSeriesId());
 			String db_name = request.getDbName();
 			String fromDate = request.getFromDate();
 			String toDate = request.getToDate();
@@ -187,24 +221,30 @@ public class ZdalyQueryRestServices {
 				sql.append("  and dttm < " + "\'" + toDate + "\'");
 			}
 			LOG.debug(sql.toString());
-			ResultSet rs = session.execute(sql.toString(), series_Id, db_name);
+			String series_id = HashUtil.encode(request.getSeriesId(), this.salt);
+			ResultSet rs = session.execute(sql.toString(), series_id, db_name);
 			Iterator<Row> itr = rs.iterator();
 			while (itr.hasNext())
 			{
 				Row row = itr.next();
-				list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(5),row.getString(4)));
+				list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(5), row.getString(4)));
 			}
 			transactionResponse.setResponseEntity(list);
-		}
-		catch(Exception exp)
+		} catch (Exception exp)
 		{
-			StringWriter sw = new StringWriter();
-			PrintWriter prnt=new PrintWriter(sw);
-			exp.printStackTrace(prnt);
-			LOG.error(sw.toString());
+			handleException(exp);
 			transactionResponse.setStatus(HttpStatus.OK.toString());
-			transactionResponse.setResponseMessage("Error : " +exp.getMessage());
+			transactionResponse.setResponseMessage("Error : " + exp.getMessage());
 		}
 		return transactionResponse;
+	}
+
+	public void handleException(Exception exp) throws IOException
+	{
+		StringWriter sw = new StringWriter();
+		PrintWriter prnt = new PrintWriter(sw);
+		exp.printStackTrace(prnt);
+		LOG.error(sw.toString());
+		sw.close();
 	}
 }
