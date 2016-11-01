@@ -83,7 +83,9 @@ public class AttributeBucketer {
 					System.out.println(hit.getSourceAsString());
 					
 					System.out.println(hit.getInnerHits());
+					System.out.println(hit.getInnerHits().keySet());
 					for(Map.Entry<String, SearchHits> h: hit.getInnerHits().entrySet()) {
+						System.out.println(h);
 						for (SearchHit s: h.getValue().getHits()) {
 							System.out.println(s.getSourceAsString());
 						}
