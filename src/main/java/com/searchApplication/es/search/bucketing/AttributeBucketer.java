@@ -81,7 +81,6 @@ public class AttributeBucketer {
 				} catch (Exception e) {
 					System.out.println(hitCounter);
 					System.out.println(hit.getSourceAsString());
-					
 					System.out.println(hit.getInnerHits());
 					System.out.println(hit.getInnerHits().keySet());
 					for(Map.Entry<String, SearchHits> h: hit.getInnerHits().entrySet()) {
@@ -91,7 +90,6 @@ public class AttributeBucketer {
 						}
 					}
 
-					LOGGER.error("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
 				}
 			}
