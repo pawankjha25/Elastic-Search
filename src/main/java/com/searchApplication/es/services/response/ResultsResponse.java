@@ -1,9 +1,6 @@
 package com.searchApplication.es.services.response;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -11,180 +8,161 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
 import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import com.searchApplication.entities.QueryResults;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.Results;
-import com.searchApplication.es.entities.Data;
 
 public class ResultsResponse {
 
 	public static QueryResultsList getResults( SearchResponse tFdocs, Map<String, Set<String>> locationMap,
-			String stratumName ) throws Exception
+			String stratumName, Boolean location ) throws Exception
 	{
 		QueryResultsList response = new QueryResultsList();
-		Set<QueryResults> results = new TreeSet<QueryResults>();
-		int length = 9999;
-		if(stratumName.contains("*") && !stratumName.replaceAll("\\*", "").isEmpty() )
+		Set<QueryResults> results = new TreeSet<>();
+		int length = 500;
+		if( stratumName.contains("*") && !stratumName.replaceAll("\\*", "").isEmpty() )
 		{
 			length = Integer.parseInt(stratumName.replaceAll("\\*", ""));
 		}
 
 		try
 		{
+			Set<String> type=new TreeSet<>();
 
-			InternalNested attributes = tFdocs.getAggregations().get("attributes");
-			Terms attTypes = attributes.getAggregations().get("attTypes");
-			for( Terms.Bucket attTypeBucket : attTypes.getBuckets() )
+			InternalNested database = tFdocs.getAggregations().get("database");
+			Terms dbName = database.getAggregations().get("dbname");
+			for( Terms.Bucket dbNameBucket : dbName.getBuckets() )
 			{
-				if( attTypeBucket != null && attTypeBucket.getAggregations() != null
-						&& attTypeBucket.getAggregations().get("attributesValues") != null )
+				Terms dbproperties = dbNameBucket.getAggregations().get("dbproperties");
+				for( Terms.Bucket dbpropertiesBucket : dbproperties.getBuckets() )
 				{
-					Terms attValues = attTypeBucket.getAggregations().get("attributesValues");
-					Collection<Bucket> attValuesBuckets = attValues.getBuckets();
-					for( Terms.Bucket attValuesBucket : attValuesBuckets )
+					ReverseNested reverseDb = dbpropertiesBucket.getAggregations().get("dbReverse");
+					//get the stratums for the row
+					Map<String, String> stratums = new HashMap<>();
+					InternalNested attributes = reverseDb.getAggregations().get("attributes");
+					Terms attTypes = attributes.getAggregations().get("attTypes");
+					for( Terms.Bucket attTypesBucket : attTypes.getBuckets() )
 					{
-						if( attValuesBucket.getKeyAsString() != null
-								&& !attValuesBucket.getKeyAsString().equals("null") )
+						Terms attributesValues = attTypesBucket.getAggregations().get("attributesValues");
+						for( Terms.Bucket attributesValuesBucket : attributesValues.getBuckets() )
 						{
-							QueryResults qr = new QueryResults();
-							List<Data> data = new ArrayList<Data>();
-							Map<String, Set<Results>> seriesId = new HashMap();
-							Data d = new Data();
-							d.setStratumName(attTypeBucket.getKeyAsString());
-							d.setDetails(attValuesBucket.getKeyAsString());
+							stratums.put(attTypesBucket.getKeyAsString(), attributesValuesBucket.getKeyAsString());
+						}
+					}
 
-							ReverseNested reverseAtt = attValuesBucket.getAggregations().get("attReverse");
-							InternalNested database = reverseAtt.getAggregations().get("database");
-							Terms dbNameBuckets = database.getAggregations().get("dbname");
-
-							for( Terms.Bucket dbNameBucket : dbNameBuckets.getBuckets() )
+					if( location )
+					{
+						Map<Long, Results> mapData = new HashMap<>();
+						InternalNested locations = reverseDb.getAggregations().get("locations");
+						Terms locationParentBuckets = locations.getAggregations().get("locationParent");
+						for( Terms.Bucket locationParentBucket : locationParentBuckets.getBuckets() )
+						{
+							Terms locationnameBuckets = locationParentBucket.getAggregations().get("locationname");
+							for( Terms.Bucket locationnameBucket : locationnameBuckets.getBuckets() )
 							{
-								qr.setDbName(dbNameBucket.getKeyAsString());
-								if( dbNameBucket != null && dbNameBucket.getAggregations() != null
-										&& dbNameBucket.getAggregations().get("dbproperties") != null )
+								//System.out.println(locationnameBucket.getKeyAsString());
+								Terms locationidBuckets = locationnameBucket.getAggregations().get("locationid");
+								for( Terms.Bucket locationidBucket : locationidBuckets.getBuckets() )
 								{
-									Terms db_properties = dbNameBucket.getAggregations().get("dbproperties");
-									Collection<Bucket> dbPropertiesBuckets = db_properties.getBuckets();
-									for( Terms.Bucket dbPropertiesBucket : dbPropertiesBuckets )
+									Results data = null;
+									Map<String, String> locationData = null;
+									long seriesId = new Long(locationidBucket.getKeyAsString());
+									if( mapData.containsKey(seriesId) )
 									{
-										qr.setPropertyId(new Long(dbPropertiesBucket.getKeyAsString()));
-										ReverseNested reverseDb = dbPropertiesBucket.getAggregations().get("dbReverse");
-										InternalNested sectorTerms = reverseDb.getAggregations().get("locations");
-										Terms locationTypeBuckets = sectorTerms.getAggregations().get("locationType");
+										data = mapData.get(seriesId);
+										locationData = data.getLocations();
+									}
+									else
+									{
+										data = new Results();
+										locationData = new HashMap<>();
+										data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
+									}
 
-										for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
+									Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
+									boolean valid = true;
+									for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
+									{
+										if( (locationMap.get(locationTypeBucket.getKeyAsString()) != null
+												&& locationMap.get(locationTypeBucket.getKeyAsString())
+														.contains(locationnameBucket.getKeyAsString())
+												|| locationMap.get(locationTypeBucket.getKeyAsString()) == null) )
 										{
-											Terms locationParentBuckets = locationTypeBucket.getAggregations()
-													.get("locationParent");
-											String locationType = locationTypeBucket.getKeyAsString();
-											String locationName = "";
-											String locationParent = "";
-											for( Terms.Bucket locationParentBucket : locationParentBuckets
-													.getBuckets() )
-											{
-												locationParent = locationParentBucket.getKeyAsString();
-												Terms locationNameBuckets = locationParentBucket.getAggregations()
-														.get("locationname");
-
-												for( Terms.Bucket locationNameBucket : locationNameBuckets
-														.getBuckets() )
-												{
-
-													locationName = locationNameBucket.getKeyAsString();
-													if( locationMap != null && locationMap.keySet() != null )
-													{
-														if( locationMap.get(locationTypeBucket.getKeyAsString()) != null
-																&& locationMap.get(locationTypeBucket.getKeyAsString())
-																		.contains(locationName)
-																&& locationMap.get("parent").contains(locationParent) )
-														{
-															Terms seriesIdBuckets = locationNameBucket.getAggregations()
-																	.get("locationid");
-
-															Set<Results> res = new TreeSet<>();
-															int size = 0;
-															for( Terms.Bucket seriesIdBucket : seriesIdBuckets
-																	.getBuckets() )
-															{
-																if( length > size && res.size() < length )
-																{
-																	Results result = new Results();
-																	result.setLocationName(locationName);
-																	result.setLocationParent(locationParent);
-																	result.setSeriesId(
-																			new Long(seriesIdBucket.getKeyAsString()));
-																	res.add(result);
-																	size++;
-																}
-															}
-
-															if( locationType != null
-																	&& seriesId.get(locationType) != null )
-															{
-																for( Results place : seriesId.get(locationType) )
-																{
-																	if( res.size() < length )
-																	{
-																		res.add(place);
-																	}
-																	else
-																	{
-																		break;
-																	}
-																}
-															}
-															seriesId.put(locationType, res);
-														}
-													}
-													else
-													{
-														Terms seriesIdBuckets = locationNameBucket.getAggregations()
-																.get("locationid");
-
-														Set<Results> res = new TreeSet<>();
-
-														int size = 0;
-														for( Terms.Bucket seriesIdBucket : seriesIdBuckets
-																.getBuckets() )
-														{
-															if( length > size && res.size() < length )
-															{
-																Results result = new Results();
-																result.setLocationName(locationName);
-																result.setLocationParent(locationParent);
-																result.setSeriesId(
-																		new Long(seriesIdBucket.getKeyAsString()));
-																res.add(result);
-															}
-														}
-
-														if( locationType != null && seriesId.get(locationType) != null )
-														{
-															for( Results place : seriesId.get(locationType) )
-															{
-																if( res.size() < length )
-																{
-																	res.add(place);
-																}
-																else
-																{
-																	break;
-																}
-															}
-														}
-														seriesId.put(locationType, res);
-													}
-												}
-											}
+											type.add(locationTypeBucket.getKeyAsString());
+											locationData.put(locationTypeBucket.getKeyAsString(),
+													locationnameBucket.getKeyAsString());
 										}
-										d.setSeriesId(seriesId);
+										else
+										{
+											valid = false;
+										}
+									}
+									if( valid )
+									{
+										data.setLocations(locationData);
+										mapData.put(seriesId, data);
 									}
 								}
 							}
-							data.add(d);
-							qr.setData(data);
-							results.add(qr);
+						}
+						for( Long key : mapData.keySet() )
+						{
+							boolean valid = true;
+							Results data = mapData.get(key);
+							for( String locationType : locationMap.keySet() )
+							{
+								if( !locationType.equals("parent")
+										&& data.getLocations().get(locationType) == null )
+								{
+									valid = false;
+								}
+							}
+							if( results.size() < length && valid )
+							{
+								QueryResults qr = new QueryResults();
+								qr.setDbName(dbNameBucket.getKeyAsString());
+								qr.setPropertyId(new Long(dbpropertiesBucket.getKeyAsString()));
+								qr.setStratums(stratums);
+								qr.setData(data);
+								results.add(qr);
+							}
+						}
+					}
+					else
+					{
+						InternalNested locations = reverseDb.getAggregations().get("locations");
+						Terms locationidBuckets = locations.getAggregations().get("locationid");
+						for( Terms.Bucket locationidBucket : locationidBuckets.getBuckets() )
+						{
+							Results data = new Results();
+							Map<String, String> locationData = new HashMap<>();
+							data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
+
+							Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
+							for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
+							{
+								Terms locationname = locationTypeBucket.getAggregations().get("locationname");
+								for( Terms.Bucket locationnameBucket : locationname.getBuckets() )
+								{
+									locationData.put(locationTypeBucket.getKeyAsString(),
+											locationnameBucket.getKeyAsString());
+								}
+
+							}
+							if( results.size() < length )
+							{
+								QueryResults qr = new QueryResults();
+								qr.setDbName(dbNameBucket.getKeyAsString());
+								qr.setPropertyId(new Long(dbpropertiesBucket.getKeyAsString()));
+								qr.setStratums(stratums);
+								data.setLocations(locationData);
+								qr.setData(data);
+								results.add(qr);
+							}
+							else
+							{
+								break;
+							}
 						}
 					}
 				}
@@ -197,5 +175,4 @@ public class ResultsResponse {
 		}
 		return response;
 	}
-
 }

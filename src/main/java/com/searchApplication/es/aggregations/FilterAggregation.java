@@ -31,7 +31,7 @@ public class FilterAggregation {
 	}
 
 	@SuppressWarnings( "rawtypes" )
-	public static AggregationBuilder getLocationAggregation() throws Exception
+	public static AggregationBuilder getLocationAggregation( ) throws Exception
 	{
 		try
 		{
@@ -41,10 +41,10 @@ public class FilterAggregation {
 							AggregationBuilders.terms("locationType").field("locations.location_type.raw").size(100)
 
 									.subAggregation(AggregationBuilders.terms("locationParent")
-											.field("locations.location_parent.raw").size(100)
+											.field("locations.location_parent.raw").size(10000)
 
 											.subAggregation(AggregationBuilders.terms("locationName")
-													.field("locations.location_name.raw").size(100))));
+													.field("locations.location_name.raw").size(10000))));
 		}
 		catch( Exception e )
 		{

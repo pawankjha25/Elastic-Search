@@ -37,7 +37,7 @@ public class FilterQuery {
 					BoolQueryBuilder booleanQuery2 = new BoolQueryBuilder();
 					for( String value : request.getFilters().get(key) )
 					{
-						if( value != null && !value.isEmpty() )
+						if( value != null && !value.isEmpty() && !value.equalsIgnoreCase("NULL") )
 						{
 							BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
 
@@ -51,6 +51,16 @@ public class FilterQuery {
 
 							booleanQuery2.should(booleanQuery1);
 						}
+						else if( value != null && !value.isEmpty() && value.equalsIgnoreCase("NULL") )
+						{
+							BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
+
+							NestedQueryBuilder q2 = QueryBuilders.nestedQuery("attributes",
+									QueryBuilders.matchQuery("attributes.attribute_name", key));
+							booleanQuery1.mustNot(q2);
+
+							booleanQuery2.should(booleanQuery1);
+						}
 					}
 					booleanQuery.must(booleanQuery2);
 				}
@@ -58,9 +68,9 @@ public class FilterQuery {
 
 			if( request.getLocations() != null )
 			{
-				BoolQueryBuilder locationQuery = new BoolQueryBuilder();
 				for( String key : request.getLocations().keySet() )
 				{
+					BoolQueryBuilder locationQuery = new BoolQueryBuilder();
 					for( String locList : request.getLocations().get(key) )
 					{
 						String parent = locList.split(":")[0];
@@ -81,11 +91,36 @@ public class FilterQuery {
 									QueryBuilders.matchQuery("locations.location_parent", parent));
 							booleanQuery1.must(q3);
 						}
-						locationQuery.should(booleanQuery1);
+						if( request.getLocations().get(key).size() > 1 )
+						{
+							locationQuery.should(booleanQuery1);
+						}
+						else
+						{
+							locationQuery.must(booleanQuery1);
+						}
 					}
+					booleanQuery.must(locationQuery);
 				}
-				booleanQuery.must(locationQuery);
 			}
+		}
+		catch( Exception e )
+		{
+			throw e;
+		}
+		return booleanQuery;
+	}
+
+	public static BoolQueryBuilder getNotQuery( FilterRequest request, String attributeName ) throws Exception
+	{
+		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
+		try
+		{
+			booleanQuery = getQuery(request);
+			NestedQueryBuilder q2 = QueryBuilders.nestedQuery("attributes",
+					QueryBuilders.matchQuery("attributes.attribute_name", attributeName));
+			booleanQuery.mustNot(q2);
+
 		}
 		catch( Exception e )
 		{

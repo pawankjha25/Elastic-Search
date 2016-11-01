@@ -3,22 +3,23 @@ package com.searchApplication.es.search.bucketing;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.apache.lucene.util.AttributeReflector;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.utils.StopWords;
 
@@ -37,20 +38,21 @@ public class AttributeBucketer {
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
-			int hitsInScroll) {
-		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll);
+			int hitsInScroll, Set<String> locations) {
+		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll, locations);
 		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
 	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops,
-			int hitsInScroll) {
+			int hitsInScroll, Set<String> locations) {
 
 		hitsInScroll = correctLoops(query, hitsInScroll);
 		LOGGER.debug("Fetch {} rows", hitsInScroll);
 		LOGGER.debug("Start query ");
-		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type).setQuery(generateQuery(query))
+		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
 				.setFetchSource(new String[] { "sector", "sub_sector", "super_region" }, null).setSize(hitsInScroll)
 				.setScroll(new TimeValue(160000));
+		srb = generateQuery(srb, generateAttAndLocQueries(query, locations));
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
@@ -62,6 +64,7 @@ public class AttributeBucketer {
 			for (SearchHit hit : sr.getHits()) {
 				try {
 					Bucket b = processHitsToBuckets(hit, query, hitCounter);
+
 					if (b != null) {
 						if (bucketList.contains(b)) {
 							bucketList.get(bucketList.indexOf(b)).incrementCount();
@@ -78,6 +81,7 @@ public class AttributeBucketer {
 				}
 			}
 			if (hitCounter < hitsInScroll * loops) {
+
 				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 			}
 		}
@@ -101,7 +105,7 @@ public class AttributeBucketer {
 	}
 
 	private static Bucket processHitsToBuckets(SearchHit hit, String query, int counter) {
-		Set<String> bucketTerms = new HashSet<String>();
+		Set<String> bucketTerms = new LinkedHashSet<String>();
 		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
 				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
 
@@ -122,30 +126,59 @@ public class AttributeBucketer {
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
 		}
+
 		return b;
 	}
 
-	private static QueryBuilder generateQuery(String query) {
+	private static String[] generateAttAndLocQueries(String query, Set<String> locations) {
+		String loc = "";
+		String atts = "";
+		String[] splits = query.split(" ");
+		for (int i = 0; i < splits.length; i++) {
 
-		QueryInnerHitBuilder q = new QueryInnerHitBuilder();
-		q.setFetchSource("location_name", null);
-		q.setSize(10);
+			if (locations.contains(splits[i])) {
+				loc += splits[i] + "  ";
+			} else if (splits.length > i + 1 && locations.contains(splits[i] + " " + splits[i + 1])) {
+				loc += splits[i] + "  " + splits[i + 1];
+				i++;
+			} else {
+				atts += splits[i] + " ";
+			}
 
-		QueryInnerHitBuilder qi = new QueryInnerHitBuilder();
-		qi.setFetchSource("attribute_value", null);
-		qi.setSize(50);
+		}
+		return new String[] { atts, loc };
+	}
 
-		QueryBuilder b = QueryBuilders.boolQuery().must(
-				QueryBuilders
-						.nestedQuery(ATTRIBUTES, QueryBuilders.boolQuery()
-								.must(QueryBuilders.queryStringQuery(query).field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED)
-										.analyzer("shingle_analyzer").boost(10))
-								.must(QueryBuilders.queryStringQuery(query).field("attributes.attribute_value.ngramed")
-										.analyzer("n_gram_analyzer")))
-						.innerHit(qi).scoreMode("sum"))
-				.should(QueryBuilders.nestedQuery(LOCATIONS, QueryBuilders.termsQuery("locations.location_name.raw",
-						query.toLowerCase().replaceAll("apple", "").split(" "))).innerHit(q));
-		return b;
+	private static SearchRequestBuilder generateQuery(SearchRequestBuilder srb, String[] query) {
+
+		BoolQueryBuilder bool = QueryBuilders.boolQuery();
+		if (!query[0].equals("")) {
+			QueryInnerHitBuilder qi = new QueryInnerHitBuilder();
+			qi.setFetchSource("attribute_value", null);
+			qi.setSize(50);
+			QueryBuilder attQuery = QueryBuilders
+					.nestedQuery(ATTRIBUTES,
+							QueryBuilders.boolQuery().must(QueryBuilders.queryStringQuery(query[0])
+									.field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED).analyzer("shingle_analyzer").boost(10))
+									.must(QueryBuilders.queryStringQuery(query[0])
+											.field("attributes.attribute_value.ngramed").analyzer("n_gram_analyzer")))
+					.innerHit(qi).scoreMode("max");
+			bool.must(attQuery);
+			srb.setQuery(bool);
+		}
+		if (!query[1].equals("")) {
+			QueryInnerHitBuilder q = new QueryInnerHitBuilder();
+			q.setFetchSource("location_name", null);
+			q.setSize(10);
+			QueryBuilder b = QueryBuilders.nestedQuery(LOCATIONS,
+					QueryBuilders.matchQuery("locations.location_name.shingled",
+							query[1].toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
+					.innerHit(new QueryInnerHitBuilder());
+
+			srb.setPostFilter(b);
+
+		}
+		return srb;
 	}
 
 }

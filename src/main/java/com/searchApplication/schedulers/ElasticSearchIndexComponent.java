@@ -10,6 +10,7 @@
 //import org.springframework.scheduling.annotation.EnableScheduling;
 //import org.springframework.scheduling.annotation.Scheduled;
 //import org.springframework.stereotype.Component;
+//import com.google.gson.Gson;
 //import com.searchApplication.es.entities.Attributes;
 //import com.searchApplication.es.entities.DatabaseInfo;
 //import com.searchApplication.es.entities.Locations;
@@ -231,7 +232,7 @@
 //			List<TimeSeriesData> list = new ArrayList<TimeSeriesData>();
 //			while( (line = br.readLine()) != null )
 //			{
-//				if( i > 30000 )
+//				if( i > 0 )
 //				{
 //					line = line.replace("\",\"", ">>>");
 //					line = line.replace("\"", "");
@@ -252,8 +253,9 @@
 //						}
 //						else
 //						{
-//
+//							System.out.println(new Gson().toJson(data));
 //							list.add(data);
+//							return;
 //						}
 //					}
 //					if( i % 500 == 0 )

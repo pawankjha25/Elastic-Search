@@ -11,6 +11,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
+import com.google.gson.Gson;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.entities.Stratum;
@@ -71,30 +72,26 @@ public class QueryFilterResponse {
 	}
 
 	public static Map<String, Set<LocationAggrigation>> getLocationAggregation( SearchResponse tFdocs,
-			Map<String, Set<String>> map ) throws Exception
+			Map<String, Set<String>> map, Map<String, Set<String>> mapParents ) throws Exception
 	{
 		Map<String, Set<LocationAggrigation>> locationBucket = new HashMap<String, Set<LocationAggrigation>>();
 		try
 		{
 			InternalNested location_terms = tFdocs.getAggregations().get("locations");
 
-			Terms locationParent = location_terms.getAggregations().get("locationType");
-
-			Collection<Terms.Bucket> parentBuckets = locationParent.getBuckets();
-			for( Terms.Bucket parentBucket : parentBuckets )
+			Terms locType = location_terms.getAggregations().get("locationType");
+			Collection<Terms.Bucket> locTypeBuckets = locType.getBuckets();
+			for( Terms.Bucket locTypeBucket : locTypeBuckets )
 			{
-				Terms locationType = parentBucket.getAggregations().get("locationParent");
+				Terms locationParent = locTypeBucket.getAggregations().get("locationParent");
+				Collection<Terms.Bucket> locParentBuckets = locationParent.getBuckets();
 				Set<LocationAggrigation> locationList = new TreeSet<LocationAggrigation>();
-				Set<String> locations;
-				Collection<Terms.Bucket> buckets5 = locationType.getBuckets();
-				for( Terms.Bucket bucket5 : buckets5 )
+				for( Terms.Bucket locParentBucket : locParentBuckets )
 				{
 					LocationAggrigation loc = new LocationAggrigation();
-					loc.setLocationParent(bucket5.getKeyAsString());
+					loc.setLocationParent(locParentBucket.getKeyAsString());
 
-					locations = new TreeSet<String>();
-
-					Terms superregion = bucket5.getAggregations().get("locationName");
+					Terms superregion = locParentBucket.getAggregations().get("locationName");
 					Collection<Terms.Bucket> buckets6 = superregion.getBuckets();
 					Set<String> locationName = new TreeSet<String>();
 					for( Terms.Bucket bucket6 : buckets6 )
@@ -103,12 +100,11 @@ public class QueryFilterResponse {
 					}
 					if( locationName != null && !locationName.isEmpty() )
 					{
-						locations.addAll(locationName);
-						loc.setLocations(locations);
+						loc.setLocations(locationName);
 						locationList.add(loc);
 					}
+					locationBucket.put(locTypeBucket.getKeyAsString(), locationList);
 				}
-				locationBucket.put(parentBucket.getKeyAsString(), locationList);
 			}
 
 			if( map != null && map.keySet() != null )
@@ -139,6 +135,28 @@ public class QueryFilterResponse {
 						}
 					}
 					locationBucket.put(locationType, newBuckets);
+				}
+				for( String locationType : locationBucket.keySet() )
+				{
+					if( !map.containsKey(locationType) )
+					{
+						Set<LocationAggrigation> listLoc = new TreeSet<>();
+						for( LocationAggrigation loc : locationBucket.get(locationType) )
+						{
+							for( String key : mapParents.keySet() )
+							{
+								if( mapParents.get(key).contains(loc.getLocationParent()) )
+								{
+									listLoc.add(loc);
+									break;
+								}
+							}
+
+						}
+						locationBucket.put(locationType, listLoc);
+
+					}
+
 				}
 			}
 

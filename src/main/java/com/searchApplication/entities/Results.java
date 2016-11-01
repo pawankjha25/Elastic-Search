@@ -1,45 +1,29 @@
 package com.searchApplication.entities;
 
-public class Results implements Comparable<Results> {
+import java.util.Map;
+
+public class Results {
 
 	private Long seriesId;
-	private String locationName;
-	private String locationParent;
-
+	private Map<String,String> locations;
+	
 	public Long getSeriesId()
 	{
 		return seriesId;
 	}
-
+	
 	public void setSeriesId( Long seriesId )
 	{
 		this.seriesId = seriesId;
 	}
-
-	public String getLocationName()
+	
+	public Map<String, String> getLocations()
 	{
-		return locationName;
+		return locations;
 	}
-
-	public void setLocationName( String locationName )
+	
+	public void setLocations( Map<String, String> locations )
 	{
-		this.locationName = locationName;
+		this.locations = locations;
 	}
-
-	@Override
-	public int compareTo( Results o )
-	{
-		return 1;
-	}
-
-	public String getLocationParent()
-	{
-		return locationParent;
-	}
-
-	public void setLocationParent( String locationParent )
-	{
-		this.locationParent = locationParent;
-	}
-
 }
