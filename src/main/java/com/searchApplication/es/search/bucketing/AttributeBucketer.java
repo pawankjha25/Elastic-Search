@@ -76,11 +76,12 @@ public class AttributeBucketer {
 					} else
 						hitCounter++;
 				} catch (Exception e) {
+					System.out.println(hit);
 					LOGGER.error("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
 				}
 			}
-			if (hitCounter < hitsInScroll * loops) {
+			if (hitCounter < hitsInScroll * loops || hitCounter == sr.getHits().getTotalHits()) {
 
 				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 			}
