@@ -13,6 +13,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.FilteredQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
@@ -43,10 +44,11 @@ public class AttributeBucketer {
 		LOGGER.debug("Start query ");
 		String[] querySplit = generateAttAndLocQueries(query, locations);
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
-				.setQuery(generateQuery(querySplit[0], querySplit[1]))
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
 				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(160000));
+
+		srb = generateQuery(srb, querySplit);
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
@@ -138,26 +140,27 @@ public class AttributeBucketer {
 		return new String[] { atts, loc };
 	}
 
-	private static QueryBuilder generateQuery(String atts, String loc) {
+	private static SearchRequestBuilder generateQuery(SearchRequestBuilder srb, String[] query) {
 
 		BoolQueryBuilder bool = QueryBuilders.boolQuery();
-
-		if (!atts.equals("")) {
-			QueryBuilder attQuery = QueryBuilders.queryStringQuery(atts).analyzer(N_GRAM_ANALYZER)
+		if (!query[0].equals("")) {
+			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).analyzer(N_GRAM_ANALYZER)
 					.defaultField(SEARCH_FIELD);
 			bool.must(attQuery);
+			srb.setQuery(bool);
 		}
-		if (!loc.equals("")) {
+		if (!query[1].equals("")) {
 			QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 			q.setFetchSource("location_name", null);
 			q.setSize(10);
-			bool.must(QueryBuilders
-					.nestedQuery(LOCATIONS,
-							QueryBuilders.matchQuery("locations.location_name.shingled",
-									loc.toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
-					.innerHit(new QueryInnerHitBuilder()));
+			QueryBuilder b = QueryBuilders.nestedQuery(LOCATIONS,
+					QueryBuilders.matchQuery("locations.location_name.shingled",
+							query[1].toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
+					.innerHit(new QueryInnerHitBuilder());
+
+			srb.setPostFilter(b);
 
 		}
-		return bool;
+		return srb;
 	}
 }
