@@ -132,10 +132,11 @@ public class AttributeBucketer {
 	}
 
 	private static BucketMetaData createBucketMetaData(SearchHit hit) {
-		String superRegion = hit.getSource().containsKey("super_region")? (String) hit.getSource().get("super_region"):"";
-		String sector = hit.getSource().containsKey("sector")? (String) hit.getSource().get("sector"):"";
-		String subSector = hit.getSource().containsKey("sub_sector")?(String) hit.getSource().get("sub_sector"):"";
-		BucketMetaData b = new BucketMetaData(superRegion,sector, subSector);
+		String superRegion = hit.getSource().containsKey("super_region") ? (String) hit.getSource().get("super_region")
+				: "";
+		String sector = hit.getSource().containsKey("sector") ? (String) hit.getSource().get("sector") : "";
+		String subSector = hit.getSource().containsKey("sub_sector") ? (String) hit.getSource().get("sub_sector") : "";
+		BucketMetaData b = new BucketMetaData(superRegion, sector, subSector);
 
 		return b;
 	}
@@ -169,10 +170,10 @@ public class AttributeBucketer {
 			QueryBuilder attQuery = QueryBuilders
 					.nestedQuery(ATTRIBUTES,
 							QueryBuilders.boolQuery().must(QueryBuilders.queryStringQuery(query[0])
-									.field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED).analyzer("shingle_analyzer").boost(10))
-//									.must(QueryBuilders.queryStringQuery(query[0])
-//											.field(ATTRIBUTES_ATTRIBUTE_VALUE_NGRAMED).analyzer(N_GRAM_ANALYZER)))
-					).innerHit(qi).scoreMode("avg");
+									.field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED).analyzer("shingle_analyzer").boost(5))
+									.must(QueryBuilders.queryStringQuery(query[0])
+											.field(ATTRIBUTES_ATTRIBUTE_VALUE_NGRAMED).analyzer(N_GRAM_ANALYZER)))
+					.innerHit(qi).scoreMode("avg");
 			bool.must(attQuery);
 			srb.setQuery(bool);
 		}

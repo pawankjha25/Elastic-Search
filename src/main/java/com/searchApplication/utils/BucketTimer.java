@@ -62,7 +62,7 @@ public class BucketTimer {
 				contain++;
 			}
 		}
-		
+
 		LOGGER.info("total on the same position {} and total contain {}", samePos, contain);
 
 	}
