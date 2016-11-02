@@ -127,9 +127,10 @@ public class AttributeBucketer {
 		for (int i = 0; i < splits.length; i++) {
 
 			if (locations.contains(splits[i])) {
-				loc += splits[i] + "  ";
+				loc += splits[i] + " ";
 			} else if (splits.length > i + 1 && locations.contains(splits[i] + " " + splits[i + 1])) {
-				loc += splits[i] + "  ";
+				loc += splits[i] + " " + splits[i + 1];
+				i++;
 			} else {
 				atts += splits[i] + " ";
 			}
