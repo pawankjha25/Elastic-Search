@@ -24,12 +24,14 @@ import com.searchApplication.es.entities.BucketResponseList;
 
 public class AttributeBucketer {
 
+	private static final String SHINGLE_ANALYZER = "shingle_analyzer";
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(AttributeBucketer.class);
 
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
 	private static final int HITS_IN_SCROLL = 500;
-	private static final String SEARCH_FIELD = "description.ngramed";
+	private static final String SEARCH_FIELD = "description.shingled";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
@@ -144,7 +146,7 @@ public class AttributeBucketer {
 
 		BoolQueryBuilder bool = QueryBuilders.boolQuery();
 		if (!query[0].equals("")) {
-			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).analyzer(N_GRAM_ANALYZER)
+			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).analyzer(SHINGLE_ANALYZER)
 					.defaultField(SEARCH_FIELD);
 			bool.must(attQuery);
 			srb.setQuery(bool);
@@ -155,7 +157,7 @@ public class AttributeBucketer {
 			q.setSize(10);
 			QueryBuilder b = QueryBuilders.nestedQuery(LOCATIONS,
 					QueryBuilders.matchQuery("locations.location_name.shingled",
-							query[1].toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
+							query[1].toLowerCase().replaceAll("apple", "")).analyzer(SHINGLE_ANALYZER))
 					.innerHit(new QueryInnerHitBuilder());
 
 			srb.setPostFilter(b);
