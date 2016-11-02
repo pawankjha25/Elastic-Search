@@ -72,9 +72,9 @@ public class BucketMetaData {
 	@Override
 	public boolean equals( Object obj )
 	{
+		BucketMetaData b = (BucketMetaData) obj;
 		if( obj instanceof BucketMetaData )
 		{
-			BucketMetaData b = (BucketMetaData) obj;
 			return sector.equals(b.getSector()) && subSector.equals(b.getSubSector())
 					&& superRegion.equals(b.getSuperRegion());
 		}

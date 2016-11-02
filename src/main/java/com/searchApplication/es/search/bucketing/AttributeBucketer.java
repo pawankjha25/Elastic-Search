@@ -83,9 +83,9 @@ public class AttributeBucketer {
 					System.out.println(hit.getSourceAsString());
 					System.out.println(hit.getInnerHits());
 					System.out.println(hit.getInnerHits().keySet());
-					for(Map.Entry<String, SearchHits> h: hit.getInnerHits().entrySet()) {
+					for (Map.Entry<String, SearchHits> h : hit.getInnerHits().entrySet()) {
 						System.out.println(h);
-						for (SearchHit s: h.getValue().getHits()) {
+						for (SearchHit s : h.getValue().getHits()) {
 							System.out.println(s.getSourceAsString());
 						}
 					}
@@ -119,9 +119,7 @@ public class AttributeBucketer {
 
 	private static Bucket processHitsToBuckets(SearchHit hit, String query, int counter) {
 		Set<String> bucketTerms = new LinkedHashSet<String>();
-		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
-				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
-
+		BucketMetaData metaData = createBucketMetaData(hit);
 		if (hit.getInnerHits().containsKey(ATTRIBUTES)) {
 			for (SearchHit innerHit : hit.getInnerHits().get(ATTRIBUTES)) {
 				bucketTerms.add((String) innerHit.getSource().get("attribute_value"));
@@ -133,12 +131,23 @@ public class AttributeBucketer {
 			}
 		}
 
-		Bucket b = new Bucket(bucketTerms, Integer.MAX_VALUE - counter, 0, bucketTerms.size() / 3);
 		if (bucketTerms.size() > 0) {
+			Bucket b = new Bucket(bucketTerms, Integer.MAX_VALUE - counter, 0, bucketTerms.size() / 3);
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
+			return b;
+		} else {
+			return null;
 		}
+
+	}
+
+	private static BucketMetaData createBucketMetaData(SearchHit hit) {
+		String superRegion = hit.getSource().containsKey("super_region")? (String) hit.getSource().get("super_region"):"";
+		String sector = hit.getSource().containsKey("sector")? (String) hit.getSource().get("sector"):"";
+		String subSector = hit.getSource().containsKey("sub_sector")?(String) hit.getSource().get("sub_sector"):"";
+		BucketMetaData b = new BucketMetaData(superRegion,sector, subSector);
 
 		return b;
 	}
