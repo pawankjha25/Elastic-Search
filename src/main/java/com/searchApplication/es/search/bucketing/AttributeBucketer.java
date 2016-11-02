@@ -148,9 +148,9 @@ public class AttributeBucketer {
 		for (int i = 0; i < splits.length; i++) {
 
 			if (locations.contains(splits[i])) {
-				loc += splits[i] + "  ";
+				loc += splits[i] + " ";
 			} else if (splits.length > i + 1 && locations.contains(splits[i] + " " + splits[i + 1])) {
-				loc += splits[i] + "  " + splits[i + 1];
+				loc += splits[i] + " " + splits[i + 1];
 				i++;
 			} else {
 				atts += splits[i] + " ";
@@ -181,10 +181,9 @@ public class AttributeBucketer {
 			QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 			q.setFetchSource("location_name", null);
 			q.setSize(10);
-			QueryBuilder b = QueryBuilders.nestedQuery(LOCATIONS,
-					QueryBuilders.matchQuery("locations.location_name.shingled",
-							query[1].toLowerCase().replaceAll("apple", "")).analyzer("shingle_analyzer"))
-					.innerHit(new QueryInnerHitBuilder());
+			QueryBuilder b = QueryBuilders
+					.nestedQuery(LOCATIONS, QueryBuilders.termsQuery("locations.location_name.raw", query[1].trim()))
+					.innerHit(q);
 
 			srb.setPostFilter(b);
 
