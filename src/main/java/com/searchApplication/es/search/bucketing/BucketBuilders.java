@@ -11,7 +11,6 @@ import com.searchApplication.utils.Stemmer;
 
 public class BucketBuilders {
 
-	private static final String LOCATION_IDENTIFIER = "_LOC";
 	private static final String SPACE_DELIMITER = " ";
 	private static List<String> STOP_LIST = Arrays.asList("a", "an", "and", "are", "as", "at", "be", "but", "by", "for",
 			"if", "in", "into", "is", "it", "no", "not", "of", "on", "or", "such", "that", "the", "their", "then",
@@ -19,7 +18,8 @@ public class BucketBuilders {
 
 	private static Stemmer STEMMER = new Stemmer();
 
-	public static Bucket createFromQueryString(String query, List<String> bucket, Set<String> hits) {
+	public static Bucket createFromQueryString(String query, Set<String> locations, List<String> bucket,
+			Set<String> hits) {
 
 		Set<String> bucketWords = new HashSet<String>();
 		int perfectMatches = 0;
@@ -42,16 +42,6 @@ public class BucketBuilders {
 		List<BucketTerms> bucketTerms = new ArrayList<BucketTerms>();
 		Set<String> matchedQueries = new HashSet<String>();
 		for (String b : bucket) {
-
-			boolean isLocation = false;
-			int locationMatch = 0;
-			int locationLenght = 0;
-			if (b.endsWith(LOCATION_IDENTIFIER)) {
-				isLocation = true;
-				b = b.substring(0, b.lastIndexOf(LOCATION_IDENTIFIER)).replaceAll("_", " ");
-				locationLenght = b.split(" ").length;
-
-			}
 			String[] bs = b.toLowerCase().trim().replaceAll("\\p{P}", "").split(SPACE_DELIMITER);
 			int localMatches = 0;
 			int firstMatch = 0;
@@ -68,48 +58,25 @@ public class BucketBuilders {
 				int localQC = 0;
 				for (QueryTerm q : queryWords) {
 					localQC++;
-					if (isLocation) {
-						localMatches = 0;
-						if (q.getOriginal().equals(t)) {
-							locationMatch++;
+					int distance = StringCompareUtil.editDistance(q.getStem(), termStem);
+					if (isPerfectMatch(q.getOriginal(), termStem, q.getPrefix(), termPrefix, distance)) {
+						if (!matchedQueries.contains(q.getOriginal())) {
+							perfectMatches++;
+							matchedQueries.add(q.getOriginal());
 						}
-					} else {
-						int distance = StringCompareUtil.editDistance(q.getStem(), termStem);
-						if (isPerfectMatch(q.getOriginal(), termStem, q.getPrefix(), termPrefix, distance)) {
-							if (!matchedQueries.contains(q.getOriginal())) {
-								perfectMatches++;
-								matchedQueries.add(q.getOriginal());
-							}
-							localMatches++;
-							if (firstMatch == 0) {
-								firstMatch = localQC++;
-							}
-							totalDistance += distance;
-							bucketWords.add(b);
-
+						localMatches++;
+						if (firstMatch == 0) {
+							firstMatch = localQC;
 						}
-
-					}
-				}
-
-				if (isLocation) {
-					if (locationLenght == locationMatch) {
-						perfectMatches++;
-						b += LOCATION_IDENTIFIER;
+						totalDistance += distance;
 						bucketWords.add(b);
-						hits.add(b);
-						BucketTerms bte = new BucketTerms();
-						bte.setAttributeName(b);
-						bte.setQueryWordMatch(qc);
-						bte.setFull(true);
-						bte.setMatchedQueryWordsCount(1);
-						bucketTerms.add(bte);
 
 					}
+
 				}
 
 			}
-			if (localMatches > 0 && !isLocation) {
+			if (localMatches > 0) {
 				BucketTerms bte = new BucketTerms();
 				bte.setAttributeName(b);
 				bte.setQueryWordMatch(firstMatch);
@@ -119,7 +86,20 @@ public class BucketBuilders {
 			}
 
 		}
-		if (perfectMatches > 0) {
+		if (!locations.isEmpty()) {
+			for (String location: locations) {
+				BucketTerms bte = new BucketTerms();
+				bte.setAttributeName(location);
+				bte.setQueryWordMatch(qc);
+				bte.setFull(true);
+				bte.setMatchedQueryWordsCount(1);
+				perfectMatches++;
+				bucketTerms.add(bte);
+			}
+		}
+		if (perfectMatches > 0)
+
+		{
 			return new Bucket(BucketTerms.createdQuerySortedBucket(bucketTerms), perfectMatches, partialMathces,
 					totalDistance);
 		} else {
