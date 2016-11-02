@@ -5,10 +5,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.apache.lucene.queries.function.valuesource.TotalTermFreqValueSource;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -18,15 +16,15 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.env.SystemEnvironmentPropertySource;
 
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.utils.StopWords;
 
 public class AttributeBucketer {
+
+	private static final String ATTRIBUTES_ATTRIBUTE_VALUE_NGRAMED = "attributes.attribute_value.ngramed";
 
 	private static final String ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED = "attributes.attribute_value.shingled";
 
@@ -37,7 +35,6 @@ public class AttributeBucketer {
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
 	private static final int HITS_IN_SCROLL = 1000;
-	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
@@ -85,16 +82,13 @@ public class AttributeBucketer {
 				}
 			}
 			totalBucektTime = System.currentTimeMillis() - bucketTime;
-			LOGGER.info(" bucket creation time {}", totalBucektTime);
 
 			if (hitCounter < hitsInScroll * loops || hitCounter == sr.getHits().getTotalHits()) {
 
 				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 			}
 		}
-		System.out.println(bucketList);
 		Collections.sort(bucketList);
-		LOGGER.debug(" list {}", bucketList);
 
 		return bucketList;
 	}
@@ -176,9 +170,9 @@ public class AttributeBucketer {
 					.nestedQuery(ATTRIBUTES,
 							QueryBuilders.boolQuery().must(QueryBuilders.queryStringQuery(query[0])
 									.field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED).analyzer("shingle_analyzer").boost(10))
-									.must(QueryBuilders.queryStringQuery(query[0])
-											.field("attributes.attribute_value.ngramed").analyzer("n_gram_analyzer")))
-					.innerHit(qi).scoreMode("avg");
+//									.must(QueryBuilders.queryStringQuery(query[0])
+//											.field(ATTRIBUTES_ATTRIBUTE_VALUE_NGRAMED).analyzer(N_GRAM_ANALYZER)))
+					).innerHit(qi).scoreMode("avg");
 			bool.must(attQuery);
 			srb.setQuery(bool);
 		}
