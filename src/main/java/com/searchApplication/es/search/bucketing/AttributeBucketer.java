@@ -155,10 +155,9 @@ public class AttributeBucketer {
 			QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 			q.setFetchSource("location_name", null);
 			q.setSize(10);
-			QueryBuilder b = QueryBuilders.nestedQuery(LOCATIONS,
-					QueryBuilders.matchQuery("locations.location_name.shingled",
-							query[1].toLowerCase().replaceAll("apple", "")).analyzer(SHINGLE_ANALYZER))
-					.innerHit(new QueryInnerHitBuilder());
+			QueryBuilder b = QueryBuilders
+					.nestedQuery(LOCATIONS, QueryBuilders.termsQuery("locations.location_name.raw", query[1].trim()))
+					.innerHit(q);
 
 			srb.setPostFilter(b);
 
