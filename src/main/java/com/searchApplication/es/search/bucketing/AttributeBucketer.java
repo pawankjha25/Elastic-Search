@@ -156,7 +156,7 @@ public class AttributeBucketer {
 			q.setFetchSource("location_name", null);
 			q.setSize(10);
 			QueryBuilder b = QueryBuilders
-					.nestedQuery(LOCATIONS, QueryBuilders.termsQuery("locations.location_name.raw", query[1].trim()))
+					.nestedQuery(LOCATIONS, QueryBuilders.termsQuery("locations.location_name.raw", query[1].toUpperCase().trim()))
 					.innerHit(q);
 
 			srb.setPostFilter(b);
