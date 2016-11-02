@@ -2,13 +2,13 @@ package com.searchApplication.es.search.bucketing;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.queries.function.valuesource.TotalTermFreqValueSource;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -19,9 +19,9 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.internal.InternalSearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.SystemEnvironmentPropertySource;
 
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.utils.StopWords;
@@ -60,10 +60,12 @@ public class AttributeBucketer {
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
 		LOGGER.debug(" response {}", sr.toString());
-
+		long totalBucektTime = 0;
 		List<Bucket> bucketList = new LinkedList<Bucket>();
 		while ((hitCounter < hitsInScroll * loops) && (sr.getHits().getHits().length > 0)) {
-			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
+			LOGGER.info(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
+			long bucketTime = System.currentTimeMillis();
+
 			for (SearchHit hit : sr.getHits()) {
 				try {
 					Bucket b = processHitsToBuckets(hit, query, hitCounter);
@@ -79,20 +81,12 @@ public class AttributeBucketer {
 					} else
 						hitCounter++;
 				} catch (Exception e) {
-					System.out.println(hitCounter);
-					System.out.println(hit.getSourceAsString());
-					System.out.println(hit.getInnerHits());
-					System.out.println(hit.getInnerHits().keySet());
-					for (Map.Entry<String, SearchHits> h : hit.getInnerHits().entrySet()) {
-						System.out.println(h);
-						for (SearchHit s : h.getValue().getHits()) {
-							System.out.println(s.getSourceAsString());
-						}
-					}
-
 					e.printStackTrace();
 				}
 			}
+			totalBucektTime = System.currentTimeMillis() - bucketTime;
+			LOGGER.info(" bucket creation time {}", totalBucektTime);
+
 			if (hitCounter < hitsInScroll * loops || hitCounter == sr.getHits().getTotalHits()) {
 
 				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
