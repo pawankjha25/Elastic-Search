@@ -131,7 +131,7 @@ public class QueryFilterResponse {
 							{
 								seriesIds = seriesIds + locationIds.getValue();
 							}
-							else if( map != null && map.get(locTypeBucket.getKeyAsString()) == null)
+							else if( map != null && map.get(locTypeBucket.getKeyAsString()) == null )
 							{
 								seriesIds = seriesIds + locationIds.getValue();
 							}
@@ -197,7 +197,7 @@ public class QueryFilterResponse {
 					}
 					else if( locAgg.getLevel() == 0 )
 					{
-						nextLevelBucketIds = locAgg.getSeriesIds();
+						nextLevelBucketIds = nextLevelBucketIds + locAgg.getSeriesIds();
 					}
 				}
 			}
