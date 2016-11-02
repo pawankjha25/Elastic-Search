@@ -9,9 +9,12 @@ import java.util.Set;
 import java.util.TreeSet;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
+import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
+import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
 import com.google.gson.Gson;
+import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.entities.Stratum;
@@ -61,7 +64,10 @@ public class QueryFilterResponse {
 				}
 
 			}
-			response.setStratum(stratum);
+			/* ReverseNested reverseAtt = nestedAttributes.getAggregations().get("attReverse");
+			 * InternalNested locations = reverseAtt.getAggregations().get("locations"); ValueCount
+			 * locationIds = locations.getAggregations().get("locationid");
+			 * response.setTotalSeriesIds(locationIds.getValue()); */ response.setStratum(stratum);
 			response.setStratumList(stratumList);
 		}
 		catch( Exception e )
@@ -71,12 +77,16 @@ public class QueryFilterResponse {
 		return response;
 	}
 
-	public static Map<String, Set<LocationAggrigation>> getLocationAggregation( SearchResponse tFdocs,
-			Map<String, Set<String>> map, Map<String, Set<String>> mapParents ) throws Exception
+	public static SearchOutput getLocationAggregation( SearchResponse tFdocs, Map<String, Set<String>> map,
+			Map<String, Set<String>> mapParents, FilterRequest request ) throws Exception
 	{
+		long seriesIdCount = 0;
+		SearchOutput response = new SearchOutput();
 		Map<String, Set<LocationAggrigation>> locationBucket = new HashMap<String, Set<LocationAggrigation>>();
+		Map<String, Set<LocationAggrigation>> locationBucketFinal = new HashMap<String, Set<LocationAggrigation>>();
 		try
 		{
+			System.out.println(new Gson().toJson(map));
 			InternalNested location_terms = tFdocs.getAggregations().get("locations");
 
 			Terms locType = location_terms.getAggregations().get("locationType");
@@ -85,25 +95,56 @@ public class QueryFilterResponse {
 			{
 				Terms locationParent = locTypeBucket.getAggregations().get("locationParent");
 				Collection<Terms.Bucket> locParentBuckets = locationParent.getBuckets();
+
 				Set<LocationAggrigation> locationList = new TreeSet<LocationAggrigation>();
 				for( Terms.Bucket locParentBucket : locParentBuckets )
 				{
-					LocationAggrigation loc = new LocationAggrigation();
-					loc.setLocationParent(locParentBucket.getKeyAsString());
+					if( (mapParents != null && mapParents.get("all").contains(locParentBucket.getKeyAsString()))
+							|| (mapParents == null || mapParents.isEmpty()) )
+					{
+						LocationAggrigation loc = new LocationAggrigation();
+						loc.setLocationParent(locParentBucket.getKeyAsString());
 
-					Terms superregion = locParentBucket.getAggregations().get("locationName");
-					Collection<Terms.Bucket> buckets6 = superregion.getBuckets();
-					Set<String> locationName = new TreeSet<String>();
-					for( Terms.Bucket bucket6 : buckets6 )
-					{
-						locationName.add(bucket6.getKeyAsString());
+						if( request.getLocationLevels() != null && !request.getLocationLevels().isEmpty() )
+						{
+							if( request.getLocationLevels().containsKey(locTypeBucket.getKeyAsString()) )
+							{
+								loc.setLevel(request.getLocationLevels().get(locTypeBucket.getKeyAsString()));
+							}
+							else
+							{
+								loc.setLevel(0);
+							}
+						}
+
+						Terms superregion = locParentBucket.getAggregations().get("locationName");
+						Collection<Terms.Bucket> buckets6 = superregion.getBuckets();
+						Set<String> locationName = new TreeSet<String>();
+						long seriesIds = 0;
+						for( Terms.Bucket bucket6 : buckets6 )
+						{
+							locationName.add(bucket6.getKeyAsString());
+
+							ValueCount locationIds = bucket6.getAggregations().get("locationid");
+							if( map != null && map.get(locTypeBucket.getKeyAsString()) != null
+									&& mapParents.get("all").contains(bucket6.getKeyAsString()) )
+							{
+								seriesIds = seriesIds + locationIds.getValue();
+							}
+							else if( map != null && map.get(locTypeBucket.getKeyAsString()) == null )
+							{
+								seriesIds = seriesIds + locationIds.getValue();
+							}
+						}
+						if( locationName != null && !locationName.isEmpty() )
+						{
+							loc.setLocations(locationName);
+							loc.setSeriesIds(seriesIds);
+							locationList.add(loc);
+						}
+						locationBucket.put(locTypeBucket.getKeyAsString(), locationList);
+						locationBucketFinal.put(locTypeBucket.getKeyAsString(), locationList);
 					}
-					if( locationName != null && !locationName.isEmpty() )
-					{
-						loc.setLocations(locationName);
-						locationList.add(loc);
-					}
-					locationBucket.put(locTypeBucket.getKeyAsString(), locationList);
 				}
 			}
 
@@ -129,43 +170,61 @@ public class QueryFilterResponse {
 									names.add(location[1]);
 									newBucket.setLocationParent(bucket.getLocationParent());
 									newBucket.setLocations(names);
+									newBucket.setSeriesIds(bucket.getSeriesIds());
+									newBucket.setLevel(bucket.getLevel());
 									newBuckets.add(newBucket);
 								}
 							}
 						}
 					}
 					locationBucket.put(locationType, newBuckets);
-				}
-				for( String locationType : locationBucket.keySet() )
-				{
-					if( !map.containsKey(locationType) )
-					{
-						Set<LocationAggrigation> listLoc = new TreeSet<>();
-						for( LocationAggrigation loc : locationBucket.get(locationType) )
-						{
-							for( String key : mapParents.keySet() )
-							{
-								if( mapParents.get(key).contains(loc.getLocationParent()) )
-								{
-									listLoc.add(loc);
-									break;
-								}
-							}
-
-						}
-						locationBucket.put(locationType, listLoc);
-
-					}
-
+					locationBucketFinal.put(locationType, newBuckets);
 				}
 			}
 
+			long currentLevelBucketIds = 0;
+			long nextLevelBucketIds = 0;
+			int level = -1;
+			for( String key : locationBucket.keySet() )
+			{
+				for( LocationAggrigation locAgg : locationBucket.get(key) )
+				{
+					if( locAgg.getLevel() > level && locAgg.getLevel() != 0 )
+					{
+						level = locAgg.getLevel();
+						currentLevelBucketIds = locAgg.getSeriesIds();
+						seriesIdCount = currentLevelBucketIds;
+					}
+					else if( locAgg.getLevel() == 0 )
+					{
+						nextLevelBucketIds = nextLevelBucketIds + locAgg.getSeriesIds();
+					}
+				}
+			}
+
+			if( nextLevelBucketIds < currentLevelBucketIds )
+			{
+				for( String key : locationBucketFinal.keySet() )
+				{
+					for( LocationAggrigation locAgg : locationBucketFinal.get(key) )
+					{
+						if( locAgg.getLevel() == 0 )
+						{
+							Set<LocationAggrigation> newAggList = new TreeSet<>();
+							locAgg.getLocations().add("OVERALL");
+							newAggList.add(locAgg);
+							locationBucketFinal.put(key, newAggList);
+						}
+					}
+				}
+			}
+			response.setLocations(locationBucketFinal);
+			response.setTotalSeriesIds(seriesIdCount);
 		}
 		catch( Exception e )
 		{
 			throw e;
 		}
-		return locationBucket;
+		return response;
 	}
-
 }
