@@ -49,7 +49,6 @@ public class AttributeBucketer {
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
 				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(160000));
-
 		srb = generateQuery(srb, querySplit);
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
@@ -64,6 +63,9 @@ public class AttributeBucketer {
 			for (SearchHit hit : sr.getHits()) {
 				try {
 					Bucket b = processHitsToBuckets(hit, querySplit[0], hits, misses);
+					if (querySplit.length > 1 && querySplit.length > 1) {
+						b.getBucketTerms().add(querySplit[1]);
+					}
 					if (b != null) {
 						if (bucketList.contains(b)) {
 							bucketList.get(bucketList.indexOf(b)).incrementCount();
@@ -100,15 +102,9 @@ public class AttributeBucketer {
 				bucketTerms.add(attributeData.get("attribute_value"));
 			}
 		}
-		Set<String> locations = new HashSet<String>();
-		LOGGER.debug(hit.getSourceAsString());
-		if (hit.getInnerHits() != null && hit.getInnerHits().containsKey(LOCATIONS)) {
-			for (SearchHit innerHit : hit.getInnerHits().get(LOCATIONS)) {
-				locations.add((String) innerHit.getSource().get(LOCATION_NAME) + "_LOC");
-			}
-		}
 
-		Bucket b = BucketBuilders.createFromQueryString(query, locations, bucketTerms, checked);
+		LOGGER.debug(hit.getSourceAsString());
+		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
 		if (b != null) {
 			for (String terms : bucketTerms) {
@@ -155,9 +151,8 @@ public class AttributeBucketer {
 			QueryInnerHitBuilder q = new QueryInnerHitBuilder();
 			q.setFetchSource("location_name", null);
 			q.setSize(10);
-			QueryBuilder b = QueryBuilders
-					.nestedQuery(LOCATIONS, QueryBuilders.termsQuery("locations.location_name.raw", query[1].toUpperCase().trim()))
-					.innerHit(q);
+			QueryBuilder b = QueryBuilders.nestedQuery(LOCATIONS,
+					QueryBuilders.termsQuery("locations.location_name.raw", query[1].toUpperCase().trim()));
 
 			srb.setPostFilter(b);
 
