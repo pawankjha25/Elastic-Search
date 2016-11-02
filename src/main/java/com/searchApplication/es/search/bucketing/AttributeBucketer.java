@@ -170,8 +170,8 @@ public class AttributeBucketer {
 			QueryBuilder attQuery = QueryBuilders
 					.nestedQuery(ATTRIBUTES,
 							QueryBuilders.boolQuery().must(QueryBuilders.queryStringQuery(query[0])
-									.field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED).analyzer("shingle_analyzer").boost(5))
-									.must(QueryBuilders.queryStringQuery(query[0])
+									.field(ATTRIBUTES_ATTRIBUTE_NAME_SHINGLED).analyzer("shingle_analyzer").boost(10))
+									.should(QueryBuilders.queryStringQuery(query[0])
 											.field(ATTRIBUTES_ATTRIBUTE_VALUE_NGRAMED).analyzer(N_GRAM_ANALYZER)))
 					.innerHit(qi).scoreMode("avg");
 			bool.must(attQuery);
