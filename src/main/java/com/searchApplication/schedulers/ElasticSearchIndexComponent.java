@@ -57,7 +57,7 @@ public class ElasticSearchIndexComponent {
 			List<TimeSeriesData> list = new ArrayList<TimeSeriesData>();
 			while( (line = br.readLine()) != null )
 			{
-				if( i > 1 )
+				if( i > 301700 )
 				{
 					line = line.replace("\",\"", ">>>");
 					line = line.replace("\"", "");
@@ -87,6 +87,7 @@ public class ElasticSearchIndexComponent {
 						 * "zdaly", "time_series", list); */
 						list.removeAll(list);
 					}
+					System.out.println(i);
 				}
 				i++;
 			}
@@ -197,11 +198,22 @@ public class ElasticSearchIndexComponent {
 						location.setLocation_type(locMeta[j].trim());
 						if( loc[loc.length - 1].endsWith(")") )
 						{
-							String id = loc[loc.length - 1].replace(location.getLocation_name(), "").trim();
+							String id = "";
+							if( loc[j].endsWith(")") )
+							{
+								id = loc[loc.length - 1]
+										.replace(loc[j].substring(0, loc[j].lastIndexOf("(")).trim(), "").trim();
+							}
+							else
+							{
+								System.out.println("Location Name :" + loc[j].trim());
+								id = loc[loc.length - 1].replace(loc[j].trim(), "").trim();
+							}
 							System.out.println(id);
-							id = id.replace("(", "").replace(")", "");
+							//id = id.replace("(", "").replace(")", "");
+							System.out.println(id.lastIndexOf("(") + ":" + id.lastIndexOf(")"));
+							id = id.substring(id.lastIndexOf("(") + 1, id.lastIndexOf(")"));
 							System.out.println(id);
-							System.out.println(location.getLocation_name());
 							System.out.println("------------------");
 							if( !id.trim().isEmpty() )
 							{
@@ -215,6 +227,7 @@ public class ElasticSearchIndexComponent {
 				else if( locationsMetaData.startsWith("[[") )
 				{
 					System.out.println(locationsMetaData);
+					throw new Exception();
 				}
 			}
 			data.setSuper_region(superRegion);
@@ -223,8 +236,11 @@ public class ElasticSearchIndexComponent {
 		}
 		catch( Exception e )
 		{
-			System.out.println(locations);
-			throw e;
+			if( locationsMetaData.startsWith("[[") )
+			{
+				System.out.println(locationsMetaData);
+				throw e;
+			}
 		}
 		return data;
 	}
