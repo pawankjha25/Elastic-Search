@@ -75,29 +75,40 @@ public class FilterQuery {
 					{
 						String parent = locList.split(":")[0];
 						String child = locList.split(":")[1];
+
 						BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
-
-						NestedQueryBuilder q1 = QueryBuilders.nestedQuery("locations",
-								QueryBuilders.matchQuery("locations.location_name.raw", child));
-						booleanQuery1.must(q1);
-
-						NestedQueryBuilder q2 = QueryBuilders.nestedQuery("locations",
-								QueryBuilders.matchQuery("locations.location_type", key));
-						booleanQuery1.must(q2);
-
-						if( parent != null && !parent.equals("null") )
+						if( !child.equalsIgnoreCase("OVERALL") )
 						{
-							NestedQueryBuilder q3 = QueryBuilders.nestedQuery("locations",
-									QueryBuilders.matchQuery("locations.location_parent", parent));
-							booleanQuery1.must(q3);
-						}
-						if( request.getLocations().get(key).size() > 1 )
-						{
-							locationQuery.should(booleanQuery1);
+							NestedQueryBuilder q1 = QueryBuilders.nestedQuery("locations",
+									QueryBuilders.matchQuery("locations.location_name.raw", child));
+							booleanQuery1.must(q1);
+
+							NestedQueryBuilder q2 = QueryBuilders.nestedQuery("locations",
+									QueryBuilders.matchQuery("locations.location_type", key));
+							booleanQuery1.must(q2);
+
+							if( parent != null && !parent.equals("null") )
+							{
+								NestedQueryBuilder q3 = QueryBuilders.nestedQuery("locations",
+										QueryBuilders.matchQuery("locations.location_parent", parent));
+								booleanQuery1.must(q3);
+							}
+							if( request.getLocations().get(key).size() > 1 )
+							{
+								locationQuery.should(booleanQuery1);
+							}
+							else
+							{
+								locationQuery.must(booleanQuery1);
+							}
 						}
 						else
 						{
+							NestedQueryBuilder q2 = QueryBuilders.nestedQuery("locations",
+									QueryBuilders.matchQuery("locations.location_type", key));
+							booleanQuery1.mustNot(q2);
 							locationQuery.must(booleanQuery1);
+
 						}
 					}
 					booleanQuery.must(locationQuery);
