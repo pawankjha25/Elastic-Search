@@ -44,11 +44,11 @@ public class AttributeBucketer {
 			int hitsInScroll, Set<String> locations) {
 
 		LOGGER.debug("Start query ");
-		String[] querySplit = generateAttAndLocQueries(query, locations);
+		String[] querySplit = generateAttAndLocQueries(cleanQuery(query), locations);
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
-				.setSize(HITS_IN_SCROLL).setScroll(new TimeValue(160000));
+				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
 		srb = generateQuery(srb, querySplit);
 		int hitCounter = 0;
 		SearchResponse sr = srb.get();
@@ -56,7 +56,7 @@ public class AttributeBucketer {
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		Set<String> hits = new HashSet<String>();
 		Set<String> misses = new HashSet<String>();
-		while ((hitCounter < HITS_IN_SCROLL * loops) && (sr.getHits().getHits().length > 0)) {
+		while ((hitCounter < hitsInScroll * loops) && (sr.getHits().getHits().length > 0)) {
 			LOGGER.debug(" query {}", sr.toString());
 
 			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
@@ -82,7 +82,10 @@ public class AttributeBucketer {
 					e.printStackTrace();
 				}
 			}
-			if (hitCounter < HITS_IN_SCROLL * loops) {
+			if (hitCounter < hitsInScroll) {
+				break;
+			}
+			if (hitCounter < hitsInScroll * loops) {
 				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
 			}
 		}
@@ -93,17 +96,27 @@ public class AttributeBucketer {
 		return bucketList;
 	}
 
+	private static String cleanQuery(String query) {
+		return query.toLowerCase().trim().replaceAll("\\p{P}", "");
+	}
+
 	private static Bucket processHitsToBuckets(SearchHit hit, String query, Set<String> checked, Set<String> misses) {
 		List<String> bucketTerms = new ArrayList<String>();
 		BucketMetaData metaData = new BucketMetaData((String) hit.getSource().get("super_region"),
 				(String) hit.getSource().get("sector"), (String) hit.getSource().get("sub_sector"));
-		for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource().get("attributes")) {
-			if (!misses.contains(attributeData.get("attribute_value"))) {
-				bucketTerms.add(attributeData.get("attribute_value"));
+		if (hit.getSource() != null && hit.getSource().containsKey("attributes")) {
+			try {
+				for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource()
+						.get("attributes")) {
+					if (!misses.contains(attributeData.get("attribute_value"))) {
+						bucketTerms.add(attributeData.get("attribute_value"));
+					}
+				}
+			} catch (Exception e) {
+				LOGGER.debug("skipped attribute");
 			}
 		}
 
-		LOGGER.debug(hit.getSourceAsString());
 		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
 		if (b != null) {
@@ -124,17 +137,21 @@ public class AttributeBucketer {
 		String loc = "";
 		String atts = "";
 		String[] splits = query.split(" ");
-		for (int i = 0; i < splits.length; i++) {
+		if (splits.length == 1) {
+			atts = query;
+		} else {
+			for (int i = 0; i < splits.length; i++) {
 
-			if (locations.contains(splits[i])) {
-				loc += splits[i] + " ";
-			} else if (splits.length > i + 1 && locations.contains(splits[i] + " " + splits[i + 1])) {
-				loc += splits[i] + " " + splits[i + 1];
-				i++;
-			} else {
-				atts += splits[i] + " ";
+				if (locations.contains(splits[i])) {
+					loc += splits[i] + " ";
+				} else if (splits.length > i + 1 && locations.contains(splits[i] + " " + splits[i + 1])) {
+					loc += splits[i] + " " + splits[i + 1];
+					i++;
+				} else {
+					atts += splits[i] + " ";
+				}
+
 			}
-
 		}
 		return new String[] { atts, loc };
 	}
@@ -154,7 +171,6 @@ public class AttributeBucketer {
 			q.setSize(10);
 			QueryBuilder b = QueryBuilders.nestedQuery(LOCATIONS,
 					QueryBuilders.termsQuery("locations.location_name.raw", query[1].toUpperCase().trim()));
-
 			srb.setPostFilter(b);
 
 		}

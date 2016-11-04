@@ -77,10 +77,10 @@ public class BucketTest {
 
 	@Test
 	public void testCompare() {
-		Bucket b = BucketBuilders.createFromQueryString("corn production", new HashSet<String>(),
-				Arrays.asList("corn", "production"), new HashSet<String>());
-		Bucket b1 = BucketBuilders.createFromQueryString("corn production", new HashSet<String>(),
-				Arrays.asList("corn production"), new HashSet<String>());
+		Bucket b = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn", "production"),
+				new HashSet<String>());
+		Bucket b1 = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn production"),
+				new HashSet<String>());
 		List<Bucket> lb = Arrays.asList(b, b1);
 		Collections.sort(lb);
 	}
