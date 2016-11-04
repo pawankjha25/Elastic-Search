@@ -31,7 +31,7 @@ public class AttributeBucketer {
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
 	private static final int HITS_IN_SCROLL = 500;
-	private static final String SEARCH_FIELD = "description.shingled";
+	private static final String SEARCH_FIELD = "description.ngramed";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
@@ -78,7 +78,7 @@ public class AttributeBucketer {
 					} else
 						hitCounter++;
 				} catch (Exception e) {
-					LOGGER.error("Error processing row {}", e.getCause().getMessage());
+					LOGGER.debug("Error processing row {}", e.getCause().getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -138,7 +138,7 @@ public class AttributeBucketer {
 		String atts = "";
 		String[] splits = query.split(" ");
 		if (splits.length == 1) {
-			atts = query;
+			atts = query.trim();
 		} else {
 			for (int i = 0; i < splits.length; i++) {
 
@@ -160,7 +160,7 @@ public class AttributeBucketer {
 
 		BoolQueryBuilder bool = QueryBuilders.boolQuery();
 		if (!query[0].equals("")) {
-			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).analyzer(SHINGLE_ANALYZER)
+			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).analyzer(N_GRAM_ANALYZER)
 					.defaultField(SEARCH_FIELD);
 			bool.must(attQuery);
 			srb.setQuery(bool);
