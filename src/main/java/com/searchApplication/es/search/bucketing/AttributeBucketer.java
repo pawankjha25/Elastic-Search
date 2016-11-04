@@ -31,7 +31,7 @@ public class AttributeBucketer {
 	private static final String LOCATION_NAME = "location_name";
 	private static final String LOCATIONS = "locations";
 	private static final int HITS_IN_SCROLL = 500;
-	private static final String SEARCH_FIELD = "description.ngramed";
+	private static final String SEARCH_FIELD = "description.shingled";
 	private static final String N_GRAM_ANALYZER = "n_gram_analyzer";
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
@@ -63,7 +63,7 @@ public class AttributeBucketer {
 			for (SearchHit hit : sr.getHits()) {
 				try {
 					Bucket b = processHitsToBuckets(hit, querySplit[0], hits, misses);
-					if (querySplit.length > 1 && querySplit.length > 1) {
+					if (querySplit.length > 1 && querySplit[1].length() > 1) {
 						b.getBucketTerms().add(querySplit[1]);
 					}
 					if (b != null) {
@@ -97,7 +97,7 @@ public class AttributeBucketer {
 	}
 
 	private static String cleanQuery(String query) {
-		return query.toLowerCase().trim().replaceAll("\\p{P}", "");
+		return query.toLowerCase().trim().replaceAll("\\p{P}", "").trim();
 	}
 
 	private static Bucket processHitsToBuckets(SearchHit hit, String query, Set<String> checked, Set<String> misses) {
@@ -138,7 +138,7 @@ public class AttributeBucketer {
 		String atts = "";
 		String[] splits = query.split(" ");
 		if (splits.length == 1) {
-			atts = query.trim();
+			atts = query;
 		} else {
 			for (int i = 0; i < splits.length; i++) {
 
@@ -153,14 +153,14 @@ public class AttributeBucketer {
 
 			}
 		}
-		return new String[] { atts, loc };
+		return new String[] { atts.trim(), loc.trim() };
 	}
 
 	private static SearchRequestBuilder generateQuery(SearchRequestBuilder srb, String[] query) {
 
 		BoolQueryBuilder bool = QueryBuilders.boolQuery();
 		if (!query[0].equals("")) {
-			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).analyzer(N_GRAM_ANALYZER)
+			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).analyzer(SHINGLE_ANALYZER)
 					.defaultField(SEARCH_FIELD);
 			bool.must(attQuery);
 			srb.setQuery(bool);
