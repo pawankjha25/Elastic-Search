@@ -6,34 +6,63 @@ public class LocationAggrigation implements Comparable<LocationAggrigation>
 
 {
 
-    private String locationParent;
+	private String locationParent;
 
-    private Set<String> locations;
+	private long seriesIds;
 
-    public String getLocationParent()
-    {
-        return locationParent;
-    }
+	private int level;
 
-    public void setLocationParent( String locationParent )
-    {
-        this.locationParent = locationParent;
-    }
+	private Set<String> locations;
 
-    public Set<String> getLocations()
-    {
-        return locations;
-    }
+	public String getLocationParent()
+	{
+		return locationParent;
+	}
 
-    public void setLocations( Set<String> locations )
-    {
-        this.locations = locations;
-    }
+	public void setLocationParent( String locationParent )
+	{
+		this.locationParent = locationParent;
+	}
 
-    @Override
-    public int compareTo( LocationAggrigation o )
-    {
-        return 1;
-    }
+	public Set<String> getLocations()
+	{
+		return locations;
+	}
+
+	public void setLocations( Set<String> locations )
+	{
+		this.locations = locations;
+	}
+
+	@Override
+	public int compareTo( LocationAggrigation o )
+	{
+		if( o.getSeriesIds() == this.getSeriesIds() )
+			return 0;
+		else if( o.getSeriesIds() > this.getSeriesIds() )
+			return 1;
+		else
+			return -1;
+	}
+
+	public long getSeriesIds()
+	{
+		return seriesIds;
+	}
+
+	public void setSeriesIds( long seriesIds )
+	{
+		this.seriesIds = seriesIds;
+	}
+
+	public int getLevel()
+	{
+		return level;
+	}
+
+	public void setLevel( int level )
+	{
+		this.level = level;
+	}
 
 }

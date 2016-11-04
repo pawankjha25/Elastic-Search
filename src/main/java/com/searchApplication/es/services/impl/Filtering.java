@@ -110,8 +110,15 @@ public class Filtering {
 				tFdocs1 = client.prepareSearch(indexName).setSize(0).setTypes(objectType).setQuery(booleanQuery)
 						.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
 
-				Map<String, Set<LocationAggrigation>> loc = QueryFilterResponse.getLocationAggregation(tFdocs1,
-						request.getLocations(), getLocationMap(request.getLocations()));
+				SearchOutput res = QueryFilterResponse.getLocationAggregation(tFdocs1,
+						request.getLocations(), getLocationMap(request.getLocations()), request);
+				
+				Map<String, Set<LocationAggrigation>> loc = res.getLocations();
+
+				if( res!=null && res.getTotalSeriesIds() > 0 )
+				{
+					response.setTotalSeriesIds(res.getTotalSeriesIds());
+				}
 				if( location != "" && !location.isEmpty() )
 				{
 					Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
@@ -189,6 +196,7 @@ public class Filtering {
 			if( map != null && !map.isEmpty() && map.keySet() != null )
 			{
 				Set<String> parent = new TreeSet<>();
+				Set<String> all = new TreeSet<>();
 				for( String locationType : map.keySet() )
 				{
 					Set<String> loc = new TreeSet<>();
@@ -199,11 +207,13 @@ public class Filtering {
 						{
 							loc.add(locString[1]);
 							parent.add(locString[0]);
+							all.add(locString[1]);
 						}
 					}
 					res.put(locationType, loc);
 				}
 				res.put("parent", parent);
+				res.put("all", all);
 			}
 			else
 			{
