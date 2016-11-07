@@ -1,6 +1,7 @@
 package com.searchApplication.es.search.bucketing;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -55,8 +56,10 @@ public class AttributeBucketer {
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
 		List<Bucket> bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+		LOGGER.debug("Query {} split size {}", query, query.split(" ").length);
 		if (bucketList.size() == 0 && query.split(" ").length == 1) {
 			querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 2);
+			LOGGER.debug("Queries {}", Arrays.toString(querySplit));
 			if (!querySplit[1].equals("")) {
 				bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
 			}
