@@ -46,7 +46,7 @@ public class AttributeBucketer {
 			int hitsInScroll, Set<String> locations) {
 
 		LOGGER.debug("Start query ");
-		String[] querySplit = generateAttAndLocQueries(cleanQuery(query), locations);
+		String[] querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 1);
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
@@ -54,8 +54,14 @@ public class AttributeBucketer {
 		srb = generateQuery(srb, querySplit);
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
-		return getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
-
+		List<Bucket> bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+		if (bucketList.size() == 0 && query.split(" ").length == 1) {
+			querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 2);
+			if (!querySplit[2].equals("")) {
+				bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+			}
+		}
+		return bucketList;
 	}
 
 	private static List<Bucket> getBucketsFromSearchResponse(SearchResponse sr, String[] querySplit, int hitsInScroll,
@@ -128,11 +134,10 @@ public class AttributeBucketer {
 		if (!query.equals("")) {
 			b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
-		}
-		else {
+		} else {
 			b = new Bucket(new HashSet<String>(bucketTerms), 0, 0, 0);
 		}
-	
+
 		if (b != null) {
 			for (String terms : bucketTerms) {
 				if (!b.getBucketTerms().contains(terms)) {
@@ -147,7 +152,7 @@ public class AttributeBucketer {
 		return b;
 	}
 
-	private static String[] generateAttAndLocQueries(String query, Set<String> locations) {
+	private static String[] generateAttAndLocQueries(String query, Set<String> locations, int attempt) {
 		String loc = "";
 		String atts = "";
 		String[] splits = query.split(" ");
@@ -164,7 +169,11 @@ public class AttributeBucketer {
 			}
 
 		}
-	
+		if (attempt == 1 && splits.length == 1 && !locations.equals("")) {
+			atts = query;
+			loc = "";
+		}
+
 		return new String[] { atts.trim(), loc.trim() };
 
 	}
