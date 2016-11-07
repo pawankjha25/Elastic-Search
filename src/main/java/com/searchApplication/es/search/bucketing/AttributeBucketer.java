@@ -125,7 +125,7 @@ public class AttributeBucketer {
 			}
 		}
 		Bucket b = null;
-		if (query.equals("")) {
+		if (!query.equals("")) {
 			b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
 		}
