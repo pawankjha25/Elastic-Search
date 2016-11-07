@@ -164,9 +164,7 @@ public class AttributeBucketer {
 			}
 
 		}
-		if (splits.length == 1 && atts.equals("")) {
-			atts = query;
-		}
+	
 		return new String[] { atts.trim(), loc.trim() };
 
 	}
