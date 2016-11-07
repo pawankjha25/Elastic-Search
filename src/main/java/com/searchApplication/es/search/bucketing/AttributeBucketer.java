@@ -125,12 +125,12 @@ public class AttributeBucketer {
 			}
 		}
 		Bucket b = null;
-		if (query.length() > 1) {
+		if (query.equals("")) {
 			b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
 		}
 		else {
-			b = new Bucket(new HashSet<>(bucketTerms), 0, 0, 0);
+			b = new Bucket(new HashSet<String>(bucketTerms), 0, 0, 0);
 		}
 	
 		if (b != null) {
