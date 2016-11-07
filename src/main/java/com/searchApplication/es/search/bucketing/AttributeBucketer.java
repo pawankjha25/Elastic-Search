@@ -24,6 +24,8 @@ import com.searchApplication.es.entities.BucketResponseList;
 
 public class AttributeBucketer {
 
+	private static final String LOCATION_CONTEXT = "_LOC";
+
 	private static final String SHINGLE_ANALYZER = "shingle_analyzer";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AttributeBucketer.class);
@@ -50,9 +52,15 @@ public class AttributeBucketer {
 						null)
 				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
 		srb = generateQuery(srb, querySplit);
-		int hitCounter = 0;
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
+		return getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+
+	}
+
+	private static List<Bucket> getBucketsFromSearchResponse(SearchResponse sr, String[] querySplit, int hitsInScroll,
+			int loops, Client client) {
+		int hitCounter = 0;
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		Set<String> hits = new HashSet<String>();
 		Set<String> misses = new HashSet<String>();
@@ -64,7 +72,7 @@ public class AttributeBucketer {
 				try {
 					Bucket b = processHitsToBuckets(hit, querySplit[0], hits, misses);
 					if (querySplit.length > 1 && querySplit[1].length() > 1) {
-						b.getBucketTerms().add(querySplit[1]);
+						b.getBucketTerms().add(querySplit[1].toUpperCase() + LOCATION_CONTEXT);
 					}
 					if (b != null) {
 						if (bucketList.contains(b)) {
@@ -116,9 +124,15 @@ public class AttributeBucketer {
 				LOGGER.debug("skipped attribute");
 			}
 		}
+		Bucket b = null;
+		if (query.length() > 1) {
+			b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
-		Bucket b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
-
+		}
+		else {
+			b = new Bucket(new HashSet<>(bucketTerms), 0, 0, 0);
+		}
+	
 		if (b != null) {
 			for (String terms : bucketTerms) {
 				if (!b.getBucketTerms().contains(terms)) {
@@ -137,23 +151,24 @@ public class AttributeBucketer {
 		String loc = "";
 		String atts = "";
 		String[] splits = query.split(" ");
-		if (splits.length == 1) {
-			atts = query;
-		} else {
-			for (int i = 0; i < splits.length; i++) {
 
-				if (locations.contains(splits[i])) {
-					loc += splits[i] + " ";
-				} else if (splits.length > i + 1 && locations.contains(splits[i] + " " + splits[i + 1])) {
-					loc += splits[i] + " " + splits[i + 1];
-					i++;
-				} else {
-					atts += splits[i] + " ";
-				}
+		for (int i = 0; i < splits.length; i++) {
 
+			if (locations.contains(splits[i])) {
+				loc += splits[i] + " ";
+			} else if (splits.length > i + 1 && locations.contains(splits[i] + " " + splits[i + 1])) {
+				loc += splits[i] + " " + splits[i + 1];
+				i++;
+			} else {
+				atts += splits[i] + " ";
 			}
+
+		}
+		if (splits.length == 1 && atts.equals("")) {
+			atts = query;
 		}
 		return new String[] { atts.trim(), loc.trim() };
+
 	}
 
 	private static SearchRequestBuilder generateQuery(SearchRequestBuilder srb, String[] query) {

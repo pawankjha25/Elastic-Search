@@ -250,7 +250,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 		createTestIndex();
 		LocationData loc = new LocationData();
-		loc.setLocation_name("illinois");
+		loc.setLocation_name("ILLINOIS");
 		loc.setLocation_type("state");
 
 		LocationData loc1 = new LocationData();
@@ -282,7 +282,7 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"corn production illinois", 1, 1000, LOC);
 		Assertions.assertThat(buckets).hasSize(1);
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn", "corn production", "illinois_LOC");
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn", "corn production", "ILLINOIS_LOC");
 
 	}
 
@@ -294,14 +294,14 @@ public class AttributeBucketerTest extends SearchESTest {
 		loc.setLocation_type("state");
 
 		LocationData loc1 = new LocationData();
-		loc1.setLocation_name("united states");
+		loc1.setLocation_name("UNITED STATES");
 		loc1.setLocation_type("country");
 
 		Row r3 = createAtrributeFromList("corn|corn production");
 		r3.setSector("sector");
 		r3.setSub_sector("subSector");
 		r3.setSuper_region("superRegion");
-		r3.setLocations(Arrays.asList(loc, loc1));
+		r3.setLocations(Arrays.asList(loc));
 
 		Row r4 = createAtrributeFromList("soccer|transfer data");
 		r4.setSector("sector");
@@ -322,7 +322,7 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "united states",
 				1, 1000, LOC);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("united states_LOC");
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("soccer", "transfer data", "UNITED STATES_LOC");
 
 	}
 
