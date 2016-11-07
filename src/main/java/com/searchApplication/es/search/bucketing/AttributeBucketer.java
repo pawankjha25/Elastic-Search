@@ -149,7 +149,7 @@ public class AttributeBucketer {
 			b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
 		} else {
-			b = new Bucket(new HashSet<String>(bucketTerms), 0, 0, 0);
+			b = new Bucket(new HashSet<String>(), 0, 0, 0);
 		}
 
 		if (b != null) {

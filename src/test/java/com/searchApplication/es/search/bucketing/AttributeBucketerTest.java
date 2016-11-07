@@ -322,12 +322,11 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "united states",
 				1, 1000, LOC);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("soccer", "transfer data",
-				"UNITED STATES_LOC");
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("UNITED STATES_LOC");
 
 		buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "illinois", 1, 1000, LOC);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn", "corn production", "ILLINOIS_LOC");
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("ILLINOIS_LOC");
 
 	}
 
