@@ -57,7 +57,7 @@ public class AttributeBucketer {
 		List<Bucket> bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
 		if (bucketList.size() == 0 && query.split(" ").length == 1) {
 			querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 2);
-			if (!querySplit[2].equals("")) {
+			if (!querySplit[1].equals("")) {
 				bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
 			}
 		}
