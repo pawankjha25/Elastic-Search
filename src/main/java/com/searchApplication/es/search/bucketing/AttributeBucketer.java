@@ -43,18 +43,26 @@ public class AttributeBucketer {
 		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
-	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops,
-			int hitsInScroll, Set<String> locations) {
-
-		LOGGER.debug("Start query ");
-		String[] querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 1);
+	private static SearchResponse hitEs(Client client, String index, String type, int hitsInScroll,
+			String[] querySplit) {
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
 				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
 		srb = generateQuery(srb, querySplit);
-		SearchResponse sr = srb.get();
 		LOGGER.debug(" query {}", srb.toString());
+
+		SearchResponse sr = srb.get();
+		return sr;
+	}
+
+	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops,
+			int hitsInScroll, Set<String> locations) {
+
+		LOGGER.debug("Start query ");
+		String[] querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 1);
+		SearchResponse sr = hitEs(client, index, type, hitsInScroll, querySplit);
+
 		List<Bucket> bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
 		LOGGER.debug("Query {} split size {}", query, query.split(" ").length);
 		if (bucketList.size() == 0 && query.split(" ").length == 1) {
@@ -63,7 +71,8 @@ public class AttributeBucketer {
 			LOGGER.debug("Next one {}", querySplit[1].equals(""));
 
 			if (!querySplit[1].equals("")) {
-				bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+				bucketList = getBucketsFromSearchResponse(hitEs(client, index, type, hitsInScroll, querySplit),
+						querySplit, hitsInScroll, loops, client);
 			}
 		}
 		return bucketList;

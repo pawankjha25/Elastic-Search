@@ -290,7 +290,7 @@ public class AttributeBucketerTest extends SearchESTest {
 	public void testLocationsOnly() throws IOException {
 		createTestIndex();
 		LocationData loc = new LocationData();
-		loc.setLocation_name("illinois");
+		loc.setLocation_name("ILLINOIS");
 		loc.setLocation_type("state");
 
 		LocationData loc1 = new LocationData();
@@ -310,7 +310,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 		r4.setLocations(Arrays.asList(loc1));
 
-		Row r5 = createAtrributeFromList("corn|corn production");
+		Row r5 = createAtrributeFromList("corn|corn x");
 		r5.setSector("sector");
 		r5.setSub_sector("subSector");
 		r5.setSuper_region("superRegion");
@@ -322,7 +322,12 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "united states",
 				1, 1000, LOC);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("soccer", "transfer data", "UNITED STATES_LOC");
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("soccer", "transfer data",
+				"UNITED STATES_LOC");
+
+		buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "illinois", 1, 1000, LOC);
+
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn", "corn production", "ILLINOIS_LOC");
 
 	}
 
