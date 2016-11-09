@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
-import org.elasticsearch.search.aggregations.bucket.nested.ReverseNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
@@ -86,13 +85,13 @@ public class QueryFilterResponse {
 		Map<String, Set<LocationAggrigation>> locationBucketFinal = new HashMap<String, Set<LocationAggrigation>>();
 		try
 		{
-			System.out.println(new Gson().toJson(map));
 			InternalNested location_terms = tFdocs.getAggregations().get("locations");
 
 			Terms locType = location_terms.getAggregations().get("locationType");
 			Collection<Terms.Bucket> locTypeBuckets = locType.getBuckets();
 			for( Terms.Bucket locTypeBucket : locTypeBuckets )
 			{
+				System.out.println("Type -----------------" + locTypeBucket.getKeyAsString());
 				Terms locationParent = locTypeBucket.getAggregations().get("locationParent");
 				Collection<Terms.Bucket> locParentBuckets = locationParent.getBuckets();
 
@@ -102,6 +101,7 @@ public class QueryFilterResponse {
 					if( (mapParents != null && mapParents.get("all").contains(locParentBucket.getKeyAsString()))
 							|| (mapParents == null || mapParents.isEmpty()) )
 					{
+						System.out.println(locParentBucket.getKeyAsString());
 						LocationAggrigation loc = new LocationAggrigation();
 						loc.setLocationParent(locParentBucket.getKeyAsString());
 
@@ -142,11 +142,12 @@ public class QueryFilterResponse {
 							loc.setSeriesIds(seriesIds);
 							locationList.add(loc);
 						}
-						locationBucket.put(locTypeBucket.getKeyAsString(), locationList);
-						locationBucketFinal.put(locTypeBucket.getKeyAsString(), locationList);
 					}
 				}
+				locationBucket.put(locTypeBucket.getKeyAsString(), locationList);
+				locationBucketFinal.put(locTypeBucket.getKeyAsString(), locationList);
 			}
+			
 
 			if( map != null && map.keySet() != null )
 			{
@@ -218,7 +219,7 @@ public class QueryFilterResponse {
 					}
 				}
 			}
-			response.setLocations(locationBucketFinal);
+			response.setLocations(locationBucket);
 			response.setTotalSeriesIds(seriesIdCount);
 		}
 		catch( Exception e )
