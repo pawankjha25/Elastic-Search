@@ -75,8 +75,16 @@ public class BucketMetaData {
 		if( obj instanceof BucketMetaData )
 		{
 			BucketMetaData b = (BucketMetaData) obj;
-			return sector.equals(b.getSector()) && subSector.equals(b.getSubSector())
-					&& superRegion.equals(b.getSuperRegion());
+			System.out.println(new Gson().toJson(b));
+			if( b.getSector() != null && b.getSubSector() != null && b.getSuperRegion() != null )
+			{
+				return sector.equals(b.getSector()) && subSector.equals(b.getSubSector())
+						&& superRegion.equals(b.getSuperRegion());
+			}
+			else
+			{
+				return false;
+			}
 		}
 		else
 		{
