@@ -310,9 +310,6 @@
 						<goals>
 							<goal>shade</goal>
 						</goals>
-						<configuration>
-							<promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>

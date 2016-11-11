@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
-import java.net.UnknownHostException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -20,13 +17,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.datastax.driver.core.ResultSet;
@@ -41,8 +38,6 @@ import com.searchApplication.entities.TransactionResponse;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
 import com.searchApplication.utils.ZdalyCassandraConnection;
-
-import zdaly.etl.util.HashUtil;
 
 @Path("/zdaly")
 @RestController
@@ -197,8 +192,9 @@ public class ZdalyQueryRestServices
 	@Produces(
 	{ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/get-time-series-data")
-	public TransactionResponse getTimeSeriesData(CassandraFilterRequest request) throws Exception
+	public TransactionResponse getTimeSeriesData(@RequestBody List<CassandraFilterRequest> requests) throws Exception
 	{
+		long starttime = System.currentTimeMillis();
 		List<TimeSeriesEntity> list = new ArrayList<>();
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus(HttpStatus.OK.toString());
@@ -206,36 +202,45 @@ public class ZdalyQueryRestServices
 		transactionResponse.setResponseType("Object");
 		try
 		{
-			LOG.info(request.toString());
-			String db_name = request.getDbName();
-			String fromDate = request.getFromDate();
-			String toDate = request.getToDate();
-			Session session = ZdalyCassandraConnection.getCassandraSession();
-			StringBuffer sql = new StringBuffer("select * from time_series_data where series_id = ? and db_name= ? and period='d'  ");
-			if (fromDate != null)
+			for (CassandraFilterRequest request : requests)
 			{
-				sql.append("  and dttm >= " + "\'" + fromDate + "\'");
-			}
-			if (toDate != null)
-			{
-				sql.append("  and dttm < " + "\'" + toDate + "\'");
-			}
-			LOG.debug(sql.toString());
-			String series_id = HashUtil.encode(request.getSeriesId(), this.salt);
-			ResultSet rs = session.execute(sql.toString(), series_id, db_name);
-			Iterator<Row> itr = rs.iterator();
-			while (itr.hasNext())
-			{
-				Row row = itr.next();
-				list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(5), row.getString(4)));
+				LOG.info(request.toString());
+				String db_name = request.getDbName();
+				String fromDate = request.getFromDate();
+				String toDate = request.getToDate();
+				BigInteger series_id = new BigInteger(request.getSeriesId());
+				Session session = ZdalyCassandraConnection.getCassandraSession();
+				StringBuffer sql = new StringBuffer("select * from time_series_data where series_id = ? and db_name= ? and period='d'  ");
+				/*if (fromDate != null)
+				{
+					sql.append("  and dttm >= " + "\'" + fromDate + "\'");
+				}
+				if (toDate != null)
+				{
+					sql.append("  and dttm < " + "\'" + toDate + "\'");
+				}*/
+				LOG.debug(sql.toString());
+				// String series_id = HashUtil.encode(request.getSeriesId(),
+				// this.salt);
+				ResultSet rs = session.execute(sql.toString(), series_id, db_name);
+				Iterator<Row> itr = rs.iterator();
+				while (itr.hasNext())
+				{
+					Row row = itr.next();
+					//list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(5), row.getString(4)));
+					
+					list.add(new TimeSeriesEntity(row.getVarint(1), row.getString(0), row.getDouble(5), row.getString(3)));
+				}
 			}
 			transactionResponse.setResponseEntity(list);
 		} catch (Exception exp)
 		{
 			handleException(exp);
-			transactionResponse.setStatus(HttpStatus.OK.toString());
+			transactionResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
 			transactionResponse.setResponseMessage("Error : " + exp.getMessage());
 		}
+		long end = System.currentTimeMillis();
+		LOG.debug(" requests : " + requests.size() + " Time taken : " + (end - starttime) + "ms");
 		return transactionResponse;
 	}
 
