@@ -11,6 +11,7 @@ public class SearchOutput {
 	private Map<String, Set<LocationAggrigation>> locations;
 	private Set<Stratum> stratumList;
 	private Long totalRows;
+	private Long totalSeriesIds;
 
 	public Set<Stratum> getStratumList()
 	{
@@ -62,4 +63,13 @@ public class SearchOutput {
 		this.totalRows = totalRows;
 	}
 
+	public Long getTotalSeriesIds()
+	{
+		return totalSeriesIds;
+	}
+
+	public void setTotalSeriesIds( Long totalSeriesIds )
+	{
+		this.totalSeriesIds = totalSeriesIds;
+	}
 }
