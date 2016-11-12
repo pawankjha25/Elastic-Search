@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.PropertySources;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,7 +42,8 @@ import com.searchApplication.utils.ZdalyCassandraConnection;
 
 @Path("/zdaly")
 @RestController
-@PropertySource("sample-key.properties")
+@PropertySources(
+{ @PropertySource(value = "${database.properties}", ignoreResourceNotFound = false) })
 public class ZdalyQueryRestServices
 {
 	@Value("${zDaly.salt}")
@@ -211,14 +213,11 @@ public class ZdalyQueryRestServices
 				BigInteger series_id = new BigInteger(request.getSeriesId());
 				Session session = ZdalyCassandraConnection.getCassandraSession();
 				StringBuffer sql = new StringBuffer("select * from time_series_data where series_id = ? and db_name= ? and period='d'  ");
-				/*if (fromDate != null)
-				{
-					sql.append("  and dttm >= " + "\'" + fromDate + "\'");
-				}
-				if (toDate != null)
-				{
-					sql.append("  and dttm < " + "\'" + toDate + "\'");
-				}*/
+				/*
+				 * if (fromDate != null) { sql.append("  and dttm >= " + "\'" +
+				 * fromDate + "\'"); } if (toDate != null) { sql.append(
+				 * "  and dttm < " + "\'" + toDate + "\'"); }
+				 */
 				LOG.debug(sql.toString());
 				// String series_id = HashUtil.encode(request.getSeriesId(),
 				// this.salt);
@@ -227,8 +226,9 @@ public class ZdalyQueryRestServices
 				while (itr.hasNext())
 				{
 					Row row = itr.next();
-					//list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(5), row.getString(4)));
-					
+					// list.add(new TimeSeriesEntity(row.getVarint(0),
+					// row.getString(1), row.getDouble(5), row.getString(4)));
+
 					list.add(new TimeSeriesEntity(row.getVarint(1), row.getString(0), row.getDouble(5), row.getString(3)));
 				}
 			}
