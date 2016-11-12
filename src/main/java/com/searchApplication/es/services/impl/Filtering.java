@@ -110,12 +110,12 @@ public class Filtering {
 				tFdocs1 = client.prepareSearch(indexName).setSize(0).setTypes(objectType).setQuery(booleanQuery)
 						.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
 
-				SearchOutput res = QueryFilterResponse.getLocationAggregation(tFdocs1,
-						request.getLocations(), getLocationMap(request.getLocations()), request);
-				
+				SearchOutput res = QueryFilterResponse.getLocationAggregation(tFdocs1, request.getLocations(),
+						getLocationMap(request.getLocations()), request);
+
 				Map<String, Set<LocationAggrigation>> loc = res.getLocations();
 
-				if( res!=null && res.getTotalSeriesIds() > 0 )
+				if( res != null && res.getTotalSeriesIds() > 0 )
 				{
 					response.setTotalSeriesIds(res.getTotalSeriesIds());
 				}
@@ -157,7 +157,7 @@ public class Filtering {
 				}
 				else
 				{
-					if( request.getLocations() == null || request.getLocations().keySet() == null
+					/*if( request.getLocations() == null || request.getLocations().keySet() == null
 							|| request.getLocations().keySet().isEmpty() )
 					{
 						Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
@@ -174,7 +174,8 @@ public class Filtering {
 					else
 					{
 						response.setLocations(loc);
-					}
+					}*/
+					response.setLocations(loc);
 				}
 			}
 			response.setTotalRows(tFdocs.getHits().getTotalHits());
