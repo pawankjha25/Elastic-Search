@@ -97,7 +97,9 @@ public class AttributeBucketer {
 					if (b != null) {
 						if (bucketList.contains(b)) {
 							bucketList.get(bucketList.indexOf(b)).incrementCount();
-							bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
+							if(b.getBucketMetaData() != null) {
+								bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
+							}
 
 						} else {
 							bucketList.add(b);
@@ -107,6 +109,7 @@ public class AttributeBucketer {
 						hitCounter++;
 				} catch (Exception e) {
 					LOGGER.debug("Error processing row {}", e.getCause().getMessage());
+					LOGGER.debug("Hit Counter: " + hitCounter);
 					e.printStackTrace();
 				}
 			}
@@ -137,7 +140,11 @@ public class AttributeBucketer {
 				for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource()
 						.get("attributes")) {
 					if (!misses.contains(attributeData.get("attribute_value"))) {
-						bucketTerms.add(attributeData.get("attribute_value"));
+						if(attributeData.get("attribute_value")  != null ) {
+							bucketTerms.add(attributeData.get("attribute_value"));
+						} else {
+							LOGGER.debug("Attribute value is NULL");
+						}
 					}
 				}
 			} catch (Exception e) {
