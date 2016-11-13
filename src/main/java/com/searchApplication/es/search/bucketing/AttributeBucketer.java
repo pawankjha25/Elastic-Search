@@ -160,7 +160,11 @@ public class AttributeBucketer {
 				for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource()
 						.get("attributes")) {
 					if (!misses.contains(attributeData.get("attribute_value"))) {
-						bucketTerms.add(attributeData.get("attribute_value"));
+						if(attributeData.get("attribute_value")  != null ) {
+							bucketTerms.add(attributeData.get("attribute_value"));
+						} else {
+							LOGGER.debug("Attribute value is NULL");
+						}
 					}
 				}
 			} catch (Exception e) {

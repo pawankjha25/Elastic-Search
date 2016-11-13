@@ -11,8 +11,8 @@ public class LocationLoader {
 	public static Set<String> getLocationsFromFile(String path) throws IOException {
 		
 		ClassLoader classLoader = LocationLoader.class.getClassLoader();
-		InputStream is = classLoader.getResourceAsStream(path);
-		return new HashSet<String>(Arrays.asList(IOUtils.textLinesAsArray(is)));
+		InputStream inputStream = classLoader.getResourceAsStream("locations.txt");
+		return new HashSet<String>(Arrays.asList(IOUtils.textLinesAsArray(inputStream)));
 	}
 
 	

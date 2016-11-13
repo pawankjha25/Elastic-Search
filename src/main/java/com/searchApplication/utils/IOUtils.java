@@ -23,16 +23,6 @@ public class IOUtils {
 
 	}
 
-	public static String[] textLinesAsArray(InputStream is) throws IOException {
-		List<String> sb = new LinkedList<String>();
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(is));) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				sb.add(line);
-			}
-			return sb.toArray(new String[sb.size()]);
-		}
-	}
 
 	public static String[] textLinesAsArray(File file) throws IOException {
 		List<String> sb = new LinkedList<String>();
@@ -56,5 +46,17 @@ public class IOUtils {
 			return sb.toArray(new String[sb.size()]);
 		}
 
+	}
+	
+	public static String[] textLinesAsArray(InputStream inputStream) throws IOException {
+		List<String> sb = new LinkedList<String>();
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				sb.add(line);
+			}
+			return sb.toArray(new String[sb.size()]);
+		}
+		
 	}
 }
