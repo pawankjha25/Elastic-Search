@@ -4,23 +4,27 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.FilteredQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.searchApplication.es.entities.BucketResponseList;
 
 public class AttributeBucketer {
@@ -48,11 +52,14 @@ public class AttributeBucketer {
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
-				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
+				.setSize(0).setScroll(new TimeValue(160000));
 		srb = generateQuery(srb, querySplit);
+		srb.addAggregation(generateAggregaion(querySplit[0]));
 		LOGGER.debug(" query {}", srb.toString());
 
 		SearchResponse sr = srb.get();
+		LOGGER.debug(" resutls {}", sr.toString());
+
 		return sr;
 	}
 
@@ -69,7 +76,6 @@ public class AttributeBucketer {
 			querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 2);
 			LOGGER.debug("Queries {}", Arrays.toString(querySplit));
 			LOGGER.debug("Next one {}", querySplit[1].equals(""));
-
 			if (!querySplit[1].equals("")) {
 				bucketList = getBucketsFromSearchResponse(hitEs(client, index, type, hitsInScroll, querySplit),
 						querySplit, hitsInScroll, loops, client);
@@ -84,38 +90,52 @@ public class AttributeBucketer {
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		Set<String> hits = new HashSet<String>();
 		Set<String> misses = new HashSet<String>();
-		while ((hitCounter < hitsInScroll * loops) && (sr.getHits().getHits().length > 0)) {
-			LOGGER.debug(" query {}", sr.toString());
+		LOGGER.debug(" query {}", sr.toString());
 
-			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
-			for (SearchHit hit : sr.getHits()) {
-				try {
-					Bucket b = processHitsToBuckets(hit, querySplit[0], hits, misses);
-					if (querySplit.length > 1 && querySplit[1].length() > 1) {
-						b.getBucketTerms().add(querySplit[1].toUpperCase() + LOCATION_CONTEXT);
+		LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
+
+		Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> buckets = ((StringTerms) sr
+				.getAggregations().asMap().get("values")).getBuckets().iterator();
+
+		while (buckets.hasNext()) {
+			Terms.Bucket b = buckets.next();
+			System.out.println(b.getKeyAsString());
+			Bucket result = BucketBuilders.createFromQueryString(querySplit[0], Arrays.asList(b.getKeyAsString()),
+					hits);
+			if (result == null) {
+				continue;
+			}
+			if (querySplit.length > 1 && querySplit[1].length() > 1) {
+				result.getBucketTerms().add(querySplit[1].toUpperCase() + LOCATION_CONTEXT);
+			}
+			Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> sectorIt = ((StringTerms) b
+					.getAggregations().asList().get(0)).getBuckets().iterator();
+			List<BucketMetaData> metaDataList = new ArrayList<BucketMetaData>();
+			while (sectorIt.hasNext()) {
+				Terms.Bucket sectorBucket = sectorIt.next();
+				Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> subSectorIT = ((StringTerms) sectorBucket
+						.getAggregations().asList().get(0)).getBuckets().iterator();
+				while (subSectorIT.hasNext()) {
+					Terms.Bucket subSectorBucket = subSectorIT.next();
+
+					Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> superRegionIT = ((StringTerms) subSectorBucket
+							.getAggregations().asList().get(0)).getBuckets().iterator();
+					
+					while (superRegionIT.hasNext()) {
+						Terms.Bucket regionBucket = superRegionIT.next();
+						BucketMetaData metaData = new BucketMetaData(regionBucket.getKeyAsString(),
+								sectorBucket.getKeyAsString(), subSectorBucket.getKeyAsString());
+						metaData.setTotal(regionBucket.getDocCount());
+						metaDataList.add(metaData);
+						
 					}
-					if (b != null) {
-						if (bucketList.contains(b)) {
-							bucketList.get(bucketList.indexOf(b)).incrementCount();
-							bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
-
-						} else {
-							bucketList.add(b);
-						}
-						hitCounter++;
-					} else
-						hitCounter++;
-				} catch (Exception e) {
-					LOGGER.debug("Error processing row {}", e.getCause().getMessage());
-					e.printStackTrace();
 				}
 			}
-			if (hitCounter < hitsInScroll) {
-				break;
-			}
-			if (hitCounter < hitsInScroll * loops) {
-				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
-			}
+			LOGGER.debug("bucket {}", result);
+
+			result.setTotalRows(b.getDocCount());
+			bucketList.add(result);
+			
 		}
 
 		Collections.sort(bucketList);
@@ -189,6 +209,15 @@ public class AttributeBucketer {
 		}
 
 		return new String[] { atts.trim(), loc.trim() };
+
+	}
+
+	private static AbstractAggregationBuilder generateAggregaion(String query) {
+
+		return AggregationBuilders.terms("values").field("description.raw").size(2000)
+				.subAggregation(AggregationBuilders.terms("sectors").field("sector")
+						.subAggregation(AggregationBuilders.terms("sub").field("sub_sector")
+								.subAggregation(AggregationBuilders.terms("region").field("super_region"))));
 
 	}
 

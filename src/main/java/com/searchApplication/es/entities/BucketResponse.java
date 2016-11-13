@@ -8,7 +8,7 @@ public class BucketResponse implements Comparable<BucketResponse> {
 	private String superRegion;
 	// to do this will have multiple names as there are multiple strings?
 	private String stratumName;
-	private int totalRows;
+	private long totalRows;
 
 	public String getSuggestionString() {
 		return suggestionString;
@@ -50,11 +50,11 @@ public class BucketResponse implements Comparable<BucketResponse> {
 		this.stratumName = stratumName;
 	}
 
-	public int getTotalRows() {
+	public long getTotalRows() {
 		return totalRows;
 	}
 
-	public void setTotalRows(int totalRows) {
+	public void setTotalRows(long totalRows) {
 		this.totalRows = totalRows;
 	}
 

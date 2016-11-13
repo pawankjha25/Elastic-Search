@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.fest.assertions.api.Assertions;
 import org.junit.After;
-import org.junit.Test;
+import org.junit.Ignore;
 
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.entities.DBData;
@@ -21,7 +21,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	private static Set<String> LOC = new HashSet<String>(Arrays.asList("illinois", "united states"));
 
-	@Test
+	@Ignore
 	public void testWithMeta() throws IOException {
 		createTestIndex();
 		Row r = new Row();
@@ -54,7 +54,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Test
+	@Ignore
 	public void testProduceResponseBuckets() throws IOException {
 		createTestIndex();
 
@@ -141,7 +141,7 @@ public class AttributeBucketerTest extends SearchESTest {
 	 * match)
 	 */
 
-	@Test
+	@Ignore
 	public void testMatches() throws Exception {
 		createTestIndex();
 
@@ -192,7 +192,7 @@ public class AttributeBucketerTest extends SearchESTest {
 	 * iron production wheat
 	 */
 
-	@Test
+	@Ignore
 	public void testMatch2() throws Exception {
 		createTestIndex();
 
@@ -245,7 +245,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Test
+	@Ignore
 	public void testLocations() throws IOException {
 
 		createTestIndex();
@@ -286,7 +286,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Test
+	@Ignore
 	public void testLocationsOnly() throws IOException {
 		createTestIndex();
 		LocationData loc = new LocationData();

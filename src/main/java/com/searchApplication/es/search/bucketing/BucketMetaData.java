@@ -7,7 +7,7 @@ public class BucketMetaData {
 	private String superRegion;
 	private String sector;
 	private String subSector;
-	private int total;
+	private long total;
 
 	public BucketMetaData( String superRegion, String sector, String subSector )
 	{
@@ -53,12 +53,12 @@ public class BucketMetaData {
 		this.subSector = subSector;
 	}
 
-	public int getTotal()
+	public long getTotal()
 	{
 		return total;
 	}
 
-	public void setTotal( int total )
+	public void setTotal( long total )
 	{
 		this.total = total;
 	}
