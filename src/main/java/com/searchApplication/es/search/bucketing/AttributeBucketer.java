@@ -225,7 +225,7 @@ public class AttributeBucketer {
 
 		BoolQueryBuilder bool = QueryBuilders.boolQuery();
 		if (!query[0].equals("")) {
-			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).analyzer(SHINGLE_ANALYZER)
+			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0])
 					.defaultField(SEARCH_FIELD);
 			bool.must(attQuery);
 			srb.setQuery(bool);
