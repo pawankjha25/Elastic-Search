@@ -11,7 +11,7 @@ public class LocationLoader {
 	public static Set<String> getLocationsFromFile(String path) throws IOException {
 		
 		ClassLoader classLoader = LocationLoader.class.getClassLoader();
-		File file = new File(classLoader.getResource("path").getFile());
+		File file = new File(classLoader.getResource(path).getFile());
 		return new HashSet<String>(Arrays.asList(IOUtils.textLinesAsArray(file)));
 	}
 
