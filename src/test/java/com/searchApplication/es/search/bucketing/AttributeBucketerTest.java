@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.fest.assertions.api.Assertions;
 import org.junit.After;
-import org.junit.Ignore;
+import org.junit.Test;
 
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.entities.DBData;
@@ -21,7 +21,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	private static Set<String> LOC = new HashSet<String>(Arrays.asList("illinois", "united states"));
 
-	@Ignore
+	@Test
 	public void testWithMeta() throws IOException {
 		createTestIndex();
 		Row r = new Row();
@@ -54,7 +54,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Ignore
+	@Test
 	public void testProduceResponseBuckets() throws IOException {
 		createTestIndex();
 
@@ -141,7 +141,7 @@ public class AttributeBucketerTest extends SearchESTest {
 	 * match)
 	 */
 
-	@Ignore
+	@Test
 	public void testMatches() throws Exception {
 		createTestIndex();
 
@@ -166,9 +166,9 @@ public class AttributeBucketerTest extends SearchESTest {
 				"corn production", 1, 1000, LOC);
 		System.out.println(buckets);
 		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn production");
-		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("production", "corn");
-		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("corn", "production planning");
-		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsOnly("production planning");
+		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("production planning");
+		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsOnly("production");
+		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("corn");
 		Assertions.assertThat(buckets.get(5).getBucketTerms()).containsOnly("iron production");
 		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsOnly("yellow corn");
 		Assertions.assertThat(buckets.get(6).getBucketTerms()).containsOnly("popcorn production");
@@ -192,7 +192,7 @@ public class AttributeBucketerTest extends SearchESTest {
 	 * iron production wheat
 	 */
 
-	@Ignore
+	@Test
 	public void testMatch2() throws Exception {
 		createTestIndex();
 
@@ -211,15 +211,19 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"wheat production", 10, 1000, LOC);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsExactly("wheat", "production");
 
-		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsExactly("wheat production");
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsExactly("wheat production");
+		
+		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsExactly("wheat");
 
-		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsExactly("wheat production", "wheat");
 
-		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsExactly("mining wheat", "iron production");
+		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsExactly("production");
 
-		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsExactly("wheat");
+		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsExactly("mining wheat");
+
+		
+		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsExactly("iron production");
+
 
 	}
 
@@ -245,7 +249,7 @@ public class AttributeBucketerTest extends SearchESTest {
 
 	}
 
-	@Ignore
+	@Test
 	public void testLocations() throws IOException {
 
 		createTestIndex();
@@ -281,12 +285,13 @@ public class AttributeBucketerTest extends SearchESTest {
 
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"corn production illinois", 1, 1000, LOC);
-		Assertions.assertThat(buckets).hasSize(1);
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn", "corn production", "ILLINOIS_LOC");
+		Assertions.assertThat(buckets).hasSize(2);
+		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn production", "ILLINOIS_LOC");
+		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("corn", "ILLINOIS_LOC");
 
 	}
 
-	@Ignore
+	@Test
 	public void testLocationsOnly() throws IOException {
 		createTestIndex();
 		LocationData loc = new LocationData();

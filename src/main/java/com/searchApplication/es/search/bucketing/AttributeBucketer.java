@@ -101,10 +101,13 @@ public class AttributeBucketer {
 			Terms.Bucket b = buckets.next();
 			Bucket result = BucketBuilders.createFromQueryString(querySplit[0], Arrays.asList(b.getKeyAsString()),
 					hits);
-			if (result == null) {
+			if (result == null && querySplit[1].length() == 0) {
 				continue;
 			}
-			if (querySplit.length > 1 && querySplit[1].length() > 1) {
+			else if (result == null && querySplit[1].length() > 0) {
+				result = new Bucket(new HashSet<String>(Arrays.asList(querySplit[1].toUpperCase()+ LOCATION_CONTEXT)), 1, 1, 0);
+			}
+			else if (result != null && querySplit.length > 1 && querySplit[1].length() > 1) {
 				result.getBucketTerms().add(querySplit[1].toUpperCase() + LOCATION_CONTEXT);
 			}
 			Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> sectorIt = ((StringTerms) b
