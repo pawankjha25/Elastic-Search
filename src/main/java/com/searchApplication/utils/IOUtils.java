@@ -23,18 +23,14 @@ public class IOUtils {
 
 	}
 
-	public static String[] textLinesAsArray(InputStream is) {
+	public static String[] textLinesAsArray(InputStream is) throws IOException {
 		List<String> sb = new LinkedList<String>();
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(is));) {
 			String line;
 			while ((line = br.readLine()) != null) {
 				sb.add(line);
 			}
 			return sb.toArray(new String[sb.size()]);
-		} catch (Exception e) {
-			return sb.toArray(new String[sb.size()]);
-
 		}
 	}
 
