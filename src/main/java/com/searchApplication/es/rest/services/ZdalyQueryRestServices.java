@@ -212,7 +212,7 @@ public class ZdalyQueryRestServices
 				String toDate = request.getToDate();
 				BigInteger series_id = new BigInteger(request.getSeriesId());
 				Session session = ZdalyCassandraConnection.getCassandraSession();
-				StringBuffer sql = new StringBuffer("select * from time_series_data where series_id = ? and db_name= ? and period='d'  ");
+				StringBuffer sql = new StringBuffer("select series_id,db_name,date,value from time_series_data where series_id = ? and db_name= ? and period='d'  ");
 				/*
 				 * if (fromDate != null) { sql.append("  and dttm >= " + "\'" +
 				 * fromDate + "\'"); } if (toDate != null) { sql.append(
@@ -226,10 +226,7 @@ public class ZdalyQueryRestServices
 				while (itr.hasNext())
 				{
 					Row row = itr.next();
-					// list.add(new TimeSeriesEntity(row.getVarint(0),
-					// row.getString(1), row.getDouble(5), row.getString(4)));
-
-					list.add(new TimeSeriesEntity(row.getVarint(1), row.getString(0), row.getDouble(5), row.getString(3)));
+					list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(3), row.getString(2)));
 				}
 			}
 			transactionResponse.setResponseEntity(list);

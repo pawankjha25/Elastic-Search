@@ -41,7 +41,7 @@ public class App
 		ElasticSearchUtility.getInstance(env);
 		try
 		{
-			LOCATIONS = LocationLoader.getLocationsFromFile("src/main/resources/locations");
+			LOCATIONS = LocationLoader.getLocationsFromFile("locations");
 		} catch (Exception e)
 		{
 			System.out.println("failed to load locations");
