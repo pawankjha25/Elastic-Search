@@ -99,7 +99,6 @@ public class AttributeBucketer {
 
 		while (buckets.hasNext()) {
 			Terms.Bucket b = buckets.next();
-			System.out.println(b.getKeyAsString());
 			Bucket result = BucketBuilders.createFromQueryString(querySplit[0], Arrays.asList(b.getKeyAsString()),
 					hits);
 			if (result == null) {
