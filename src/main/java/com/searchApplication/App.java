@@ -40,7 +40,7 @@ public class App {
 		registration.addInitParameter(ServletProperties.JAXRS_APPLICATION_CLASS, JerseyConfig.class.getName());
 		ElasticSearchUtility.getInstance(env);
 		try {
-			LOCATIONS = LocationLoader.getLocationsFromFile("src/main/resources/locations");
+			LOCATIONS = LocationLoader.getLocationsFromFile("locations");
 		} catch (Exception e) {
 			System.out.println("failed to load locations");
 		}
