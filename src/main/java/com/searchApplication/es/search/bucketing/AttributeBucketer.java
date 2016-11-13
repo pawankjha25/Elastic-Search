@@ -131,7 +131,7 @@ public class AttributeBucketer {
 				}
 			}
 			LOGGER.debug("bucket {}", result);
-
+			result.setBucketMetaData(metaDataList);
 			result.setTotalRows(b.getDocCount());
 			bucketList.add(result);
 			

@@ -6,6 +6,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.searchApplication.es.search.bucketing.AttributeBucketer;
 import com.searchApplication.es.search.bucketing.Bucket;
 import com.searchApplication.es.search.bucketing.BucketMetaData;
 
@@ -15,6 +19,8 @@ public class BucketResponseList {
 	private Set<BucketResponse> searchResponse;
 	private long totalTimesInMillis;
 	private long totalRows;
+	private static final Logger LOGGER = LoggerFactory.getLogger(BucketResponseList.class);
+
 
 	public long getTotalTimesInMillis() {
 		return totalTimesInMillis;
@@ -65,11 +71,15 @@ public class BucketResponseList {
 				r.setSuggestionString(sb.toString());
 				r.setTotalRows(meta.getTotal());
 				responses.add(r);
+				LOGGER.debug("response {}", r);
 			}
 			
 			
 		}
+		
 		b.setSearchResponse(responses);
+		LOGGER.debug("response {}", b);
+
 		return b;
 	}
 }
