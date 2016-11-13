@@ -4,7 +4,7 @@
 
 	<groupId>com.tool.zdalySearchApplication</groupId>
 	<artifactId>zdalySearchApplication</artifactId>
-	<version>0.0.3-SNAPSHOT</version>
+	<version>0.0.5-SNAPSHOT</version>
 
 	<name>zdalySearchApplication</name>
 	<url>http://maven.apache.org</url>
@@ -266,7 +266,6 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>ZDalyETL</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
