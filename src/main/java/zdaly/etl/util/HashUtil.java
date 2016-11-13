@@ -42,7 +42,6 @@ public class HashUtil {
 	 * @return
 	 */
 	public static String encode(String message) {
-		long starttime = System.currentTimeMillis();
 		String hashEncoded = null;
 		byte[] hash = null;
 		MessageDigest digest;
@@ -54,8 +53,6 @@ public class HashUtil {
 			e.printStackTrace();
 		}
 		hashEncoded = Base64.encodeBase64String(hash);
-		long end = System.currentTimeMillis();
-		System.out.println("Time take: " + (end-starttime) + "ms");
 		return hashEncoded;
 	}
 	
@@ -65,7 +62,6 @@ public class HashUtil {
 	 * @return
 	 */
 	public static List<String> encode(List<String> messages) {
-		long starttime = System.currentTimeMillis();
 		List<String> encodedHashes = new ArrayList<>();
 		byte[] hash = null;
 		MessageDigest digest;
@@ -81,8 +77,6 @@ public class HashUtil {
 			hashString = Base64.encodeBase64String(hash);
 			encodedHashes.add(hashString);
 		}
-		long end = System.currentTimeMillis();
-		System.out.println("Time take: " + (end-starttime) + "ms");
 		return encodedHashes;
 	}
 	
@@ -93,7 +87,6 @@ public class HashUtil {
 	 * @return
 	 */
 	public static List<String> encode(List<String> messages, String salt) {
-		long starttime = System.currentTimeMillis();
 		List<String> encodedHashes = new ArrayList<>();
 		for(String message: messages) {
 		    // Initialize SHA-256
@@ -111,8 +104,6 @@ public class HashUtil {
 		    // build cipher from the chars
 		    encodedHashes.add(Base64.encodeBase64String(hash));
 		}
-	    long end = System.currentTimeMillis();
-		System.out.println("Time take: " + (end-starttime) + "ms");
 	    return encodedHashes;
 	}
 	
@@ -123,7 +114,6 @@ public class HashUtil {
 	 * @return
 	 */
 	public static String encode(String message, String salt) {
-		long starttime = System.currentTimeMillis();
 		String hashEncoded = null;
 	    
 	    // Initialize SHA-256
@@ -140,8 +130,6 @@ public class HashUtil {
 
 	    // build cipher from the chars
 	    hashEncoded = Base64.encodeBase64String(hash);
-	    long end = System.currentTimeMillis();
-		System.out.println("Time take: " + (end-starttime) + "ms");
 	    return hashEncoded;
 	}
 
