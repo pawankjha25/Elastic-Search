@@ -125,6 +125,7 @@ public class AttributeBucketer {
 						BucketMetaData metaData = new BucketMetaData(regionBucket.getKeyAsString(),
 								sectorBucket.getKeyAsString(), subSectorBucket.getKeyAsString());
 						metaData.setTotal(regionBucket.getDocCount());
+						LOGGER.debug("adding metadata {}", metaData);
 						metaDataList.add(metaData);
 						
 					}
