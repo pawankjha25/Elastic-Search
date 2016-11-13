@@ -4,24 +4,40 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 
 public class IOUtils {
-
 
 	public static String textLines(String path) throws IOException {
 		StringBuffer sb = new StringBuffer();
 		try (BufferedReader br = new BufferedReader(new FileReader(path));) {
 			String line;
 			while ((line = br.readLine()) != null) {
-				sb.append(" "+line);
+				sb.append(" " + line);
 			}
 			return sb.toString();
 		}
-		
+
 	}
-	
+
+	public static String[] textLinesAsArray(InputStream is) {
+		List<String> sb = new LinkedList<String>();
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+			String line;
+			while ((line = br.readLine()) != null) {
+				sb.add(line);
+			}
+			return sb.toArray(new String[sb.size()]);
+		} catch (Exception e) {
+			return sb.toArray(new String[sb.size()]);
+
+		}
+	}
+
 	public static String[] textLinesAsArray(File file) throws IOException {
 		List<String> sb = new LinkedList<String>();
 		try (BufferedReader br = new BufferedReader(new FileReader(file));) {
@@ -31,9 +47,9 @@ public class IOUtils {
 			}
 			return sb.toArray(new String[sb.size()]);
 		}
-		
+
 	}
-	
+
 	public static String[] textLinesAsArray(String path) throws IOException {
 		List<String> sb = new LinkedList<String>();
 		try (BufferedReader br = new BufferedReader(new FileReader(path));) {
@@ -43,6 +59,6 @@ public class IOUtils {
 			}
 			return sb.toArray(new String[sb.size()]);
 		}
-		
+
 	}
 }
