@@ -18,7 +18,7 @@ public class BucketBuilders {
 
 	private static Stemmer STEMMER = new Stemmer();
 
-	public static Bucket createFromQueryString(String query, Set<String> locations, List<String> bucket,
+	public static Bucket createFromQueryString(String query, List<String> bucket,
 			Set<String> hits) {
 
 		Set<String> bucketWords = new HashSet<String>();
@@ -85,17 +85,6 @@ public class BucketBuilders {
 				bucketTerms.add(bte);
 			}
 
-		}
-		if (!locations.isEmpty()) {
-			for (String location: locations) {
-				BucketTerms bte = new BucketTerms();
-				bte.setAttributeName(location);
-				bte.setQueryWordMatch(qc);
-				bte.setFull(true);
-				bte.setMatchedQueryWordsCount(1);
-				perfectMatches++;
-				bucketTerms.add(bte);
-			}
 		}
 		if (perfectMatches > 0)
 
