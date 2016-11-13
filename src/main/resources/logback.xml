@@ -1,5 +1,5 @@
 <configuration>
-	<appender name="fileAppender" class="ch.qos.logback.core.FileAppender">
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
 		<file>logs/app.log</file>
 		<append>true</append>
 		<encoder>
@@ -16,7 +16,9 @@
 	</appender>
 	
 	<root level="debug">
-	  <appender-ref ref="STDOUT" />
-	  <appender-ref ref="fileAppender" />
+	  <appender-ref ref="STDOUT" />	  
+	</root>
+	<root level="info">
+	  <appender-ref ref="FILE" />
 	</root>
 </configuration>
