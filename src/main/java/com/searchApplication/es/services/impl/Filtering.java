@@ -9,6 +9,7 @@ import java.util.TreeSet;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import com.google.gson.Gson;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.SearchOutput;
@@ -130,6 +131,7 @@ public class Filtering {
 
 						for( LocationAggrigation locationDetails : locAgg )
 						{
+							System.out.println(new Gson().toJson(locationDetails));
 							if( locationDetails != null && locationDetails.getLocationParent() != null
 									&& locationDetails.getLocationParent().equalsIgnoreCase(location) )
 							{
@@ -148,6 +150,9 @@ public class Filtering {
 								newLocationDetails.setLocations(place);
 
 								newLocAgg.add(newLocationDetails);
+								newLoc.put(keys, newLocAgg);
+							}else{
+								newLocAgg.add(locationDetails);
 								newLoc.put(keys, newLocAgg);
 							}
 						}
