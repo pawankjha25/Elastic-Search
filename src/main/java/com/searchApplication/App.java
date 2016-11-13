@@ -21,29 +21,24 @@ import com.searchApplication.utils.LocationLoader;
 @EnableAutoConfiguration
 @ComponentScan("com.searchApplication.*")
 @EnableScheduling
-public class App
-{
+public class App {
 
 	@Autowired
 	private Environment env;
 	public static Set<String> LOCATIONS;
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		SpringApplication.run(App.class, args);
 	}
 
 	@Bean
-	public ServletRegistrationBean jerseyServlet()
-	{
+	public ServletRegistrationBean jerseyServlet() {
 		ServletRegistrationBean registration = new ServletRegistrationBean(new ServletContainer(), "/rest/*");
 		registration.addInitParameter(ServletProperties.JAXRS_APPLICATION_CLASS, JerseyConfig.class.getName());
 		ElasticSearchUtility.getInstance(env);
-		try
-		{
-			LOCATIONS = LocationLoader.getLocationsFromFile("locations");
-		} catch (Exception e)
-		{
+		try {
+			LOCATIONS = LocationLoader.getLocationsFromFile("locations.txt");
+		} catch (Exception e) {
 			System.out.println("failed to load locations");
 		}
 		return registration;
