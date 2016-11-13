@@ -11,19 +11,19 @@ import java.util.List;
 
 public class IOUtils {
 
-
 	public static String textLines(String path) throws IOException {
 		StringBuffer sb = new StringBuffer();
 		try (BufferedReader br = new BufferedReader(new FileReader(path));) {
 			String line;
 			while ((line = br.readLine()) != null) {
-				sb.append(" "+line);
+				sb.append(" " + line);
 			}
 			return sb.toString();
 		}
-		
+
 	}
-	
+
+
 	public static String[] textLinesAsArray(File file) throws IOException {
 		List<String> sb = new LinkedList<String>();
 		try (BufferedReader br = new BufferedReader(new FileReader(file));) {
@@ -33,9 +33,9 @@ public class IOUtils {
 			}
 			return sb.toArray(new String[sb.size()]);
 		}
-		
+
 	}
-	
+
 	public static String[] textLinesAsArray(String path) throws IOException {
 		List<String> sb = new LinkedList<String>();
 		try (BufferedReader br = new BufferedReader(new FileReader(path));) {
@@ -45,7 +45,7 @@ public class IOUtils {
 			}
 			return sb.toArray(new String[sb.size()]);
 		}
-		
+
 	}
 	
 	public static String[] textLinesAsArray(InputStream inputStream) throws IOException {
