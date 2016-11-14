@@ -91,17 +91,16 @@ public class QueryFilterResponse {
 			Collection<Terms.Bucket> locTypeBuckets = locType.getBuckets();
 			for( Terms.Bucket locTypeBucket : locTypeBuckets )
 			{
-				System.out.println("Type -----------------" + locTypeBucket.getKeyAsString());
 				Terms locationParent = locTypeBucket.getAggregations().get("locationParent");
 				Collection<Terms.Bucket> locParentBuckets = locationParent.getBuckets();
 
 				Set<LocationAggrigation> locationList = new TreeSet<LocationAggrigation>();
 				for( Terms.Bucket locParentBucket : locParentBuckets )
 				{
-					if( (mapParents != null && mapParents.get("all").contains(locParentBucket.getKeyAsString()))
+					if( (mapParents != null && (mapParents.get("all").contains(locParentBucket.getKeyAsString())
+							|| locParentBucket.getKeyAsString().equalsIgnoreCase("NULL")))
 							|| (mapParents == null || mapParents.isEmpty()) )
 					{
-						System.out.println(locParentBucket.getKeyAsString());
 						LocationAggrigation loc = new LocationAggrigation();
 						loc.setLocationParent(locParentBucket.getKeyAsString());
 
@@ -124,7 +123,6 @@ public class QueryFilterResponse {
 						for( Terms.Bucket bucket6 : buckets6 )
 						{
 							locationName.add(bucket6.getKeyAsString());
-
 							ValueCount locationIds = bucket6.getAggregations().get("locationid");
 							if( map != null && map.get(locTypeBucket.getKeyAsString()) != null
 									&& mapParents.get("all").contains(bucket6.getKeyAsString()) )
@@ -147,7 +145,6 @@ public class QueryFilterResponse {
 				locationBucket.put(locTypeBucket.getKeyAsString(), locationList);
 				locationBucketFinal.put(locTypeBucket.getKeyAsString(), locationList);
 			}
-			
 
 			if( map != null && map.keySet() != null )
 			{
