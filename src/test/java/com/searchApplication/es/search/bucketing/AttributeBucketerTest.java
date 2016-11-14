@@ -356,8 +356,8 @@ public class AttributeBucketerTest extends SearchESTest {
 				"corn", 1, 1000, LOC);
 		System.out.println(buckets);
 		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn");
-		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsOnly("yellow corn");
-		Assertions.assertThat(buckets.get(6).getBucketTerms()).containsOnly("corn production");
+		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("yellow corn");
+		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("corn production");
 
 	}
 
