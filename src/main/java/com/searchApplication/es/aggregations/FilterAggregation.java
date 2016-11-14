@@ -31,9 +31,9 @@ public class FilterAggregation {
 		try
 		{
 			return AggregationBuilders.nested("locations").path("locations")
-				   .subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw").size(100)
-				   .subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").size(10000)
-				   .subAggregation(AggregationBuilders.terms("locationName").field("locations.location_name.raw").size(10000)
+				   .subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw").size(10000000)
+				   .subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").size(10000000)
+				   .subAggregation(AggregationBuilders.terms("locationName").field("locations.location_name.raw").size(10000000)
 				   .subAggregation(AggregationBuilders.count("locationid").field("locations.series_id")))));
 		}
 		catch( Exception e )

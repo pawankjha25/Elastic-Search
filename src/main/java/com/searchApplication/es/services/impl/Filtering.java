@@ -116,6 +116,7 @@ public class Filtering {
 
 				Map<String, Set<LocationAggrigation>> loc = res.getLocations();
 
+				System.out.println(new Gson().toJson(loc));
 				if( res != null && res.getTotalSeriesIds() > 0 )
 				{
 					response.setTotalSeriesIds(res.getTotalSeriesIds());
@@ -131,7 +132,6 @@ public class Filtering {
 
 						for( LocationAggrigation locationDetails : locAgg )
 						{
-							System.out.println(new Gson().toJson(locationDetails));
 							if( locationDetails != null && locationDetails.getLocationParent() != null
 									&& locationDetails.getLocationParent().equalsIgnoreCase(location) )
 							{
@@ -151,7 +151,9 @@ public class Filtering {
 
 								newLocAgg.add(newLocationDetails);
 								newLoc.put(keys, newLocAgg);
-							}else{
+							}
+							else
+							{
 								newLocAgg.add(locationDetails);
 								newLoc.put(keys, newLocAgg);
 							}
@@ -162,7 +164,7 @@ public class Filtering {
 				}
 				else
 				{
-					/*if( request.getLocations() == null || request.getLocations().keySet() == null
+					if( request.getLocations() == null || request.getLocations().keySet() == null
 							|| request.getLocations().keySet().isEmpty() )
 					{
 						Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
@@ -173,14 +175,26 @@ public class Filtering {
 								newLoc.put(keys, loc.get(keys));
 								break;
 							}
+							else
+							{
+								Set<LocationAggrigation> locVal = loc.get(keys);
+								for( LocationAggrigation l : locVal )
+								{
+									if( l.getLocationParent().equalsIgnoreCase("NULL") )
+									{
+										newLoc.put(keys, loc.get(keys));
+										break;
+									}
+								}
+							}
 						}
 						response.setLocations(newLoc);
 					}
 					else
 					{
 						response.setLocations(loc);
-					}*/
-					response.setLocations(loc);
+					}
+					//response.setLocations(loc);
 				}
 			}
 			response.setTotalRows(tFdocs.getHits().getTotalHits());
