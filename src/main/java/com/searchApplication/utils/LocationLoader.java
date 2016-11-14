@@ -12,7 +12,6 @@ public class LocationLoader {
 		
 		ClassLoader classLoader = LocationLoader.class.getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream("locations.txt");
-//		System.out.println("Loaded locations file " + file);
 		return new HashSet<String>(Arrays.asList(IOUtils.textLinesAsArray(inputStream)));
 	}
 

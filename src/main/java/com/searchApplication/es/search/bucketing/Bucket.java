@@ -10,7 +10,7 @@ public class Bucket implements Comparable<Bucket> {
 	private int totalPerfectMatches;
 	private int totalPartialMatches;
 	private int totalLevenstheinDistance;
-	private int totalRows;
+	private long totalRows;
 	private int totalLength;
 	private List<BucketMetaData> bucketMetaData;
 
@@ -67,11 +67,11 @@ public class Bucket implements Comparable<Bucket> {
 		return l + this.bucketTerms.size();
 	}
 
-	public int getTotalRows() {
+	public long getTotalRows() {
 		return totalRows;
 	}
 
-	public void setTotalRows(int totalRows) {
+	public void setTotalRows(long totalRows) {
 		this.totalRows = totalRows;
 	}
 

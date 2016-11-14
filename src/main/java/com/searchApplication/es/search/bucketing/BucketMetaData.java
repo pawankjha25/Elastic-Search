@@ -1,13 +1,11 @@
 package com.searchApplication.es.search.bucketing;
 
-import com.google.gson.Gson;
-
 public class BucketMetaData {
 
 	private String superRegion;
 	private String sector;
 	private String subSector;
-	private int total;
+	private long total;
 
 	public BucketMetaData( String superRegion, String sector, String subSector )
 	{
@@ -53,12 +51,12 @@ public class BucketMetaData {
 		this.subSector = subSector;
 	}
 
-	public int getTotal()
+	public long getTotal()
 	{
 		return total;
 	}
 
-	public void setTotal( int total )
+	public void setTotal( long total )
 	{
 		this.total = total;
 	}
@@ -66,7 +64,17 @@ public class BucketMetaData {
 	@Override
 	public int hashCode()
 	{
-		return (sector + subSector + superRegion).hashCode();
+		StringBuilder builder = new StringBuilder();
+		if(sector != null) {
+			builder.append(sector);
+		}
+		if(subSector != null) {
+			builder.append(subSector);
+		}
+		if(superRegion != null) {
+			builder.append(superRegion);
+		}
+		return builder.toString().hashCode();
 	}
 
 	@Override
@@ -75,8 +83,42 @@ public class BucketMetaData {
 		if( obj instanceof BucketMetaData )
 		{
 			BucketMetaData b = (BucketMetaData) obj;
-			return sector.equals(b.getSector()) && subSector.equals(b.getSubSector())
-					&& superRegion.equals(b.getSuperRegion());
+			boolean equals = true;
+			if(equals == true) {
+				if (sector != null) {
+					if(sector.equals(b.getSector())) {
+						equals = true;
+					} else {
+						equals = false;
+					}
+				} else {
+					equals = b.getSector() == null;
+				}
+			}
+			if(equals == true) {
+				if (subSector != null) {
+					if(subSector.equals(b.getSubSector())) {
+						equals = true;
+					} else {
+						equals = false;
+					}
+				} else {
+					equals = b.getSubSector() == null;
+				}
+			}
+			if(equals == true) {
+				if (superRegion != null) {
+					if(superRegion.equals(b.getSuperRegion())) {
+						equals = true;
+					} else {
+						equals = false;
+					}
+				} else {
+					equals = b.getSuperRegion() == null;
+				}
+			}
+			
+			return equals;
 		}
 		else
 		{

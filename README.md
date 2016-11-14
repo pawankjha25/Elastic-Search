@@ -1,1 +1,3 @@
 # EsApplication
+
+## How to setup
