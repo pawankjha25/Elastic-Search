@@ -27,7 +27,7 @@ public class Results {
 			BoolQueryBuilder booleanQuery = FilterQuery.getQuery(request);
 
 			if( request.getLocations() != null && !request.getLocations().isEmpty()
-					&& request.getLocations().keySet().size() > 1 )
+					&& request.getLocations().keySet().size() > 0 )
 			{
 				location = true;
 			}
