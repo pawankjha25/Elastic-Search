@@ -6,7 +6,7 @@ import java.util.Set;
 
 public class Bucket implements Comparable<Bucket> {
 
-	private Set<String> bucketTerms;
+	private Set<BucketTerms> bucketTerms;
 	private int totalPerfectMatches;
 	private int totalPartialMatches;
 	private int totalLevenstheinDistance;
@@ -14,7 +14,7 @@ public class Bucket implements Comparable<Bucket> {
 	private int totalLength;
 	private List<BucketMetaData> bucketMetaData;
 
-	public Bucket(Set<String> bucketTerms, int totalPerfectMatches, int totalPartialMatches,
+	public Bucket(Set<BucketTerms> bucketTerms, int totalPerfectMatches, int totalPartialMatches,
 			int totalLevenstheinDistance) {
 		super();
 		this.bucketTerms = bucketTerms;
@@ -61,8 +61,8 @@ public class Bucket implements Comparable<Bucket> {
 
 	private int calucalteTotalBucketLength() {
 		int l = 0;
-		for (String s : this.bucketTerms) {
-			l += s.replaceAll(" ", "").length() + 1;
+		for (BucketTerms s : this.bucketTerms) {
+			l += s.getAttributeName().replaceAll(" ", "").length() + 1;
 		}
 		return l + this.bucketTerms.size();
 	}
@@ -75,11 +75,11 @@ public class Bucket implements Comparable<Bucket> {
 		this.totalRows = totalRows;
 	}
 
-	public Set<String> getBucketTerms() {
+	public Set<BucketTerms> getBucketTerms() {
 		return bucketTerms;
 	}
 
-	public void setBucketTerms(Set<String> bucketTerms) {
+	public void setBucketTerms(Set<BucketTerms> bucketTerms) {
 		this.bucketTerms = bucketTerms;
 	}
 
@@ -134,7 +134,7 @@ public class Bucket implements Comparable<Bucket> {
 			if (this.getBucketTerms().size() != ((Bucket) obj).getBucketTerms().size()) {
 				return false;
 			} else {
-				for (String term : ((Bucket) obj).getBucketTerms()) {
+				for (BucketTerms term : ((Bucket) obj).getBucketTerms()) {
 					if (!this.bucketTerms.contains(term)) {
 						return false;
 					}
@@ -149,8 +149,9 @@ public class Bucket implements Comparable<Bucket> {
 	@Override
 	public int hashCode() {
 		int hash = 0;
-		for (String s : bucketTerms) {
-			hash += s.hashCode();
+		
+		for (BucketTerms t : bucketTerms) {
+			hash += t.getAttributeName().hashCode();
 		}
 		return hash;
 	}

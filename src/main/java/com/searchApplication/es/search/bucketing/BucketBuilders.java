@@ -18,8 +18,7 @@ public class BucketBuilders {
 
 	private static Stemmer STEMMER = new Stemmer();
 
-	public static Bucket createFromQueryString(String query, List<String> bucket,
-			Set<String> hits) {
+	public static Bucket createFromQueryString(String query, List<String> bucket, Set<String> hits) {
 
 		Set<String> bucketWords = new HashSet<String>();
 		int perfectMatches = 0;
@@ -39,12 +38,13 @@ public class BucketBuilders {
 			}
 
 		}
-		List<BucketTerms> bucketTerms = new ArrayList<BucketTerms>();
+		Set<BucketTerms> bucketTerms = new HashSet<BucketTerms>();
 		Set<String> matchedQueries = new HashSet<String>();
 		for (String b : bucket) {
 			String[] bs = b.toLowerCase().trim().replaceAll("\\p{P}", "").split(SPACE_DELIMITER);
 			int localMatches = 0;
 			int firstMatch = 0;
+			Set<String> localMatchedQueries = new HashSet<String>();
 
 			for (String t : bs) {
 				if (STOP_LIST.contains(t)) {
@@ -63,7 +63,9 @@ public class BucketBuilders {
 						if (!matchedQueries.contains(q.getOriginal())) {
 							perfectMatches++;
 							matchedQueries.add(q.getOriginal());
+							
 						}
+						localMatchedQueries.add(q.getOriginal());
 						localMatches++;
 						if (firstMatch == 0) {
 							firstMatch = localQC;
@@ -82,6 +84,7 @@ public class BucketBuilders {
 				bte.setQueryWordMatch(firstMatch);
 				bte.setFull(bs.length <= localMatches ? true : false);
 				bte.setMatchedQueryWordsCount(localMatches);
+				bte.setMatchedQueries(localMatchedQueries);
 				bucketTerms.add(bte);
 			}
 
@@ -89,8 +92,7 @@ public class BucketBuilders {
 		if (perfectMatches > 0)
 
 		{
-			return new Bucket(BucketTerms.createdQuerySortedBucket(bucketTerms), perfectMatches, partialMathces,
-					totalDistance);
+			return new Bucket(bucketTerms, perfectMatches, partialMathces, totalDistance);
 		} else {
 			return null;
 		}

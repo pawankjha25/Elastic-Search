@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.searchApplication.es.search.bucketing.AttributeBucketer;
 import com.searchApplication.es.search.bucketing.Bucket;
 import com.searchApplication.es.search.bucketing.BucketMetaData;
+import com.searchApplication.es.search.bucketing.BucketTerms;
 
 public class BucketResponseList {
 
@@ -60,7 +61,7 @@ public class BucketResponseList {
 		Set<BucketResponse> responses = new LinkedHashSet<BucketResponse>();
 		for (Bucket bucket : buckets) {
 			StringBuffer sb= new StringBuffer();
-			for (String t: bucket.getBucketTerms()) {
+			for (String t: BucketTerms.createdQuerySortedBucket(bucket.getBucketTerms())) {
 				sb.append(t+"|");
 			}
 			for (BucketMetaData meta : bucket.getBucketMetaData()) {

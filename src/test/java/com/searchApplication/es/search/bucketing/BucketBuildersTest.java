@@ -122,7 +122,7 @@ public class BucketBuildersTest {
 				Arrays.asList("corn production", "corn", "all production practices"), new HashSet<String>());
 		Assert.assertEquals(b.getTotalPerfectMatches(), 2);
 		Assert.assertEquals(b.getTotalPartialMatches(), 0);
-		Assertions.assertThat(b.getBucketTerms()).containsExactly("corn production", "corn",
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(b.getBucketTerms())).containsExactly("corn production", "corn",
 				"all production practices");
 
 	}

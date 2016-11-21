@@ -43,8 +43,13 @@ public class AttributeBucketer {
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
 			int hitsInScroll, Set<String> locations) {
-		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll, locations);
+		List<Bucket> buckets = aggregateBuckets(
+				createBucketList(client, index, type, query, loops, hitsInScroll, locations));
 		return BucketResponseList.buildFromBucketList(buckets, query);
+	}
+
+	private static List<Bucket> aggregateBuckets(List<Bucket> buckets) {
+		return Aggregator.generateAggregated(buckets);
 	}
 
 	private static SearchResponse hitEs(Client client, String index, String type, int hitsInScroll,
@@ -103,12 +108,12 @@ public class AttributeBucketer {
 					hits);
 			if (result == null && querySplit[1].length() == 0) {
 				continue;
-			}
-			else if (result == null && querySplit[1].length() > 0) {
-				result = new Bucket(new HashSet<String>(Arrays.asList(querySplit[1].toUpperCase()+ LOCATION_CONTEXT)), 1, 1, 0);
-			}
-			else if (result != null && querySplit.length > 1 && querySplit[1].length() > 1) {
-				result.getBucketTerms().add(querySplit[1].toUpperCase() + LOCATION_CONTEXT);
+			} else if (result == null && querySplit[1].length() > 0) {
+				BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
+				result = new Bucket(new HashSet(Arrays.asList(bts)), 1, 1, 0);
+			} else if (result != null && querySplit.length > 1 && querySplit[1].length() > 1) {
+				BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
+				result.getBucketTerms().add(bts);
 			}
 			Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> sectorIt = ((StringTerms) b
 					.getAggregations().asList().get(0)).getBuckets().iterator();
@@ -122,7 +127,7 @@ public class AttributeBucketer {
 
 					Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> superRegionIT = ((StringTerms) subSectorBucket
 							.getAggregations().asList().get(0)).getBuckets().iterator();
-					
+
 					while (superRegionIT.hasNext()) {
 						Terms.Bucket regionBucket = superRegionIT.next();
 						BucketMetaData metaData = new BucketMetaData(regionBucket.getKeyAsString(),
@@ -130,7 +135,6 @@ public class AttributeBucketer {
 						metaData.setTotal(regionBucket.getDocCount());
 						LOGGER.debug("adding metadata {}", metaData);
 						metaDataList.add(metaData);
-						
 					}
 				}
 			}
@@ -138,7 +142,7 @@ public class AttributeBucketer {
 			result.setBucketMetaData(metaDataList);
 			result.setTotalRows(b.getDocCount());
 			bucketList.add(result);
-			
+
 		}
 
 		Collections.sort(bucketList);
@@ -160,7 +164,7 @@ public class AttributeBucketer {
 				for (Map<String, String> attributeData : (List<Map<String, String>>) hit.getSource()
 						.get("attributes")) {
 					if (!misses.contains(attributeData.get("attribute_value"))) {
-						if(attributeData.get("attribute_value")  != null ) {
+						if (attributeData.get("attribute_value") != null) {
 							bucketTerms.add(attributeData.get("attribute_value"));
 						} else {
 							LOGGER.debug("Attribute value is NULL");
@@ -176,7 +180,7 @@ public class AttributeBucketer {
 			b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
 		} else {
-			b = new Bucket(new HashSet<String>(), 0, 0, 0);
+			b = new Bucket(new HashSet<BucketTerms>(), 0, 0, 0);
 		}
 
 		if (b != null) {
@@ -232,8 +236,7 @@ public class AttributeBucketer {
 
 		BoolQueryBuilder bool = QueryBuilders.boolQuery();
 		if (!query[0].equals("")) {
-			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0])
-					.defaultField(SEARCH_FIELD);
+			QueryBuilder attQuery = QueryBuilders.queryStringQuery(query[0]).defaultField(SEARCH_FIELD);
 			bool.must(attQuery);
 			srb.setQuery(bool);
 		}
