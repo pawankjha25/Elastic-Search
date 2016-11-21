@@ -16,7 +16,7 @@ public class BucketBuildersTest {
 		Assert.assertEquals(b.getTotalPerfectMatches(), 2);
 		Assert.assertEquals(b.getTotalPartialMatches(), 0);
 		Assert.assertEquals(b.getTotalLevenstheinDistance(), 0);
-		Assert.assertTrue(b.getBucketTerms().contains("corn production"));
+		Assert.assertTrue(BucketTerms.createdQuerySortedBucket(b.getBucketTerms()).contains("corn production"));
 		Assert.assertEquals(b.getBucketTerms().size(), 1);
 
 		Bucket b1 = BucketBuilders.createFromQueryString("corn production", Arrays.asList("production", "corn", "xs"),
@@ -24,15 +24,14 @@ public class BucketBuildersTest {
 		Assert.assertEquals(b1.getTotalPerfectMatches(), 2);
 		Assert.assertEquals(b1.getTotalPartialMatches(), 0);
 		Assert.assertEquals(b1.getTotalLevenstheinDistance(), 0);
-		Assert.assertTrue(b1.getBucketTerms().contains("corn"));
-		Assert.assertTrue(b1.getBucketTerms().contains("production"));
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(b1.getBucketTerms())).contains("corn", "production");
 
 		Bucket b2 = BucketBuilders.createFromQueryString("corn production", Arrays.asList("corn production", "corn"),
 				new HashSet<String>());
 		Assert.assertEquals(b2.getTotalPerfectMatches(), 2);
 		Assert.assertEquals(b2.getTotalPartialMatches(), 0);
 		Assert.assertEquals(b2.getTotalLevenstheinDistance(), 0);
-		Assert.assertTrue(b2.getBucketTerms().contains("corn production"));
+		Assert.assertTrue(BucketTerms.createdQuerySortedBucket(b2.getBucketTerms()).contains("corn production"));
 		Assert.assertEquals(b2.getBucketTerms().size(), 2);
 
 	}
@@ -66,8 +65,7 @@ public class BucketBuildersTest {
 				Arrays.asList("iron production", "corn mining"), new HashSet<String>());
 		Assert.assertEquals(b.getTotalPerfectMatches(), 2);
 		Assert.assertEquals(b.getTotalPartialMatches(), 0);
-		Assert.assertTrue(b.getBucketTerms().contains("iron production"));
-		Assert.assertTrue(b.getBucketTerms().contains("corn mining"));
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(b.getBucketTerms())).contains("iron production", "corn mining");
 
 		Assert.assertEquals(b.getBucketTerms().size(), 2);
 		Assert.assertEquals(b.getTotalLevenstheinDistance(), 0);

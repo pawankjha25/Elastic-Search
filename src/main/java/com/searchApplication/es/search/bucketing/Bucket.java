@@ -47,16 +47,16 @@ public class Bucket implements Comparable<Bucket> {
 			} else if (this.totalRows < o.totalRows) {
 				return 1;
 			} else {
-				if (this.totalLength < o.totalLength) {
+				if (this.getBucketTerms().size() < o.getBucketTerms().size()) {
 					return -1;
-				} else if (this.totalLength > o.totalLength) {
+				} else if (this.getBucketTerms().size() > o.getBucketTerms().size()) {
 					return 1;
 				}
 
 			}
 		}
 
-		return 0;
+		return Integer.compare(totalLength, o.totalLength);
 	}
 
 	private int calucalteTotalBucketLength() {
@@ -119,13 +119,12 @@ public class Bucket implements Comparable<Bucket> {
 		this.bucketMetaData = bucketMetaData;
 	}
 
-
 	@Override
 	public String toString() {
-		return "Bucket [bucketTerms=" + bucketTerms + ", totalPerfectMatches=" + totalPerfectMatches
+		return "Bucket [bucketTerms=" + bucketTerms + "\n, totalPerfectMatches=" + totalPerfectMatches
 				+ ", totalPartialMatches=" + totalPartialMatches + ", totalLevenstheinDistance="
 				+ totalLevenstheinDistance + ", totalRows=" + totalRows + ", totalLength=" + totalLength
-				+ ", bucketMetaData=" + bucketMetaData + "]";
+				+ ", bucketMetaData=" + bucketMetaData + "]\n";
 	}
 
 	@Override
@@ -149,7 +148,7 @@ public class Bucket implements Comparable<Bucket> {
 	@Override
 	public int hashCode() {
 		int hash = 0;
-		
+
 		for (BucketTerms t : bucketTerms) {
 			hash += t.getAttributeName().hashCode();
 		}

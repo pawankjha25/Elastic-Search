@@ -27,8 +27,6 @@ public class BucketTerms implements Comparable<BucketTerms> {
 		this.matchedQueryWordsCount = matchedQueryWordsCount;
 		this.matchedQueries = new HashSet<String>();
 	}
-	
-	
 
 	public Set<String> getMatchedQueries() {
 		return matchedQueries;
@@ -72,11 +70,9 @@ public class BucketTerms implements Comparable<BucketTerms> {
 
 	@Override
 	public String toString() {
-		return "BucketTerms [attributeName=" + attributeName + ", queryWordMatch=" + queryWordMatch + ", isFull="
-				+ isFull + ", matchedQueryWordsCount=" + matchedQueryWordsCount + "]";
+		return "BucketTerms [attributeName=" + attributeName + "\n, queryWordMatch=" + queryWordMatch + ", isFull="
+				+ isFull + ", matchedQueryWordsCount=" + matchedQueryWordsCount + "]\n";
 	}
-	
-	
 
 	@Override
 	public int hashCode() {
@@ -130,10 +126,10 @@ public class BucketTerms implements Comparable<BucketTerms> {
 
 	public static LinkedHashSet<String> createdQuerySortedBucket(Set<BucketTerms> terms) {
 		LinkedHashSet<String> bucketTermsInOrder = new LinkedHashSet<String>();
-		ArrayList<BucketTerms> list  = new ArrayList<BucketTerms>(terms);
+		ArrayList<BucketTerms> list = new ArrayList<BucketTerms>(terms);
 		Collections.sort(list);
-		for (BucketTerms t : terms) {
-			bucketTermsInOrder.add(t.getAttributeName());
+		for (int i = 0; i < list.size(); i++) {
+			bucketTermsInOrder.add(list.get(i).getAttributeName());
 		}
 		return bucketTermsInOrder;
 	}

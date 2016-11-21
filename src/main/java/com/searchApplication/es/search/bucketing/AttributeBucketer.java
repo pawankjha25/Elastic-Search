@@ -52,7 +52,7 @@ public class AttributeBucketer {
 		return Aggregator.generateAggregated(buckets);
 	}
 
-	private static SearchResponse hitEs(Client client, String index, String type, int hitsInScroll,
+	private static SearchResponse hitEsSingle(Client client, String index, String type, int hitsInScroll,
 			String[] querySplit) {
 		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
@@ -73,28 +73,38 @@ public class AttributeBucketer {
 
 		LOGGER.debug("Start query ");
 		String[] querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 1);
-		SearchResponse sr = hitEs(client, index, type, hitsInScroll, querySplit);
-
-		List<Bucket> bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+		List<Bucket> bucketList = getBucketsFromSearch(querySplit, hitsInScroll, loops, client, index, type);
 		LOGGER.debug("Query {} split size {}", query, query.split(" ").length);
 		if (bucketList.size() == 0 && query.split(" ").length == 1) {
 			querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 2);
 			LOGGER.debug("Queries {}", Arrays.toString(querySplit));
 			LOGGER.debug("Next one {}", querySplit[1].equals(""));
 			if (!querySplit[1].equals("")) {
-				bucketList = getBucketsFromSearchResponse(hitEs(client, index, type, hitsInScroll, querySplit),
-						querySplit, hitsInScroll, loops, client);
+				bucketList = getBucketsFromSearch(querySplit, hitsInScroll, loops, client, index, type);
 			}
 		}
 		return bucketList;
 	}
 
-	private static List<Bucket> getBucketsFromSearchResponse(SearchResponse sr, String[] querySplit, int hitsInScroll,
-			int loops, Client client) {
+	private static List<Bucket> getBucketsFromSearch(String[] querySplit, int hitsInScroll, int loops, Client client,
+			String index, String type) {
+
+		if (querySplit[0].split(" ").length == 1 && querySplit[1].split(" ").length <= 1) {
+			SearchResponse sr = hitEsSingle(client, index, type, hitsInScroll, querySplit);
+			List<Bucket> bucketList = getBucketsFromSearchResponseWithAgg(sr, querySplit, hitsInScroll, loops, client);
+			return bucketList;
+		} else {
+			SearchResponse sr = hitEsMulti(client, index, type, hitsInScroll, querySplit);
+			List<Bucket> bucketList = getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+			return bucketList;
+		}
+	}
+
+	private static List<Bucket> getBucketsFromSearchResponseWithAgg(SearchResponse sr, String[] querySplit,
+			int hitsInScroll, int loops, Client client) {
 		int hitCounter = 0;
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 		Set<String> hits = new HashSet<String>();
-		Set<String> misses = new HashSet<String>();
 		LOGGER.debug(" query {}", sr.toString());
 
 		LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
@@ -114,6 +124,7 @@ public class AttributeBucketer {
 			} else if (result != null && querySplit.length > 1 && querySplit[1].length() > 1) {
 				BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
 				result.getBucketTerms().add(bts);
+
 			}
 			Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> sectorIt = ((StringTerms) b
 					.getAggregations().asList().get(0)).getBuckets().iterator();
@@ -124,7 +135,6 @@ public class AttributeBucketer {
 						.getAggregations().asList().get(0)).getBuckets().iterator();
 				while (subSectorIT.hasNext()) {
 					Terms.Bucket subSectorBucket = subSectorIT.next();
-
 					Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> superRegionIT = ((StringTerms) subSectorBucket
 							.getAggregations().asList().get(0)).getBuckets().iterator();
 
@@ -184,11 +194,7 @@ public class AttributeBucketer {
 		}
 
 		if (b != null) {
-			for (String terms : bucketTerms) {
-				if (!b.getBucketTerms().contains(terms)) {
-					misses.add(terms);
-				}
-			}
+			
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
@@ -251,4 +257,73 @@ public class AttributeBucketer {
 		}
 		return srb;
 	}
+
+	private static SearchResponse hitEsMulti(Client client, String index, String type, int hitsInScroll,
+			String[] querySplit) {
+		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
+				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
+						null)
+				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
+		srb = generateQuery(srb, querySplit);
+		LOGGER.debug(" query {}", srb.toString());
+
+		SearchResponse sr = srb.get();
+		return sr;
+	}
+
+	private static List<Bucket> getBucketsFromSearchResponse(SearchResponse sr, String[] querySplit, int hitsInScroll,
+			int loops, Client client) {
+		int hitCounter = 0;
+		List<Bucket> bucketList = new ArrayList<Bucket>();
+		Set<String> hits = new HashSet<String>();
+		Set<String> misses = new HashSet<String>();
+		while ((hitCounter < hitsInScroll * loops) && (sr.getHits().getHits().length > 0)) {
+			LOGGER.debug(" query {}", sr.toString());
+
+			LOGGER.debug(" response {} {} {}", hitCounter, sr.getHits().getHits().length, sr.getTookInMillis());
+			for (SearchHit hit : sr.getHits()) {
+				try {
+					Bucket b = processHitsToBuckets(hit, querySplit[0], hits, misses);
+					if (querySplit.length > 1 && querySplit[1].length() > 1) {
+						BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
+						b.getBucketTerms().add(bts);
+
+					} else if (b == null && querySplit[1].length() > 0) {
+						BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
+						b = new Bucket(new HashSet(Arrays.asList(bts)), 1, 1, 0);
+
+					}
+					if (b != null) {
+						if (bucketList.contains(b)) {
+							bucketList.get(bucketList.indexOf(b)).incrementCount();
+							if (b.getBucketMetaData() != null) {
+								bucketList.get(bucketList.indexOf(b)).addMetaData(b.getBucketMetaData().get(0));
+							}
+
+						} else {
+							bucketList.add(b);
+						}
+						hitCounter++;
+					} else
+						hitCounter++;
+				} catch (Exception e) {
+					LOGGER.debug("Error processing row {}", e.getCause().getMessage());
+					LOGGER.debug("Hit Counter: " + hitCounter);
+					e.printStackTrace();
+				}
+			}
+			if (hitCounter < hitsInScroll) {
+				break;
+			}
+			if (hitCounter < hitsInScroll * loops) {
+				sr = client.prepareSearchScroll(sr.getScrollId()).setScroll(new TimeValue(160000)).get();
+			}
+		}
+
+		Collections.sort(bucketList);
+		LOGGER.debug(" list {}", bucketList);
+
+		return bucketList;
+	}
+
 }
