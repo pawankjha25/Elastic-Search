@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -17,6 +15,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import javassist.scopedpool.SoftValueHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,13 +38,17 @@ import com.searchApplication.entities.TransactionResponse;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
 import com.searchApplication.utils.ZdalyCassandraConnection;
+import zdaly.etl.util.HashUtil;
 
 @Path("/zdaly")
 @RestController
-@PropertySources({ @PropertySource(value = "${database.properties}", ignoreResourceNotFound = false) })
+@PropertySources({ @PropertySource("classpath:database.properties") })
 public class ZdalyQueryRestServices {
-	@Value("${zDaly.salt}")
+	@Value("${zDaly.cassandra.salt}")
 	private String salt;
+
+	@Value("${zDaly.cassandra.encrypt}")
+	private boolean encrypted;
 
 	@Autowired
 	private ZdalyQueryServices zdalyQueryServices;
@@ -176,25 +179,45 @@ public class ZdalyQueryRestServices {
 		try {
 			for (CassandraFilterRequest request : requests) {
 				LOG.info(request.toString());
+
 				String db_name = request.getDbName();
+				String casDbName = db_name;
+				if (encrypted) {
+					casDbName = HashUtil.encode(db_name, salt);
+				}
 				String fromDate = request.getFromDate();
 				String toDate = request.getToDate();
-				BigInteger series_id = new BigInteger(request.getSeriesId());
+				String period = request.getPeriod();
+				String series_id = request.getSeriesId();
 				Session session = ZdalyCassandraConnection.getCassandraSession();
-				StringBuffer sql = new StringBuffer("select series_id,db_name,date,value from time_series_data where series_id = ? and db_name= ? and period='d'  ");
-				/*
-				 * if (fromDate != null) { sql.append("  and dttm >= " + "\'" +
-				 * fromDate + "\'"); } if (toDate != null) { sql.append(
-				 * "  and dttm < " + "\'" + toDate + "\'"); }
-				 */
+				StringBuilder sql = new StringBuilder("select series_id, db_name, date,value from time_series_data ");
+				Map<String, Object> valueMap = new LinkedHashMap<>();
+				sql.append("where db_name= ? ");
+				valueMap.put("db_name", casDbName);
+
+				if(series_id != null) {
+					sql.append("and series_id = ?");
+					valueMap.put("series_id", series_id);
+				}
+				if(period != null) {
+					sql.append("and period = ?");
+					valueMap.put("period", period);
+				}
+				if(fromDate != null) {
+					sql.append("and dttm >= ?");
+					valueMap.put("dttm", fromDate);
+				}
+				if(toDate != null) {
+					sql.append("and dttm < ?");
+					valueMap.put("dttm", toDate);
+				}
 				LOG.debug(sql.toString());
-				// String series_id = HashUtil.encode(request.getSeriesId(),
-				// this.salt);
-				ResultSet rs = session.execute(sql.toString(), series_id, db_name);
+
+				ResultSet rs = session.execute(sql.toString(), valueMap.values().toArray());
 				Iterator<Row> itr = rs.iterator();
 				while (itr.hasNext()) {
 					Row row = itr.next();
-					list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(3), row.getString(2)));
+					list.add(new TimeSeriesEntity(row.getString(0), row.getString(1), row.getDecimal(3), row.getString(2)));
 				}
 			}
 			transactionResponse.setResponseEntity(list);

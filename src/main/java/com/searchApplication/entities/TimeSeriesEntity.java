@@ -1,12 +1,13 @@
 package com.searchApplication.entities;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class TimeSeriesEntity
 {
-	BigInteger seriesId;
+	String seriesId;
 	String dbName;
-	double value;
+	BigDecimal value;
 	String date;
 
 	public String getDate()
@@ -19,12 +20,12 @@ public class TimeSeriesEntity
 		this.date = date;
 	}
 
-	public BigInteger getSeriesId()
+	public String getSeriesId()
 	{
 		return seriesId;
 	}
 
-	public void setSeriesId(BigInteger seriesId)
+	public void setSeriesId(String seriesId)
 	{
 		this.seriesId = seriesId;
 	}
@@ -39,21 +40,21 @@ public class TimeSeriesEntity
 		this.dbName = dbName;
 	}
 
-	public double getValue()
+	public BigDecimal getValue()
 	{
 		return value;
 	}
 
-	public void setValue(double value)
+	public void setValue(BigDecimal value)
 	{
 		this.value = value;
 	}
 
-	public TimeSeriesEntity(BigInteger j, String dbName, double d, String date)
+	public TimeSeriesEntity(String seriesId, String dbName, BigDecimal value, String date)
 	{
-		this.seriesId = j;
+		this.seriesId = seriesId;
 		this.dbName = dbName;
-		this.value = d;
+		this.value = value;
 		this.date = date;
 	}
 }

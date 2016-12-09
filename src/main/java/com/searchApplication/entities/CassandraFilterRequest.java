@@ -7,6 +7,16 @@ public class CassandraFilterRequest
 	public String fromDate;
 	public String toDate;
 
+	public String getPeriod() {
+		return period;
+	}
+
+	public void setPeriod(String period) {
+		this.period = period;
+	}
+
+	public String period;
+
 	public String getSeriesId()
 	{
 		return seriesId;
@@ -50,7 +60,7 @@ public class CassandraFilterRequest
 	@Override
 	public String toString()
 	{
-		return " seriesId : " + seriesId + " dbName : " + dbName + " from : " + fromDate + " to : " + toDate;
+		return " seriesId : " + seriesId + ", dbName : " + dbName + ", period : " + period + ", from : " + fromDate + " to : " + toDate;
 	}
 
 }
