@@ -7,6 +7,7 @@ import org.glassfish.jersey.servlet.ServletProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.boot.context.embedded.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -42,5 +43,15 @@ public class App {
 			System.out.println("failed to load locations");
 		}
 		return registration;
+	}
+	
+	@Bean
+	public FilterRegistrationBean authorizationFilter() {
+		FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+		AuthorizationFilter filter = new AuthorizationFilter(env);
+		// filter.setAllow("127.0.0.1");
+		filterRegistrationBean.setFilter(filter);
+		filterRegistrationBean.addUrlPatterns("/rest/*");
+		return filterRegistrationBean;
 	}
 }
