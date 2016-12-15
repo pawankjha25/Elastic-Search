@@ -42,7 +42,7 @@ import com.searchApplication.utils.ZdalyCassandraConnection;
 
 @Path("/zdaly")
 @RestController
-@PropertySources({ @PropertySource(value = "${database.properties}", ignoreResourceNotFound = false) })
+@PropertySources({ @PropertySource("classpath:database.properties") })
 public class ZdalyQueryRestServices {
 	@Value("${zDaly.salt}")
 	private String salt;
