@@ -3,8 +3,11 @@ package com.searchApplication.es.rest.services;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -15,7 +18,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import javassist.scopedpool.SoftValueHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +35,13 @@ import com.searchApplication.entities.CassandraFilterRequest;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
+import com.searchApplication.entities.SeriesIdStatistics;
 import com.searchApplication.entities.TimeSeriesEntity;
 import com.searchApplication.entities.TransactionResponse;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
 import com.searchApplication.utils.ZdalyCassandraConnection;
+
 import zdaly.etl.util.HashUtil;
 
 @Path("/zdaly")
@@ -177,6 +181,7 @@ public class ZdalyQueryRestServices {
 		transactionResponse.setResponseMessage("Successfull");
 		transactionResponse.setResponseType("Object");
 		try {
+			Session session = ZdalyCassandraConnection.getCassandraSession();
 			for (CassandraFilterRequest request : requests) {
 				LOG.info(request.toString());
 
@@ -189,25 +194,24 @@ public class ZdalyQueryRestServices {
 				String toDate = request.getToDate();
 				String period = request.getPeriod();
 				String series_id = request.getSeriesId();
-				Session session = ZdalyCassandraConnection.getCassandraSession();
-				StringBuilder sql = new StringBuilder("select series_id, db_name, date,value from time_series_data ");
 				Map<String, Object> valueMap = new LinkedHashMap<>();
+				StringBuilder sql = new StringBuilder("select series_id, db_name, date,value from time_series_data ");
 				sql.append("where db_name= ? ");
 				valueMap.put("db_name", casDbName);
 
-				if(series_id != null) {
+				if (series_id != null) {
 					sql.append("and series_id = ?");
 					valueMap.put("series_id", series_id);
 				}
-				if(period != null) {
+				if (period != null) {
 					sql.append("and period = ?");
 					valueMap.put("period", period);
 				}
-				if(fromDate != null) {
+				if (fromDate != null) {
 					sql.append("and dttm >= ?");
 					valueMap.put("dttm", fromDate);
 				}
-				if(toDate != null) {
+				if (toDate != null) {
 					sql.append("and dttm < ?");
 					valueMap.put("dttm", toDate);
 				}
@@ -218,6 +222,56 @@ public class ZdalyQueryRestServices {
 				while (itr.hasNext()) {
 					Row row = itr.next();
 					list.add(new TimeSeriesEntity(row.getString(0), row.getString(1), row.getDecimal(3), row.getString(2)));
+				}
+			}
+			transactionResponse.setResponseEntity(list);
+		} catch (Exception exp) {
+			handleException(exp);
+			transactionResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+			transactionResponse.setResponseMessage("Error : " + exp.getMessage());
+		}
+		long end = System.currentTimeMillis();
+		LOG.debug(" requests : " + requests.size() + " Time taken : " + (end - starttime) + "ms");
+		return transactionResponse;
+	}
+
+	@POST
+	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Path("/get-time-series-stat-data")
+	public TransactionResponse getTimeSeriesStatData(@RequestBody List<CassandraFilterRequest> requests) throws Exception {
+		long starttime = System.currentTimeMillis();
+		List<SeriesIdStatistics> list = new ArrayList<>();
+		TransactionResponse transactionResponse = new TransactionResponse();
+		transactionResponse.setStatus(HttpStatus.OK.toString());
+		transactionResponse.setResponseMessage("Successfull");
+		transactionResponse.setResponseType("Series Id Statistics ");
+		try {
+			Session session = ZdalyCassandraConnection.getCassandraSession();
+			ResultSet rs =null;
+			for (CassandraFilterRequest request : requests) {
+				LOG.info(request.toString());
+				String seriesId = request.getSeriesId();
+				String tableName = request.getDbName();
+				if(tableName==null || tableName.length()==0)
+				{
+					throw new Exception("DB Name can't be NULL or empty");
+				}
+				Map<String, Object> valueMap = new LinkedHashMap<>();
+				StringBuilder sql = new StringBuilder("select table_name,series_id,start_date,end_date,row_count from time_series_data_stat ");
+				sql.append("where table_name = ?");
+				valueMap.put("tableName", tableName);
+				if (seriesId != null) {
+					sql.append("and series_id = ?");
+					valueMap.put("seriesId", seriesId);
+				}
+				LOG.debug(sql.toString());
+
+				rs = session.execute(sql.toString(), valueMap.values().toArray());
+				Iterator<Row> itr = rs.iterator();
+				while (itr.hasNext()) {
+					Row row = itr.next();
+					list.add(new SeriesIdStatistics(row.getString("series_id"),row.getString("table_name"), row.getTimestamp("start_date"), row.getTimestamp("end_date"), row.getInt("row_count")));
 				}
 			}
 			transactionResponse.setResponseEntity(list);

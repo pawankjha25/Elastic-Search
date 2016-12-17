@@ -38,17 +38,19 @@ public class AuthorizationFilter implements Filter {
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-		String user_token = ((HttpServletRequest) request).getHeader("user_token");
-		if (user_token == null || user_token.isEmpty()) {
-			throw new IOException("Invalid/Empty user token");
-		}
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Authorization", "Bearer " + user_token);
-		HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
-		ResponseEntity<AuthResponse> responseAuth = restTemplate.exchange(authVerifyURL, HttpMethod.GET, requestEntity, AuthResponse.class);
-		AuthResponse authResponse = responseAuth.getBody();
-		if (authResponse.getResponseCode() == HttpStatus.UNAUTHORIZED.toString()) {
-			throw new ServletException("Unauthorized Request");
+		if (env.getProperty("zDaly.bypassSecurity") != null && !Boolean.valueOf(env.getProperty("zDaly.bypassSecurity"))) {
+			String user_token = ((HttpServletRequest) request).getHeader("user_token");
+			if (user_token == null || user_token.isEmpty()) {
+				throw new IOException("Invalid/Empty user token");
+			}
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Authorization", "Bearer " + user_token);
+			HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
+			ResponseEntity<AuthResponse> responseAuth = restTemplate.exchange(authVerifyURL, HttpMethod.GET, requestEntity, AuthResponse.class);
+			AuthResponse authResponse = responseAuth.getBody();
+			if (authResponse.getResponseCode() == HttpStatus.UNAUTHORIZED.toString()) {
+				throw new ServletException("Unauthorized Request");
+			}
 		}
 		filterChain.doFilter(request, response);
 	}
