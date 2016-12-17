@@ -24,7 +24,7 @@ public abstract class SearchESTest extends ESIntegTestCase {
 		ClassLoader.getSystemClassLoader().setDefaultAssertionStatus(true);
 
 	}
-	private static final String DEFAULT_ARTICLE_MAPPING = "src/test/resources/index/row.json";
+	protected static final String DEFAULT_ARTICLE_MAPPING = "src/test/resources/index/row.json";
 	protected static final String TYPE_NAME = "time_series";
 	public static final String TEST_INDEX_NAME = "time_series";
 	protected static final String TEST_ANALYZER = "standard";
