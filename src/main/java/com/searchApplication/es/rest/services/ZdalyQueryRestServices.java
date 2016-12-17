@@ -255,7 +255,7 @@ public class ZdalyQueryRestServices {
 				String tableName = request.getDbName();
 				if(tableName==null || tableName.length()==0)
 				{
-					throw new Exception("DB Name can't be NULL or empty");
+					transactionResponse.setResponseMessage("DB Name is null/Empty for one or more cases ");
 				}
 				Map<String, Object> valueMap = new LinkedHashMap<>();
 				StringBuilder sql = new StringBuilder("select table_name,series_id,start_date,end_date,row_count from time_series_data_stat ");
@@ -266,7 +266,6 @@ public class ZdalyQueryRestServices {
 					valueMap.put("seriesId", seriesId);
 				}
 				LOG.debug(sql.toString());
-
 				rs = session.execute(sql.toString(), valueMap.values().toArray());
 				Iterator<Row> itr = rs.iterator();
 				while (itr.hasNext()) {
