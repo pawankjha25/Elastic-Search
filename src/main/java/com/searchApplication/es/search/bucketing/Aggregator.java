@@ -25,14 +25,15 @@ public class Aggregator {
 			List<BucketTerms> l = generateCandidate(buckets.get(i));
 			if (l != null) {
 				checkAggregatedBucket(bucketCombination, l, i, buckets.get(i).getTotalRows());
+				LOGGER.debug("Next bucket \n=========\n");
+
 			}
 
 		}
 		List<Integer> aggregatedBucketsList = new ArrayList<Integer>();
 		for (Map.Entry<String, AggregatedBucket> entry : bucketCombination.entrySet()) {
-			LOGGER.debug("ENTRY {}", entry);
+			LOGGER.debug("ENTRY {} size {} ", entry.getKey(), entry.getValue().getBuckets().size());
 			if (entry.getValue().getBuckets().size() > 1) {
-				System.out.println("Comb " + entry.getKey() + "  " + entry.getValue().getBuckets());
 				Bucket c = new Bucket(entry.getValue().getBucketTerms(),
 						buckets.get(entry.getValue().getFirstAppearance()).getTotalPerfectMatches(), 0, 0);
 				c.setTotalRows(entry.getValue().getCount());
@@ -64,6 +65,7 @@ public class Aggregator {
 			// TODO this orders differently if there is a multi match bucket
 			// after a single match attribute
 			if (bt.getMatchedQueries().size() == b.getTotalPerfectMatches()) {
+				LOGGER.debug("match found {}", totalMatch );
 				return Arrays.asList(bt);
 			} else {
 				for (String m : bt.getMatchedQueries()) {
@@ -82,6 +84,7 @@ public class Aggregator {
 				}
 			}
 		}
+		LOGGER.debug("totalMatch {}", totalMatch );
 		if (totalMatch >= b.getTotalPerfectMatches()) {
 			LOGGER.debug("aggregated candidates {}", aggTerms);
 
