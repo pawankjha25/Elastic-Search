@@ -97,7 +97,6 @@ public class Aggregator {
 		LOGGER.debug("totalMatch {}", totalMatch );
 		if (totalMatch >= b.getTotalPerfectMatches()) {
 			LOGGER.debug("aggregated candidates {}", aggTerms);
-
 			return aggTerms;
 		} else {
 			return null;
