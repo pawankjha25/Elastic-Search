@@ -161,17 +161,18 @@ public class AggregatorTest {
 		List<Bucket> list = Arrays.asList(b, b1, b2, b3, b4, b5);
 		List<Bucket> aggregatedList = Aggregator.generateAggregated(list);
 		Assertions.assertThat(aggregatedList).hasSize(4);
-		Assertions.assertThat(aggregatedList.get(0).getBucketMetaData()).hasSize(2);
+		Assertions.assertThat(aggregatedList.get(1).getBucketMetaData()).hasSize(2);
 		String[] bucketsNames = new String[aggregatedList.size()];
 		for (int i = 0; i < aggregatedList.size(); i++) {
 			String x = "";
 			for (BucketTerms bt : aggregatedList.get(i).getBucketTerms()) {
 				x += bt.getAttributeName() + "|";
 			}
+			System.out.println(aggregatedList.get(i).getTotalRows());
 			bucketsNames[i] = x;
 		}
-		Assertions.assertThat(bucketsNames[0]).isEqualTo("a|b|");
-		Assertions.assertThat(bucketsNames[1]).isEqualTo("a b|");
+		Assertions.assertThat(bucketsNames[1]).isEqualTo("a|b|");
+		Assertions.assertThat(bucketsNames[0]).isEqualTo("a b|");
 		Assertions.assertThat(bucketsNames[2]).isEqualTo("a4|");
 		Assertions.assertThat(bucketsNames[3]).isEqualTo("a5|");
 
