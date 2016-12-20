@@ -72,15 +72,12 @@ public class BucketResponseList {
 				r.setSuggestionString(sb.toString());
 				r.setTotalRows(meta.getTotal());
 				responses.add(r);
-				LOGGER.debug("response {}", r);
 			}
 			
 			
 		}
 		
 		b.setSearchResponse(responses);
-		LOGGER.debug("response {}", b);
-
 		return b;
 	}
 }

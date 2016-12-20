@@ -124,6 +124,12 @@ public class BucketTerms implements Comparable<BucketTerms> {
 
 	}
 
+	
+	public static ArrayList<BucketTerms> createdQuerySortedBucketSet(Set<BucketTerms> terms) {
+		ArrayList<BucketTerms> list = new ArrayList<BucketTerms>(terms);
+		Collections.sort(list);
+		return list;
+	}
 	public static LinkedHashSet<String> createdQuerySortedBucket(Set<BucketTerms> terms) {
 		LinkedHashSet<String> bucketTermsInOrder = new LinkedHashSet<String>();
 		ArrayList<BucketTerms> list = new ArrayList<BucketTerms>(terms);

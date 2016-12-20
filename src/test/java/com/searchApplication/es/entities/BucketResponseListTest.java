@@ -50,5 +50,7 @@ public class BucketResponseListTest {
 		Assertions.assertThat(b.getSector()).isEqualTo(sector);
 
 	}
+	
+	
 
 }

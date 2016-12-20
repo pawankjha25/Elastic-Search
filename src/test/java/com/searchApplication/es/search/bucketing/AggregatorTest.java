@@ -14,27 +14,27 @@ public class AggregatorTest {
 
 	@Test
 	public void testMulti() {
-		Set<String> queryMatchA = new HashSet<String>(Arrays.asList("a"));
+		Set<String> queryMatchA = new HashSet<String>(Arrays.asList("a b"));
 		
 
-		BucketTerms bta = new BucketTerms("a", 1, true, 1);
+		BucketTerms bta = new BucketTerms("a b", 2, true, 1);
 		bta.setMatchedQueries(queryMatchA);
 		bta.setQueryWordMatch(1);
 
-		BucketTerms bta1 = new BucketTerms("b", 1, true, 1);
+		BucketTerms bta1 = new BucketTerms("a b y", 2, false, 1);
 		bta1.setMatchedQueries(queryMatchA);
 		bta.setQueryWordMatch(1);
 
-		BucketTerms bta2 = new BucketTerms("a b", 1, true, 1);
+		BucketTerms bta2 = new BucketTerms("a b z", 2, false, 1);
 		bta2.setMatchedQueries(queryMatchA);
 		bta2.setQueryWordMatch(2);
-		BucketTerms bta3 = new BucketTerms("a3 ", 1, true, 1);
+		BucketTerms bta3 = new BucketTerms("a b a3  ", 2, false, 1);
 		bta3.setMatchedQueries(queryMatchA);
 
-		BucketTerms bta4 = new BucketTerms("a4", 1, true, 1);
+		BucketTerms bta4 = new BucketTerms("a b a4", 1, false, 1);
 		bta4.setMatchedQueries(queryMatchA);
 
-		BucketTerms bta5 = new BucketTerms("a5", 1, true, 1);
+		BucketTerms bta5 = new BucketTerms("a b a5", 1, false, 1);
 		bta5.setMatchedQueries(queryMatchA);
 
 		Bucket b = new Bucket(new HashSet<>(Arrays.asList(bta, bta1)), 1, 0, 10);
@@ -47,6 +47,7 @@ public class AggregatorTest {
 
 		List<Bucket> list = Arrays.asList(b, b1, b2, b3, b4, b5);
 		List<Bucket> aggegatedList = Aggregator.generateAggregated(list);
+		System.out.println(aggegatedList);
 		Assertions.assertThat(aggegatedList).hasSize(3);
 		String[] bucketsNames = new String[aggegatedList.size()];
 		for (int i = 0; i < aggegatedList.size(); i++) {
@@ -57,9 +58,9 @@ public class AggregatorTest {
 			bucketsNames[i] = x;
 		}
 		System.out.println(Arrays.toString(bucketsNames));
-		Assertions.assertThat(bucketsNames[0]).isEqualTo("a|");
-		Assertions.assertThat(bucketsNames[1]).isEqualTo("a4|");
-		Assertions.assertThat(bucketsNames[2]).isEqualTo("a5|");
+		Assertions.assertThat(bucketsNames[0]).isEqualTo("a b|");
+		Assertions.assertThat(bucketsNames[1]).isEqualTo("a b a4|");
+		Assertions.assertThat(bucketsNames[2]).isEqualTo("a b a5|");
 
 
 	}

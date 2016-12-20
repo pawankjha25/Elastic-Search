@@ -46,10 +46,8 @@ public class Aggregator {
 		}
 
 		for (int i = 0; i < buckets.size(); i++) {
-
 			if (aggregatedBuckets[i] != null) {
 				LOGGER.debug("Aggregated {} " + aggregatedBuckets[i].getBucketTerms());
-
 				resultBuckets.add(aggregatedBuckets[i]);
 			} else if (!aggregatedBucketsList.contains(i)) {
 				LOGGER.debug("Old {} " +buckets.get(i).getBucketTerms());
@@ -67,8 +65,14 @@ public class Aggregator {
 		int totalMatch = 0;
 		Set<String> matched = new HashSet<String>();
 		List<BucketTerms> aggTerms = new ArrayList<BucketTerms>();
-		for (BucketTerms bt : b.getBucketTerms()) {
+		System.out.println(BucketTerms.createdQuerySortedBucketSet(b.getBucketTerms()));
+		System.out.println("++++");
+
+		System.out.println(b.getBucketTerms());
+		System.out.println("----");
+		for (BucketTerms bt : BucketTerms.createdQuerySortedBucketSet(b.getBucketTerms())) {
 			LOGGER.debug("ENTRY {}", bt);
+			System.out.println(bt);
 
 			boolean forAdd = false;
 			// TODO this orders differently if there is a multi match bucket
