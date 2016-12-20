@@ -20,7 +20,7 @@ import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 
 @Configuration
 @PropertySources(
-{ @PropertySource(value = "${database.properties}", ignoreResourceNotFound = false) })
+		{ @PropertySource("classpath:database.properties") })
 public class ZdalyCassandraConnection
 {
 	private static final Logger LOG = LoggerFactory.getLogger(ZdalyCassandraConnection.class);

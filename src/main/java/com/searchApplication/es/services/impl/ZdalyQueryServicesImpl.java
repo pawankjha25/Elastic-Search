@@ -1,6 +1,10 @@
 package com.searchApplication.es.services.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.annotation.Resource;
+
 import org.elasticsearch.client.Client;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -11,9 +15,10 @@ import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
+import com.searchApplication.es.search.aggs.InsdustriInfo;
+import com.searchApplication.es.search.aggs.SectorBreakDownAggregation;
 import com.searchApplication.es.search.bucketing.AttributeBucketer;
 import com.searchApplication.utils.ElasticSearchUtility;
-import com.searchApplication.utils.LocationLoader;
 
 @Service
 public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
@@ -65,6 +70,17 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 				response = Results.getResults(request, env.getProperty("es.index_name"),
 						env.getProperty("es.search_object"), client);
 			}
+		} catch (Exception e) {
+			throw e;
+		}
+		return response;
+	}
+
+	@Override
+	public List<InsdustriInfo> getIndustryInfo() throws Exception {
+		List<InsdustriInfo> response = new ArrayList<InsdustriInfo>();
+		try {
+			response.addAll(SectorBreakDownAggregation.getSectors(client, env.getProperty("es.index_name")));
 		} catch (Exception e) {
 			throw e;
 		}

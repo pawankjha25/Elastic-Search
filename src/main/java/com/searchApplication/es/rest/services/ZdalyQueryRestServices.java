@@ -38,11 +38,12 @@ import com.searchApplication.entities.TimeSeriesEntity;
 import com.searchApplication.entities.TransactionResponse;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
+import com.searchApplication.es.search.aggs.InsdustriInfo;
 import com.searchApplication.utils.ZdalyCassandraConnection;
 
 @Path("/zdaly")
 @RestController
-@PropertySources({ @PropertySource(value = "${database.properties}", ignoreResourceNotFound = false) })
+@PropertySources({ @PropertySource("classpath:database.properties") })
 public class ZdalyQueryRestServices {
 	@Value("${zDaly.salt}")
 	private String salt;
@@ -53,9 +54,33 @@ public class ZdalyQueryRestServices {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/wilcard-search/{queryString}")
-	public TransactionResponse produceBucekts(@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
+	@Path("/industry-info")
+	public TransactionResponse getIndustryInfo() throws Exception {
+		TransactionResponse transactionResponse = new TransactionResponse();
 
+		try {
+			List<InsdustriInfo> results = zdalyQueryServices.getIndustryInfo();
+			transactionResponse.setStatus("200");
+			transactionResponse.setResponseMessage("Successfull");
+			transactionResponse.setResponseType("Object");
+			if (results != null) {
+				transactionResponse.setResponseEntity(results);
+			} else {
+				transactionResponse.setResponseMessage("No results found");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return transactionResponse;
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/wilcard-search/{queryString}")
+	public TransactionResponse produceBucekts(
+			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
 		transactionResponse.setResponseMessage("Successfull");
@@ -82,7 +107,8 @@ public class ZdalyQueryRestServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/match-query/{queryString}")
-	public TransactionResponse matchQuery(@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
+	public TransactionResponse matchQuery(
+			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
 
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
@@ -181,7 +207,8 @@ public class ZdalyQueryRestServices {
 				String toDate = request.getToDate();
 				BigInteger series_id = new BigInteger(request.getSeriesId());
 				Session session = ZdalyCassandraConnection.getCassandraSession();
-				StringBuffer sql = new StringBuffer("select series_id,db_name,date,value from time_series_data where series_id = ? and db_name= ? and period='d'  ");
+				StringBuffer sql = new StringBuffer(
+						"select series_id,db_name,date,value from time_series_data where series_id = ? and db_name= ? and period='d'  ");
 				/*
 				 * if (fromDate != null) { sql.append("  and dttm >= " + "\'" +
 				 * fromDate + "\'"); } if (toDate != null) { sql.append(
@@ -194,7 +221,8 @@ public class ZdalyQueryRestServices {
 				Iterator<Row> itr = rs.iterator();
 				while (itr.hasNext()) {
 					Row row = itr.next();
-					list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(3), row.getString(2)));
+					list.add(new TimeSeriesEntity(row.getVarint(0), row.getString(1), row.getDouble(3),
+							row.getString(2)));
 				}
 			}
 			transactionResponse.setResponseEntity(list);
