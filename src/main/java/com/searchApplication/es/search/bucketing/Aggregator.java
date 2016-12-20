@@ -43,9 +43,9 @@ public class Aggregator {
 
 			}
 		}
-		LOGGER.debug("Aggregated {} " + aggregatedBuckets);
 
 		for (int i = 0; i < buckets.size(); i++) {
+			LOGGER.debug("Aggregated {} " + aggregatedBuckets[i]);
 
 			if (aggregatedBuckets[i] != null) {
 				resultBuckets.add(aggregatedBuckets[i]);
