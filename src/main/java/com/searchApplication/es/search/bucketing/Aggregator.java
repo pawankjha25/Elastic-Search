@@ -48,15 +48,17 @@ public class Aggregator {
 		for (int i = 0; i < buckets.size(); i++) {
 
 			if (aggregatedBuckets[i] != null) {
-				LOGGER.debug("Aggregated {} " + aggregatedBuckets[i]);
+				LOGGER.debug("Aggregated {} " + aggregatedBuckets[i].getBucketTerms());
 
 				resultBuckets.add(aggregatedBuckets[i]);
 			} else if (!aggregatedBucketsList.contains(i)) {
-				LOGGER.debug("Old {} " + aggregatedBuckets[i]);
-
+				LOGGER.debug("Old {} " +buckets.get(i).getBucketTerms());
+				
 				resultBuckets.add(buckets.get(i));
 			} 
 		}
+		LOGGER.debug("Generated size {} " + resultBuckets.size());
+
 		LOGGER.debug("Generated {} " + resultBuckets);
 		return resultBuckets;
 	}
