@@ -2,6 +2,7 @@ package com.searchApplication.es.search.bucketing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,6 +59,7 @@ public class Aggregator {
 		LOGGER.debug("Generated size {} " + resultBuckets.size());
 
 		LOGGER.debug("Generated {} " + resultBuckets);
+		Collections.sort(resultBuckets);
 		return resultBuckets;
 	}
 
@@ -65,14 +67,9 @@ public class Aggregator {
 		int totalMatch = 0;
 		Set<String> matched = new HashSet<String>();
 		List<BucketTerms> aggTerms = new ArrayList<BucketTerms>();
-		System.out.println(BucketTerms.createdQuerySortedBucketSet(b.getBucketTerms()));
-		System.out.println("++++");
-
-		System.out.println(b.getBucketTerms());
-		System.out.println("----");
+		
 		for (BucketTerms bt : BucketTerms.createdQuerySortedBucketSet(b.getBucketTerms())) {
 			LOGGER.debug("ENTRY {}", bt);
-			System.out.println(bt);
 
 			boolean forAdd = false;
 			// TODO this orders differently if there is a multi match bucket
