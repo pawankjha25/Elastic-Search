@@ -32,7 +32,7 @@ public class Aggregator {
 		}
 		List<Integer> aggregatedBucketsList = new ArrayList<Integer>();
 		for (Map.Entry<String, AggregatedBucket> entry : bucketCombination.entrySet()) {
-			LOGGER.debug("ENTRY {} size {} ", entry.getKey(), entry.getValue().getBuckets().size());
+			LOGGER.debug("ENTRY {} terms {} size {} ", entry.getKey(), entry.getValue().getBucketTerms(), entry.getValue().getBuckets().size());
 			if (entry.getValue().getBuckets().size() > 1) {
 				Bucket c = new Bucket(entry.getValue().getBucketTerms(),
 						buckets.get(entry.getValue().getFirstAppearance()).getTotalPerfectMatches(), 0, 0);
@@ -43,6 +43,8 @@ public class Aggregator {
 
 			}
 		}
+		LOGGER.debug("Aggregated {} " + aggregatedBuckets);
+
 		for (int i = 0; i < buckets.size(); i++) {
 
 			if (aggregatedBuckets[i] != null) {
