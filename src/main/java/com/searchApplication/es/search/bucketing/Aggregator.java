@@ -24,7 +24,7 @@ public class Aggregator {
 		for (int i=0; i< buckets.size(); i++) {
 			List<BucketTerms> l = generateCandidate(buckets.get(i));
 			if (l != null) {
-				checkAggregatedBucket(bucketCombination, l, i, buckets.get(i).getTotalRows());
+				checkAggregatedBucket(bucketCombination, l, i, buckets.get(i).getTotalRows(), buckets.get(i).getBucketMetaData());
 				LOGGER.debug("Next bucket \n=========\n");
 
 			}
@@ -109,7 +109,7 @@ public class Aggregator {
 	}
 
 	private static void checkAggregatedBucket(HashMap<String, AggregatedBucket> bucketCombination,
-			List<BucketTerms> combs, int index, long totalRows) {
+			List<BucketTerms> combs, int index, long totalRows, List<BucketMetaData> metadata) {
 
 		String comb = "";
 		for (BucketTerms b : combs) {
@@ -120,12 +120,14 @@ public class Aggregator {
 			LOGGER.debug("incremeating {}", comb);
 			bucketCombination.get(comb).incrementCounts(totalRows);
 			bucketCombination.get(comb).addIndex(index);
+			bucketCombination.get(comb).incrementMetaData(metadata);
 
 		} else {
 			LOGGER.debug("adding {}", comb);
 
 			AggregatedBucket b = new AggregatedBucket();
 			b.setBucketTerms(new HashSet<BucketTerms>(combs));
+			b.setMetadata(metadata);
 			b.setCount(1);
 			b.setFirstAppearance(index);
 			b.addIndex(index);

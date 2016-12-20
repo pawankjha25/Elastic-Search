@@ -12,7 +12,28 @@ public class AggregatedBucket {
 	private int firstAppearance;
 	private Set<String> matchedQueryWords; 
 	private List<Integer> buckets;
+	private List<BucketMetaData> metadata;
 	
+	
+	public List<BucketMetaData> getMetadata() {
+		return metadata;
+	}
+
+	public void setMetadata(List<BucketMetaData> metadata) {
+		this.metadata = metadata;
+	}
+
+	public void incrementMetaData(List<BucketMetaData> metaData) {
+		
+		for (BucketMetaData m: metaData) {
+			if(this.metadata.contains(m)) {
+				this.metadata.get(this.metadata.indexOf(m)).incrementCount(m.getTotal());
+			}
+			else {
+				this.metadata.add(m);
+			}
+		}
+	}
 	
 	public int getTotalRows() {
 		return totalRows;
