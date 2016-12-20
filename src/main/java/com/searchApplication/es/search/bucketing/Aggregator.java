@@ -51,6 +51,7 @@ public class Aggregator {
 				resultBuckets.add(buckets.get(i));
 			} 
 		}
+		LOGGER.debug("Generated {} " + resultBuckets);
 		return resultBuckets;
 	}
 
