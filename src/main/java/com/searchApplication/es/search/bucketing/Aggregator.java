@@ -8,7 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.searchApplication.utils.BucketTimer;
+
 public class Aggregator {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(Aggregator.class);
 
 	public static List<Bucket> generateAggregated(List<Bucket> buckets) {
 		Bucket[] aggregatedBuckets = new Bucket[buckets.size()];
@@ -23,7 +30,7 @@ public class Aggregator {
 		}
 		List<Integer> aggregatedBucketsList = new ArrayList<Integer>();
 		for (Map.Entry<String, AggregatedBucket> entry : bucketCombination.entrySet()) {
-			System.out.println(entry);
+			LOGGER.debug("ENTRY {}", entry);
 			if (entry.getValue().getBuckets().size() > 1) {
 				System.out.println("Comb " + entry.getKey() + "  " + entry.getValue().getBuckets());
 				Bucket c = new Bucket(entry.getValue().getBucketTerms(),
@@ -51,6 +58,8 @@ public class Aggregator {
 		Set<String> matched = new HashSet<String>();
 		List<BucketTerms> aggTerms = new ArrayList<BucketTerms>();
 		for (BucketTerms bt : b.getBucketTerms()) {
+			LOGGER.debug("ENTRY {}", bt);
+
 			boolean forAdd = false;
 			// TODO this orders differently if there is a multi match bucket
 			// after a single match attribute
@@ -74,6 +83,8 @@ public class Aggregator {
 			}
 		}
 		if (totalMatch >= b.getTotalPerfectMatches()) {
+			LOGGER.debug("aggregated candidates {}", aggTerms);
+
 			return aggTerms;
 		} else {
 			return null;
@@ -88,11 +99,15 @@ public class Aggregator {
 		for (BucketTerms b : combs) {
 			comb += b.getAttributeName() + " | ";
 		}
+		
 		if (bucketCombination.containsKey(comb)) {
+			LOGGER.debug("incremeating {}", comb);
 			bucketCombination.get(comb).incrementCounts(totalRows);
 			bucketCombination.get(comb).addIndex(index);
 
 		} else {
+			LOGGER.debug("adding {}", comb);
+
 			AggregatedBucket b = new AggregatedBucket();
 			b.setBucketTerms(new HashSet<BucketTerms>(combs));
 			b.setCount(1);
