@@ -111,8 +111,8 @@ public class AggregatorTest {
 			}
 			bucketsNames[i] = x;
 		}
-		Assertions.assertThat(bucketsNames[0]).isEqualTo("a|b|");
-		Assertions.assertThat(bucketsNames[1]).isEqualTo("a b|");
+		Assertions.assertThat(bucketsNames[1]).isEqualTo("a|b|");
+		Assertions.assertThat(bucketsNames[0]).isEqualTo("a b|");
 		Assertions.assertThat(bucketsNames[2]).isEqualTo("a4|");
 		Assertions.assertThat(bucketsNames[3]).isEqualTo("a5|");
 
