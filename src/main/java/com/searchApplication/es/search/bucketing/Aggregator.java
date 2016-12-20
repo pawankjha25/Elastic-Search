@@ -40,16 +40,20 @@ public class Aggregator {
 				c.setBucketMetaData(buckets.get(entry.getValue().getFirstAppearance()).getBucketMetaData());
 				aggregatedBuckets[entry.getValue().getFirstAppearance()] = c;
 				aggregatedBucketsList.addAll(entry.getValue().getBuckets());
+				LOGGER.debug("Added to aggregation buckets {}", entry.getValue().getBuckets());
 
 			}
 		}
 
 		for (int i = 0; i < buckets.size(); i++) {
-			LOGGER.debug("Aggregated {} " + aggregatedBuckets[i]);
 
 			if (aggregatedBuckets[i] != null) {
+				LOGGER.debug("Aggregated {} " + aggregatedBuckets[i]);
+
 				resultBuckets.add(aggregatedBuckets[i]);
 			} else if (!aggregatedBucketsList.contains(i)) {
+				LOGGER.debug("Old {} " + aggregatedBuckets[i]);
+
 				resultBuckets.add(buckets.get(i));
 			} 
 		}
