@@ -23,6 +23,7 @@ public class Aggregator {
 		}
 		List<Integer> aggregatedBucketsList = new ArrayList<Integer>();
 		for (Map.Entry<String, AggregatedBucket> entry : bucketCombination.entrySet()) {
+			System.out.println(entry);
 			if (entry.getValue().getBuckets().size() > 1) {
 				System.out.println("Comb " + entry.getKey() + "  " + entry.getValue().getBuckets());
 				Bucket c = new Bucket(entry.getValue().getBucketTerms(),
