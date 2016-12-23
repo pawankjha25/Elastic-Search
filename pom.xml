@@ -4,7 +4,7 @@
 
 	<groupId>com.tool.zdalySearchApplication</groupId>
 	<artifactId>zdalySearchApplication</artifactId>
-	<version>0.0.9-SNAPSHOT</version>
+	<version>0.0.10-SNAPSHOT</version>
 
 	<name>zdalySearchApplication</name>
 	<url>http://maven.apache.org</url>
