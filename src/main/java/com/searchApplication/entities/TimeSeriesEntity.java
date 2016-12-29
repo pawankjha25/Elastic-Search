@@ -6,9 +6,35 @@ import java.math.BigInteger;
 public class TimeSeriesEntity
 {
 	String seriesId;
-	String dbName;
+	String tableName;
 	BigDecimal value;
 	String date;
+	String period;
+    String extended;
+
+	public String getTableName() {
+		return tableName;
+	}
+
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
+	}
+
+	public String getPeriod() {
+		return period;
+	}
+
+	public void setPeriod(String period) {
+		this.period = period;
+	}
+
+	public String getExtended() {
+		return extended;
+	}
+
+	public void setExtended(String extended) {
+		this.extended = extended;
+	}
 
 	public String getDate()
 	{
@@ -30,16 +56,6 @@ public class TimeSeriesEntity
 		this.seriesId = seriesId;
 	}
 
-	public String getDbName()
-	{
-		return dbName;
-	}
-
-	public void setDbName(String dbName)
-	{
-		this.dbName = dbName;
-	}
-
 	public BigDecimal getValue()
 	{
 		return value;
@@ -50,11 +66,13 @@ public class TimeSeriesEntity
 		this.value = value;
 	}
 
-	public TimeSeriesEntity(String seriesId, String dbName, BigDecimal value, String date)
+	public TimeSeriesEntity(String seriesId, String tableName, BigDecimal value, String date, String period, String extended)
 	{
 		this.seriesId = seriesId;
-		this.dbName = dbName;
+		this.tableName = tableName;
 		this.value = value;
 		this.date = date;
+		this.period=period;
+		this.extended=extended;
 	}
 }

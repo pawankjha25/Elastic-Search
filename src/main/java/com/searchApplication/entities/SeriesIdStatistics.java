@@ -1,16 +1,17 @@
 package com.searchApplication.entities;
 
+import java.math.BigInteger;
 import java.util.Date;
 
 public class SeriesIdStatistics {
 
 	private String seriesID;
 	private String tableName;
-	private Date startDate;
-	private Date endDate;
-	private int rowCount;
+	private String startDate;
+	private String endDate;
+	private BigInteger rowCount;
 
-	public SeriesIdStatistics(String seriesID, String tableName, Date startDate, Date endDate, int rowCount) {
+	public SeriesIdStatistics(String seriesID, String tableName, String startDate, String endDate, BigInteger rowCount) {
 		this.seriesID = seriesID;
 		this.tableName = tableName;
 		this.startDate = startDate;
@@ -23,19 +24,19 @@ public class SeriesIdStatistics {
 		return "SeriesIdStatistics [seriesID=" + seriesID + ", tableName=" + tableName + ", startDate=" + startDate + ", endDate=" + endDate + ", rowCount=" + rowCount + "]";
 	}
 
-	public Date getStartDate() {
+	public String getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(Date startDate) {
+	public void setStartDate(String startDate) {
 		this.startDate = startDate;
 	}
 
-	public Date getEndDate() {
+	public String getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(Date endDate) {
+	public void setEndDate(String endDate) {
 		this.endDate = endDate;
 	}
 
@@ -55,12 +56,8 @@ public class SeriesIdStatistics {
 		this.tableName = tableName;
 	}
 
-	public int getRowCount() {
+	public BigInteger getRowCount() {
 		return rowCount;
-	}
-
-	public void incrementRowCount() {
-		this.rowCount++;
 	}
 
 	@Override
