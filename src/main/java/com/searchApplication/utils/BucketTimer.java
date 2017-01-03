@@ -14,7 +14,6 @@ public class BucketTimer {
 	private static void getTimeForQuery(String query, Client client, String index, String type, int loops,
 			int hitsInScroll, String path)  throws IOException{
 		Set<String> locations =  LocationLoader.getLocationsFromFile(path);
-		LOGGER.debug("{}", locations);
 		long start = System.currentTimeMillis();
 
 		LOGGER.info("{}", AttributeBucketer.generateBuckets(client, index, type, query, loops, hitsInScroll,

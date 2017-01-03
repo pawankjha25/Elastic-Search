@@ -20,7 +20,7 @@ import com.searchApplication.utils.LocationLoader;
 
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan("com.searchApplication.*")
+@ComponentScan("com.searchApplication")
 @EnableScheduling
 public class App {
 

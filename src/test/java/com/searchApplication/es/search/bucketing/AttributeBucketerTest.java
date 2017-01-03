@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.fest.assertions.api.Assertions;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.searchApplication.es.entities.BucketResponseList;
@@ -165,13 +166,68 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"corn production", 1, 1000, LOC);
 		System.out.println(buckets);
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn production");
-		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("production", "corn");
-		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("corn", "production planning");
-		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsOnly("production planning");
-		Assertions.assertThat(buckets.get(5).getBucketTerms()).containsOnly("iron production");
-		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsOnly("yellow corn");
-		Assertions.assertThat(buckets.get(6).getBucketTerms()).containsOnly("popcorn production");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("corn production");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(1).getBucketTerms()))
+				.containsOnly("corn", "production");
+
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(2).getBucketTerms()))
+				.containsOnly("corn", "production planning");
+
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(3).getBucketTerms()))
+		.containsOnly("production planning");
+		
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(4).getBucketTerms()))
+		.containsOnly("yellow corn");
+		
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(5).getBucketTerms()))
+				.containsOnly("iron production");
+		
+
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(3).getBucketTerms()))
+				.containsOnly("production planning");
+
+	}
+
+	@Test
+	public void testAggregated() throws Exception {
+		createTestIndex();
+
+		index(createAtrributeFromList("production planning|corn|x"), 1);
+
+		index(createAtrributeFromList("iron production|mining"), 2);
+
+		index(createAtrributeFromList("popcorn|popcorn production"), 3);
+
+		index(createAtrributeFromList("soccer|transfer data"), 4);
+
+		index(createAtrributeFromList("a|corn production|x"), 5);
+
+		index(createAtrributeFromList("corn|corn production|x"), 6);
+
+		index(createAtrributeFromList("yellow corn|a|x"), 7);
+
+		index(createAtrributeFromList("a|corn production|production planning"), 9);
+		index(createAtrributeFromList("a|production planning|metal"), 10);
+
+		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
+				"corn production", 1, 1000, LOC);
+		buckets = Aggregator.generateAggregated(buckets);
+
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("corn production");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(1).getBucketTerms()))
+				.containsOnly("corn", "production planning");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(2).getBucketTerms()))
+				.containsOnly("yellow corn");
+
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(4).getBucketTerms()))
+				.containsOnly("popcorn production");
+
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(3).getBucketTerms()))
+				.containsOnly("iron production");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(5).getBucketTerms()))
+				.containsOnly("production planning");
 
 	}
 
@@ -211,15 +267,20 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"wheat production", 10, 1000, LOC);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsExactly("wheat", "production");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsExactly("wheat", "production");
 
-		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsExactly("wheat production");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(1).getBucketTerms()))
+				.containsExactly("wheat production");
 
-		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsExactly("wheat production", "wheat");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(2).getBucketTerms()))
+				.containsExactly("wheat production", "wheat");
 
-		Assertions.assertThat(buckets.get(3).getBucketTerms()).containsExactly("mining wheat", "iron production");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(3).getBucketTerms()))
+				.containsExactly("mining wheat", "iron production");
 
-		Assertions.assertThat(buckets.get(4).getBucketTerms()).containsExactly("wheat");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(4).getBucketTerms()))
+				.containsExactly("wheat");
 
 	}
 
@@ -281,8 +342,10 @@ public class AttributeBucketerTest extends SearchESTest {
 
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
 				"corn production illinois", 1, 1000, LOC);
+
 		Assertions.assertThat(buckets).hasSize(1);
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn", "corn production", "ILLINOIS_LOC");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("corn", "corn production", "ILLINOIS_LOC");
 
 	}
 
@@ -322,14 +385,15 @@ public class AttributeBucketerTest extends SearchESTest {
 		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "united states",
 				1, 1000, LOC);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("UNITED STATES_LOC");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("UNITED STATES_LOC");
 
 		buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "illinois", 1, 1000, LOC);
 
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("ILLINOIS_LOC");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("ILLINOIS_LOC");
 
 	}
-
 
 	@Test
 	public void testMatchesMulti() throws Exception {
@@ -352,12 +416,15 @@ public class AttributeBucketerTest extends SearchESTest {
 		index(createAtrributeFromList("a|production planning"), 9);
 		index(createAtrributeFromList("a|production planning|metal"), 10);
 
-		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
-				"corn", 1, 1000, LOC);
+		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "corn", 1, 1000,
+				LOC);
 		System.out.println(buckets);
-		Assertions.assertThat(buckets.get(0).getBucketTerms()).containsOnly("corn");
-		Assertions.assertThat(buckets.get(1).getBucketTerms()).containsOnly("yellow corn");
-		Assertions.assertThat(buckets.get(2).getBucketTerms()).containsOnly("corn production");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("corn");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(1).getBucketTerms()))
+				.containsOnly("yellow corn");
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(2).getBucketTerms()))
+				.containsOnly("corn production");
 
 	}
 

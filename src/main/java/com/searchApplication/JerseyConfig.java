@@ -15,5 +15,6 @@ public class JerseyConfig extends ResourceConfig {
 		packages("com.searchApplication.es.rest.services");
 		register(LoggingFilter.class);
 		register(MultiPartFeature.class);
+		register(CorsFilter.class);
 	}
 }

@@ -43,8 +43,13 @@ public class AttributeBucketer {
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
 			int hitsInScroll, Set<String> locations) {
-		List<Bucket> buckets = createBucketList(client, index, type, query, loops, hitsInScroll, locations);
+		List<Bucket> buckets = aggregateBuckets(
+				createBucketList(client, index, type, query, loops, hitsInScroll, locations));
 		return BucketResponseList.buildFromBucketList(buckets, query);
+	}
+
+	private static List<Bucket> aggregateBuckets(List<Bucket> buckets) {
+		return Aggregator.generateAggregated(buckets);
 	}
 
 	private static SearchResponse hitEsSingle(Client client, String index, String type, int hitsInScroll,
@@ -114,10 +119,12 @@ public class AttributeBucketer {
 			if (result == null && querySplit[1].length() == 0) {
 				continue;
 			} else if (result == null && querySplit[1].length() > 0) {
-				result = new Bucket(new HashSet<String>(Arrays.asList(querySplit[1].toUpperCase() + LOCATION_CONTEXT)),
-						1, 1, 0);
+				BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
+				result = new Bucket(new HashSet(Arrays.asList(bts)), 1, 1, 0);
 			} else if (result != null && querySplit.length > 1 && querySplit[1].length() > 1) {
-				result.getBucketTerms().add(querySplit[1].toUpperCase() + LOCATION_CONTEXT);
+				BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
+				result.getBucketTerms().add(bts);
+
 			}
 			Iterator<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> sectorIt = ((StringTerms) b
 					.getAggregations().asList().get(0)).getBuckets().iterator();
@@ -138,7 +145,6 @@ public class AttributeBucketer {
 						metaData.setTotal(regionBucket.getDocCount());
 						LOGGER.debug("adding metadata {}", metaData);
 						metaDataList.add(metaData);
-
 					}
 				}
 			}
@@ -184,15 +190,11 @@ public class AttributeBucketer {
 			b = BucketBuilders.createFromQueryString(query, bucketTerms, checked);
 
 		} else {
-			b = new Bucket(new HashSet<String>(), 0, 0, 0);
+			b = new Bucket(new HashSet<BucketTerms>(), 0, 0, 0);
 		}
 
 		if (b != null) {
-			for (String terms : bucketTerms) {
-				if (!b.getBucketTerms().contains(terms)) {
-					misses.add(terms);
-				}
-			}
+			
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
@@ -283,7 +285,13 @@ public class AttributeBucketer {
 				try {
 					Bucket b = processHitsToBuckets(hit, querySplit[0], hits, misses);
 					if (querySplit.length > 1 && querySplit[1].length() > 1) {
-						b.getBucketTerms().add(querySplit[1].toUpperCase() + LOCATION_CONTEXT);
+						BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
+						b.getBucketTerms().add(bts);
+
+					} else if (b == null && querySplit[1].length() > 0) {
+						BucketTerms bts = new BucketTerms(querySplit[1].toUpperCase() + LOCATION_CONTEXT, 100, true, 0);
+						b = new Bucket(new HashSet(Arrays.asList(bts)), 1, 1, 0);
+
 					}
 					if (b != null) {
 						if (bucketList.contains(b)) {

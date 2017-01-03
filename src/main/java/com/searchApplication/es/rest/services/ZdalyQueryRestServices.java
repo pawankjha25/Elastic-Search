@@ -42,6 +42,7 @@ import com.searchApplication.entities.TransactionResponse;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
 import com.searchApplication.utils.ThreadLocalSDF;
+import com.searchApplication.es.search.aggs.InsdustriInfo;
 import com.searchApplication.utils.ZdalyCassandraConnection;
 
 import zdaly.etl.util.HashUtil;
@@ -62,9 +63,33 @@ public class ZdalyQueryRestServices {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/wilcard-search/{queryString}")
-	public TransactionResponse produceBucekts(@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
+	@Path("/industry-info")
+	public TransactionResponse getIndustryInfo() throws Exception {
+		TransactionResponse transactionResponse = new TransactionResponse();
 
+		try {
+			List<InsdustriInfo> results = zdalyQueryServices.getIndustryInfo();
+			transactionResponse.setStatus("200");
+			transactionResponse.setResponseMessage("Successfull");
+			transactionResponse.setResponseType("Object");
+			if (results != null) {
+				transactionResponse.setResponseEntity(results);
+			} else {
+				transactionResponse.setResponseMessage("No results found");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return transactionResponse;
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/wilcard-search/{queryString}")
+	public TransactionResponse produceBucekts(
+			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
 		transactionResponse.setResponseMessage("Successfull");
@@ -91,7 +116,8 @@ public class ZdalyQueryRestServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/match-query/{queryString}")
-	public TransactionResponse matchQuery(@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
+	public TransactionResponse matchQuery(
+			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
 
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");

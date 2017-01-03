@@ -20,6 +20,11 @@ public class BucketMetaData {
 	{
 		this.total += 1;
 	}
+	
+	public void incrementCount(long addition)
+	{
+		this.total += addition;
+	}
 
 	public String getSuperRegion()
 	{
