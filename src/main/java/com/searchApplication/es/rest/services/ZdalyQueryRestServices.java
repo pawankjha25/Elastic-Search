@@ -215,22 +215,26 @@ public class ZdalyQueryRestServices {
 
 				String db_name = request.getDbName();
 				String table_name = request.getTableName();
-				String casDbName = table_name;
-				if (encrypted) {
-					casDbName = HashUtil.encode(table_name, salt);
-				}
-				String fromDate = request.getFromDate();
-				String toDate = request.getToDate();
+				String casDbName = db_name;
+				String casTableName = table_name;
 				String period = request.getPeriod();
 				String series_id = request.getSeriesId();
+				if(db_name==null || table_name==null || series_id==null)
+				{
+					throw new Exception("Mandatory request parameters are missing");
+				}
+				if (encrypted) {
+					casDbName = HashUtil.encode(db_name, salt);
+					casTableName = HashUtil.encode(table_name, salt);
+				}
 				Map<String, Object> valueMap = new LinkedHashMap<>();
 				StringBuilder sql = new StringBuilder("select series_id, table_name, date,value, period , extended from time_series_data ");
 				sql.append("where db_name= ? ");
-				valueMap.put("db_name", db_name.toLowerCase());
+				valueMap.put("db_name", casDbName);
 
 				if (table_name != null) {
 					sql.append("and table_name = ? ");
-					valueMap.put("table_name", table_name);
+					valueMap.put("table_name", casTableName);
 				}
 				if (series_id != null) {
 					sql.append("and series_id = ? ");
@@ -254,8 +258,8 @@ public class ZdalyQueryRestServices {
 				Iterator<Row> itr = rs.iterator();
 				while (itr.hasNext()) {
 					Row row = itr.next();
-					list.add(new TimeSeriesEntity(row.getString("series_id"),
-												  row.getString("table_name"),
+					list.add(new TimeSeriesEntity(series_id,
+												  table_name,
 												  row.getDecimal("value"), 
 												  row.getString("date"),
 												  row.getString("period"),
@@ -296,13 +300,19 @@ public class ZdalyQueryRestServices {
 				if (tableName == null || tableName.length() == 0) {
 					transactionResponse.setResponseMessage("DB Name is null/Empty for one or more cases ");
 				}
+				String casDbName=dbName;
+				String casTableName=tableName;
+				if (encrypted) {
+					 casDbName = HashUtil.encode(dbName, salt);
+					 casTableName = HashUtil.encode(tableName, salt);
+				}
 				Map<String, Object> valueMap = new LinkedHashMap<>();
 				StringBuilder sql = new StringBuilder("select table_name,series_id,start_date,end_date,row_count from time_series_data_stat ");
 				sql.append("where db_name = ? ");
-				valueMap.put("dbName", dbName);
+				valueMap.put("dbName", casDbName);
 				if (tableName != null) {
 					sql.append("and table_name = ? ");
-					valueMap.put("table_name", tableName);
+					valueMap.put("table_name", casTableName);
 				}
 				if (seriesId != null) {
 					sql.append("and series_id = ? ");
