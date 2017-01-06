@@ -116,7 +116,6 @@ public class Filtering {
 
 				Map<String, Set<LocationAggrigation>> loc = res.getLocations();
 
-				System.out.println(new Gson().toJson(loc));
 				if( res != null && res.getTotalSeriesIds() > 0 )
 				{
 					response.setTotalSeriesIds(res.getTotalSeriesIds());
@@ -164,10 +163,10 @@ public class Filtering {
 				}
 				else
 				{
+					Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
 					if( request.getLocations() == null || request.getLocations().keySet() == null
 							|| request.getLocations().keySet().isEmpty() )
 					{
-						Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
 						for( String keys : loc.keySet() )
 						{
 							if( keys.equalsIgnoreCase("Country") )
@@ -192,7 +191,16 @@ public class Filtering {
 					}
 					else
 					{
-						response.setLocations(loc);
+						for (String keys : loc.keySet()) {
+							Set<LocationAggrigation> locVal = loc.get(keys);
+							for (LocationAggrigation l : locVal) {
+								if (!l.getLocationParent().equalsIgnoreCase("NULL")) {
+									newLoc.put(keys, loc.get(keys));
+									break;
+								}
+							}
+						}
+						response.setLocations(newLoc);
 					}
 					//response.setLocations(loc);
 				}
@@ -268,7 +276,6 @@ public class Filtering {
 			}
 			else
 			{
-				System.out.println("returning null");
 				return null;
 			}
 		}
