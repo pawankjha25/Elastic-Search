@@ -42,17 +42,17 @@ public class FilteringAttributesAndLocTest extends SearchESTest {
 		r.setAttributes(atts);
 
 		Set<Locations> locations = new TreeSet<>();
-		Locations l1 = new Locations(new Long(1), "UNITED STATES", "Country", "", "UNITED STATES");
+		Locations l1 = new Locations("1", "UNITED STATES", "Country", "", "UNITED STATES");
 		locations.add(l1);
-		Locations l2 = new Locations(new Long(2), "UNITED STATES", "Country", "", "UNITED STATES");
+		Locations l2 = new Locations("2", "UNITED STATES", "Country", "", "UNITED STATES");
 		locations.add(l2);
-		Locations l3 = new Locations(new Long(2), "ALABAMA", "State", "", "UNITED STATES");
+		Locations l3 = new Locations("3", "ALABAMA", "State", "", "UNITED STATES");
 		locations.add(l3);
-		Locations l4 = new Locations(new Long(3), "UNITED STATES", "Country", "", "UNITED STATES");
+		Locations l4 = new Locations("3", "UNITED STATES", "Country", "", "UNITED STATES");
 		locations.add(l4);
-		Locations l5 = new Locations(new Long(3), "ALABAMA", "State", "", "UNITED STATES");
+		Locations l5 = new Locations("3", "ALABAMA", "State", "", "UNITED STATES");
 		locations.add(l5);
-		Locations l6 = new Locations(new Long(3), "COUNTY1", "County", "", "ALABAMA");
+		Locations l6 = new Locations("3", "COUNTY1", "County", "", "ALABAMA");
 		locations.add(l6);
 
 		r.setLocations(locations);
@@ -93,17 +93,17 @@ public class FilteringAttributesAndLocTest extends SearchESTest {
 		r.setAttributes(atts);
 
 		locations = new TreeSet<>();
-		l1 = new Locations(new Long(4), "UNITED STATES", "Country", "", "UNITED STATES");
+		l1 = new Locations("4", "UNITED STATES", "Country", "", "UNITED STATES");
 		locations.add(l1);
-		l2 = new Locations(new Long(5), "UNITED STATES", "Country", "", "UNITED STATES");
+		l2 = new Locations("5", "UNITED STATES", "Country", "", "UNITED STATES");
 		locations.add(l2);
-		l3 = new Locations(new Long(5), "ALABAMA", "State", "", "UNITED STATES");
+		l3 = new Locations("5", "ALABAMA", "State", "", "UNITED STATES");
 		locations.add(l3);
-		l4 = new Locations(new Long(6), "UNITED STATES", "Country", "", "UNITED STATES");
+		l4 = new Locations("6", "UNITED STATES", "Country", "", "UNITED STATES");
 		locations.add(l4);
-		l5 = new Locations(new Long(6), "ALABAMA", "State", "", "UNITED STATES");
+		l5 = new Locations("6", "ALABAMA", "State", "", "UNITED STATES");
 		locations.add(l5);
-		l6 = new Locations(new Long(6), "COUNTY1", "County", "", "ALABAMA");
+		l6 = new Locations("6", "COUNTY1", "County", "", "ALABAMA");
 		locations.add(l6);
 
 		r.setLocations(locations);

@@ -51,7 +51,7 @@ public class Results {
 			SearchResponse tFdocs = null;
 
 			long startTime = System.currentTimeMillis();
-			tFdocs = client.prepareSearch(indexName).setTypes(objectType).setQuery(booleanQuery).setSize(0)
+			tFdocs = client.prepareSearch(indexName).setTypes(objectType.split(",")).setQuery(booleanQuery).setSize(0)
 					.addAggregation(aggregation).execute().actionGet();
 			long endTime = System.currentTimeMillis();
 

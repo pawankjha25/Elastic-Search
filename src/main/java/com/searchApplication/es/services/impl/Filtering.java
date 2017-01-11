@@ -40,7 +40,7 @@ public class Filtering {
 			booleanQuery = FilterQuery.getQuery(request);
 
 			SearchResponse tFdocs = null;
-			tFdocs = client.prepareSearch(indexName).setSize(0).setTypes(objectType).setQuery(booleanQuery)
+			tFdocs = client.prepareSearch(indexName).setSize(0).setTypes(objectType.split(",")).setQuery(booleanQuery)
 					.addAggregation(FilterAggregation.getAggregation()).execute().actionGet();
 
 			response = QueryFilterResponse.getResponse(tFdocs);
@@ -51,7 +51,8 @@ public class Filtering {
 					&& !response.getStratum().isEmpty() && response.getStratum().keySet() != null )
 			{
 				BoolQueryBuilder booleanQuery1 = FilterQuery.getNotQuery(request, request.getReqAttList());
-				long hits = client.prepareSearch(indexName).setTypes(objectType).setQuery(booleanQuery1).execute()
+				long hits = client.prepareSearch(indexName).setTypes(objectType.split(",")).setQuery(booleanQuery1)
+						.execute()
 						.actionGet().getHits().getTotalHits();
 				Iterator<String> keys = response.getStratum().keySet().iterator();
 				while( keys.hasNext() )
@@ -108,7 +109,8 @@ public class Filtering {
 				}
 
 				SearchResponse tFdocs1 = null;
-				tFdocs1 = client.prepareSearch(indexName).setSize(0).setTypes(objectType).setQuery(booleanQuery)
+				tFdocs1 = client.prepareSearch(indexName).setSize(0).setTypes(objectType.split(",")).setQuery
+						(booleanQuery)
 						.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
 
 				SearchOutput res = QueryFilterResponse.getLocationAggregation(tFdocs1, request.getLocations(),
@@ -116,7 +118,6 @@ public class Filtering {
 
 				Map<String, Set<LocationAggrigation>> loc = res.getLocations();
 
-				System.out.println(new Gson().toJson(loc));
 				if( res != null && res.getTotalSeriesIds() > 0 )
 				{
 					response.setTotalSeriesIds(res.getTotalSeriesIds());
@@ -164,10 +165,10 @@ public class Filtering {
 				}
 				else
 				{
+					Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
 					if( request.getLocations() == null || request.getLocations().keySet() == null
 							|| request.getLocations().keySet().isEmpty() )
 					{
-						Map<String, Set<LocationAggrigation>> newLoc = new HashMap<>();
 						for( String keys : loc.keySet() )
 						{
 							if( keys.equalsIgnoreCase("Country") )
@@ -192,7 +193,16 @@ public class Filtering {
 					}
 					else
 					{
-						response.setLocations(loc);
+						for (String keys : loc.keySet()) {
+							Set<LocationAggrigation> locVal = loc.get(keys);
+							for (LocationAggrigation l : locVal) {
+								if (!l.getLocationParent().equalsIgnoreCase("NULL")) {
+									newLoc.put(keys, loc.get(keys));
+									break;
+								}
+							}
+						}
+						response.setLocations(newLoc);
 					}
 					//response.setLocations(loc);
 				}
@@ -268,7 +278,6 @@ public class Filtering {
 			}
 			else
 			{
-				System.out.println("returning null");
 				return null;
 			}
 		}
