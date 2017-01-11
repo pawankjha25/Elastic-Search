@@ -4,15 +4,15 @@ import java.util.Map;
 
 public class Results {
 
-	private Long seriesId;
+	private String seriesId;
 	private Map<String,String> locations;
 	
-	public Long getSeriesId()
+	public String getSeriesId()
 	{
 		return seriesId;
 	}
 	
-	public void setSeriesId( Long seriesId )
+	public void setSeriesId( String seriesId )
 	{
 		this.seriesId = seriesId;
 	}
