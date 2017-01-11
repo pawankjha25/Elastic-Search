@@ -1,7 +1,7 @@
 {
 	"settings": {
 		"index": {
-			"number_of_replicas": 0,
+			"number_of_replicas": 2,
 			"analysis": {
 				"filter": {
 					"gram_filter": {
@@ -69,7 +69,7 @@
 					"type": "nested",
 					"properties": {
 						"series_id": {
-							"type": "long"
+							"type": "string"
 						},
 						"location_name": {
 							"type": "string",

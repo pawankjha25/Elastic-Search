@@ -40,7 +40,7 @@ public class Filtering {
 			booleanQuery = FilterQuery.getQuery(request);
 
 			SearchResponse tFdocs = null;
-			tFdocs = client.prepareSearch(indexName).setSize(0).setTypes(objectType).setQuery(booleanQuery)
+			tFdocs = client.prepareSearch(indexName).setSize(0).setTypes(objectType.split(",")).setQuery(booleanQuery)
 					.addAggregation(FilterAggregation.getAggregation()).execute().actionGet();
 
 			response = QueryFilterResponse.getResponse(tFdocs);
@@ -51,7 +51,8 @@ public class Filtering {
 					&& !response.getStratum().isEmpty() && response.getStratum().keySet() != null )
 			{
 				BoolQueryBuilder booleanQuery1 = FilterQuery.getNotQuery(request, request.getReqAttList());
-				long hits = client.prepareSearch(indexName).setTypes(objectType).setQuery(booleanQuery1).execute()
+				long hits = client.prepareSearch(indexName).setTypes(objectType.split(",")).setQuery(booleanQuery1)
+						.execute()
 						.actionGet().getHits().getTotalHits();
 				Iterator<String> keys = response.getStratum().keySet().iterator();
 				while( keys.hasNext() )
@@ -108,7 +109,8 @@ public class Filtering {
 				}
 
 				SearchResponse tFdocs1 = null;
-				tFdocs1 = client.prepareSearch(indexName).setSize(0).setTypes(objectType).setQuery(booleanQuery)
+				tFdocs1 = client.prepareSearch(indexName).setSize(0).setTypes(objectType.split(",")).setQuery
+						(booleanQuery)
 						.addAggregation(FilterAggregation.getLocationAggregation()).execute().actionGet();
 
 				SearchOutput res = QueryFilterResponse.getLocationAggregation(tFdocs1, request.getLocations(),

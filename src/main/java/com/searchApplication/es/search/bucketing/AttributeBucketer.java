@@ -54,7 +54,7 @@ public class AttributeBucketer {
 
 	private static SearchResponse hitEsSingle(Client client, String index, String type, int hitsInScroll,
 			String[] querySplit) {
-		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
+		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type.split(","))
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
 				.setSize(0).setScroll(new TimeValue(160000));
@@ -260,7 +260,8 @@ public class AttributeBucketer {
 
 	private static SearchResponse hitEsMulti(Client client, String index, String type, int hitsInScroll,
 			String[] querySplit) {
-		SearchRequestBuilder srb = client.prepareSearch(index).setTypes(type)
+		SearchRequestBuilder srb = client.prepareSearch(index)
+				.setTypes(type.split(","))
 				.setFetchSource(new String[] { "attributes.attribute_value", "sector", "sub_sector", "super_region" },
 						null)
 				.setSize(hitsInScroll).setScroll(new TimeValue(160000));

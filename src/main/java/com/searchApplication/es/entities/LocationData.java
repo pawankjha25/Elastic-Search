@@ -2,12 +2,12 @@ package com.searchApplication.es.entities;
 
 public class LocationData {
 
-	private int series_id;
+	private String series_id;
 	private String location_name;
 	private String location_type;
 	private String location_meta;
 
-	public LocationData( int series_id, String location_name, String location_type, String location_meta )
+	public LocationData( String series_id, String location_name, String location_type, String location_meta )
 	{
 		super();
 		this.series_id = series_id;
@@ -21,12 +21,12 @@ public class LocationData {
 
 	}
 
-	public int getSeries_id()
+	public String getSeries_id()
 	{
 		return series_id;
 	}
 
-	public void setSeries_id( int series_id )
+	public void setSeries_id( String series_id )
 	{
 		this.series_id = series_id;
 	}
