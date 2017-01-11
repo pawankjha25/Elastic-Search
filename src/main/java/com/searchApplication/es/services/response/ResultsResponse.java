@@ -52,7 +52,7 @@ public class ResultsResponse {
 
 					if( location )
 					{
-						Map<Long, Results> mapData = new HashMap<>();
+						Map<String, Results> mapData = new HashMap<>();
 						InternalNested locations = reverseDb.getAggregations().get("locations");
 						Terms locationParentBuckets = locations.getAggregations().get("locationParent");
 						for( Terms.Bucket locationParentBucket : locationParentBuckets.getBuckets() )
@@ -66,7 +66,7 @@ public class ResultsResponse {
 								{
 									Results data = null;
 									Map<String, String> locationData = null;
-									long seriesId = new Long(locationidBucket.getKeyAsString());
+									String seriesId = locationidBucket.getKeyAsString();
 									if( mapData.containsKey(seriesId) )
 									{
 										data = mapData.get(seriesId);
@@ -76,7 +76,7 @@ public class ResultsResponse {
 									{
 										data = new Results();
 										locationData = new HashMap<>();
-										data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
+										data.setSeriesId(locationidBucket.getKeyAsString());
 									}
 
 									Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
@@ -105,7 +105,7 @@ public class ResultsResponse {
 								}
 							}
 						}
-						for( Long key : mapData.keySet() )
+						for( String key : mapData.keySet() )
 						{
 							boolean valid = true;
 							Results data = mapData.get(key);
@@ -136,7 +136,7 @@ public class ResultsResponse {
 						{
 							Results data = new Results();
 							Map<String, String> locationData = new HashMap<>();
-							data.setSeriesId(new Long(locationidBucket.getKeyAsString()));
+							data.setSeriesId(locationidBucket.getKeyAsString());
 
 							Terms locationTypeBuckets = locationidBucket.getAggregations().get("locationType");
 							for( Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets() )
