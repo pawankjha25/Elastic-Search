@@ -4,13 +4,13 @@ public class Locations implements Comparable<Locations>
 
 {
 
-	private Long series_id;
+	private String series_id;
 	private String location_name;
 	private String location_type;
 	private String location_meta;
 	private String location_parent;
 
-	public Locations( Long series_id, String location_name, String location_type, String location_meta,
+	public Locations( String series_id, String location_name, String location_type, String location_meta,
 			String location_parent )
 	{
 		super();
@@ -26,12 +26,12 @@ public class Locations implements Comparable<Locations>
 
 	}
 
-	public Long getSeries_id()
+	public String getSeries_id()
 	{
 		return series_id;
 	}
 
-	public void setSeries_id( Long series_id )
+	public void setSeries_id( String series_id )
 	{
 		this.series_id = series_id;
 	}
