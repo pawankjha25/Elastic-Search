@@ -61,7 +61,6 @@ public class AttributeBucketer {
 		srb = generateQuery(srb, querySplit);
 		srb.addAggregation(generateAggregaion(querySplit[0]));
 		LOGGER.debug(" query {}", srb.toString());
-
 		SearchResponse sr = srb.get();
 		LOGGER.debug(" resutls {}", sr.toString());
 
@@ -194,7 +193,7 @@ public class AttributeBucketer {
 		}
 
 		if (b != null) {
-			
+
 			List<BucketMetaData> metaArray = new ArrayList<BucketMetaData>();
 			metaArray.add(metaData);
 			b.setBucketMetaData(metaArray);
@@ -207,14 +206,27 @@ public class AttributeBucketer {
 		String loc = "";
 		String atts = "";
 		String[] splits = query.split(" ");
-
+		boolean lastLocation = false;
 		for (int i = 0; i < splits.length; i++) {
 
 			if (locations.contains(splits[i])) {
-				loc += splits[i] + " ";
+				if (!loc.equals("")) {
+					atts= loc+ " "+atts;
+				}
+				loc = splits[i] + " ";
+				if (i == splits.length - 1) {
+					lastLocation = true;
+				}
 			} else if (splits.length > i + 1 && locations.contains(splits[i] + " " + splits[i + 1])) {
-				loc += splits[i] + " " + splits[i + 1];
+				if (!loc.equals("")) {
+					atts= loc+ " "+atts;
+				}
+				loc = splits[i] + " " + splits[i + 1];
 				i++;
+				
+				if (i == splits.length - 1) {
+					lastLocation = true;
+				}
 			} else {
 				atts += splits[i] + " ";
 			}
@@ -223,8 +235,10 @@ public class AttributeBucketer {
 		if (attempt == 1 && splits.length == 1 && !locations.equals("")) {
 			atts = query;
 			loc = "";
+		} else if (attempt == 1 && !lastLocation && !locations.equals("")) {
+			atts = query;
+			loc = "";
 		}
-
 		return new String[] { atts.trim(), loc.trim() };
 
 	}
@@ -266,7 +280,6 @@ public class AttributeBucketer {
 				.setSize(hitsInScroll).setScroll(new TimeValue(160000));
 		srb = generateQuery(srb, querySplit);
 		LOGGER.debug(" query {}", srb.toString());
-
 		SearchResponse sr = srb.get();
 		return sr;
 	}
