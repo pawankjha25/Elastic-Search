@@ -4,10 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
+
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.es.aggregations.ResultsAggregation;
@@ -49,7 +51,7 @@ public class Results {
 					locations);
 
 			SearchResponse tFdocs = null;
-
+			
 			long startTime = System.currentTimeMillis();
 			tFdocs = client.prepareSearch(indexName).setTypes(objectType.split(",")).setQuery(booleanQuery).setSize(0)
 					.addAggregation(aggregation).execute().actionGet();
