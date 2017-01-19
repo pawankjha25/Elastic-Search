@@ -45,6 +45,7 @@ public class Filtering {
 
 			response = QueryFilterResponse.getResponse(tFdocs);
 
+			System.out.println(new Gson().toJson(response));
 			Map<String, List<String>> stratum = new HashMap<>();
 
 			if( request.getReqAttList() != null && !request.getReqAttList().isEmpty() && response.getStratum() != null
