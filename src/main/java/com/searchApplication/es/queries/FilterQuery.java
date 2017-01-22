@@ -3,10 +3,12 @@ package com.searchApplication.es.queries;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+
 import com.searchApplication.entities.FilterRequest;
 
 public class FilterQuery {
 
+	@SuppressWarnings("deprecation")
 	public static BoolQueryBuilder getQuery(FilterRequest request) throws Exception {
 		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
 		try {

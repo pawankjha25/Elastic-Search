@@ -26,7 +26,7 @@ public class Results {
 		Boolean location = false;
 		try
 		{
-			BoolQueryBuilder booleanQuery = FilterQuery.getQuery(request);
+			//BoolQueryBuilder booleanQuery = FilterQuery.getQuery(request);
 
 			if( request.getLocations() != null && !request.getLocations().isEmpty()
 					&& request.getLocations().keySet().size() > 0 )
@@ -53,13 +53,13 @@ public class Results {
 			SearchResponse tFdocs = null;
 			
 			long startTime = System.currentTimeMillis();
-			tFdocs = client.prepareSearch(indexName).setTypes(objectType.split(",")).setQuery(booleanQuery).setSize(0)
+			tFdocs = client.prepareSearch(indexName).setTypes(objectType.split(",")).setQuery(FilterQuery.getQuery(request)).setSize(0)
 					.addAggregation(aggregation).execute().actionGet();
 			long endTime = System.currentTimeMillis();
 
 			System.out.println("Service took - " + (endTime - startTime) + " milliseconds to query");
 
-			response = ResultsResponse.getResults(tFdocs, getLocationMap(request.getLocations()),
+			response = ResultsResponse.getResultsNew(tFdocs, getLocationMap(request.getLocations()),
 					request.getStratumName(), location);
 		}
 		catch( Exception e )
