@@ -25,7 +25,7 @@ public class ResultsAggregation {
 							.subAggregation(AggregationBuilders.nested("locations").path("locations")
 							.subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").include(locations).size(10000)
 							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw").include(locations).size(10000)
-							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id.raw").size(100)
+							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(100)
 							.subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw")
 							)))))
 							
@@ -45,7 +45,7 @@ public class ResultsAggregation {
 							.subAggregation(AggregationBuilders.terms("dbnames").field("db.db_name").size(100)
 							.subAggregation(AggregationBuilders.terms("dbproperties").field("db.properties").size(500)
 							.subAggregation(AggregationBuilders.nested("locations").path("locations")
-							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id.raw").size(100000)
+							.subAggregation(AggregationBuilders.terms("locationid").field("locations.series_id").size(100000)
 							.subAggregation(AggregationBuilders.terms("locationname").field("locations.location_name.raw").size(1000000000)
 							.subAggregation(AggregationBuilders.terms("locationParent").field("locations.location_parent.raw").size(1000000000)
 							.subAggregation(AggregationBuilders.terms("locationType").field("locations.location_type.raw")
