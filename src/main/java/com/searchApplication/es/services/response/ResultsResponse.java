@@ -14,7 +14,11 @@ import com.searchApplication.entities.QueryResults;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.Results;
 
+import zdaly.etl.util.HashUtil;
+
 public class ResultsResponse {
+
+	private String salt = "zdalyrocksprod";
 
 	public static QueryResultsList getResults(SearchResponse tFdocs, Map<String, Set<String>> locationMap,
 			String stratumName, Boolean location) throws Exception {
@@ -123,8 +127,8 @@ public class ResultsResponse {
 		}
 		return response;
 	}
-	
-	public static QueryResultsList getResultsNew(SearchResponse tFdocs, Map<String, Set<String>> locationMap,
+
+	public QueryResultsList getResultsNew(SearchResponse tFdocs, Map<String, Set<String>> locationMap,
 			String stratumName, Boolean location) throws Exception {
 		QueryResultsList response = new QueryResultsList();
 		Set<QueryResults> results = new TreeSet<>();
@@ -216,6 +220,19 @@ public class ResultsResponse {
 						if (results.size() < length && valid) {
 							QueryResults qr = new QueryResults();
 							qr.setDbName(dbNameBucket.getKeyAsString());
+
+							// adding encoded dbname and table name
+							if (dbNameBucket.getKeyAsString().contains(".")) {
+								String dbValue = dbNameBucket.getKeyAsString().substring(0,
+										dbNameBucket.getKeyAsString().indexOf("."));
+								String tableValue = dbNameBucket.getKeyAsString().substring(
+										dbNameBucket.getKeyAsString().indexOf(".")+1,
+										dbNameBucket.getKeyAsString().length());
+
+								qr.setEncodedDbName(HashUtil.encode(dbValue.toLowerCase(), salt));
+								qr.setEncodedTableName(HashUtil.encode(tableValue, salt));
+							}
+
 							qr.setPropertyId(new Long(dbpropertiesBucket.getKeyAsString()));
 							qr.setStratums(mapStratums
 									.get(dbNameBucket.getKeyAsString() + ":" + dbpropertiesBucket.getKeyAsString()));
