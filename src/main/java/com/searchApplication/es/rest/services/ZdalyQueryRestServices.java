@@ -297,6 +297,7 @@ public class ZdalyQueryRestServices {
 					transactionResponse.setResponseMessage("DB Name is null/Empty for one or more cases ");
 				}
 				String casDbName = dbName;
+	
 				String casTableName = tableName;
 				if (encrypted) {
 					casDbName = HashUtil.encode(dbName, salt);
