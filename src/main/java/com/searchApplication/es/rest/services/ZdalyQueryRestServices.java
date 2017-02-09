@@ -1,24 +1,12 @@
 package com.searchApplication.es.rest.services;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
+import com.datastax.driver.core.*;
+import com.searchApplication.entities.*;
+import com.searchApplication.es.entities.BucketResponseList;
+import com.searchApplication.es.interfaces.ZdalyQueryServices;
+import com.searchApplication.es.search.aggs.InsdustriInfo;
+import com.searchApplication.utils.ThreadLocalSDF;
+import com.searchApplication.utils.ZdalyCassandraConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,24 +16,17 @@ import org.springframework.context.annotation.PropertySources;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.searchApplication.entities.CassandraFilterRequest;
-import com.searchApplication.entities.FilterRequest;
-import com.searchApplication.entities.QueryResultsList;
-import com.searchApplication.entities.SearchOutput;
-import com.searchApplication.entities.SeriesIdStatistics;
-import com.searchApplication.entities.TimeSeriesEntity;
-import com.searchApplication.entities.TransactionResponse;
-import com.searchApplication.es.entities.BucketResponseList;
-import com.searchApplication.es.interfaces.ZdalyQueryServices;
-import com.searchApplication.utils.ThreadLocalSDF;
-import com.searchApplication.es.search.aggs.InsdustriInfo;
-import com.searchApplication.utils.ZdalyCassandraConnection;
-
 import zdaly.etl.util.HashUtil;
+
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.DateFormat;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Path("/zdaly")
 @RestController
@@ -54,11 +35,18 @@ public class ZdalyQueryRestServices {
 	@Value("${zDaly.cassandra.salt}")
 	private String salt;
 
+	@Value("${zDaly.cassandra.read.consistency.level}")
+	private String readConsistencyLevel;
+
 	@Value("${zDaly.cassandra.encrypt}")
 	private boolean encrypted;
 
 	@Autowired
 	private ZdalyQueryServices zdalyQueryServices;
+
+	// Re-use prepared statement to optimize performance.
+	private Map<String, PreparedStatement> preparedStatements = new ConcurrentHashMap<>(); // Thread safety is required.
+
 	static final Logger LOG = LoggerFactory.getLogger(ZdalyQueryRestServices.class);
 
 	@GET
@@ -254,7 +242,15 @@ public class ZdalyQueryRestServices {
 				}*/
 				LOG.debug(sql.toString());
 
-				ResultSet rs = session.execute(sql.toString(), valueMap.values().toArray());
+				// Re-using prepared statement to optimize performance.
+				PreparedStatement pst = preparedStatements.computeIfAbsent(sql.toString(), query -> {
+					PreparedStatement ps = session.prepare(query);
+					ps.setConsistencyLevel(getReadConsistencyLevel());
+					return ps;
+				});
+				BoundStatement boundStatement = pst.bind(valueMap.values().toArray());
+				ResultSet rs = session.execute(boundStatement);
+
 				Iterator<Row> itr = rs.iterator();
 				while (itr.hasNext()) {
 					Row row = itr.next();
@@ -275,6 +271,10 @@ public class ZdalyQueryRestServices {
 		long end = System.currentTimeMillis();
 		LOG.debug(" requests : " + requests.size() + " Time taken : " + (end - starttime) + "ms");
 		return transactionResponse;
+	}
+
+	private ConsistencyLevel getReadConsistencyLevel() {
+		return ConsistencyLevel.valueOf(readConsistencyLevel.toUpperCase());
 	}
 
 	@POST
