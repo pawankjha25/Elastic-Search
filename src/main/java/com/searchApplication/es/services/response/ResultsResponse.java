@@ -191,10 +191,12 @@ public class ResultsResponse {
 								Terms locationTypeBuckets = locationParentBucket.getAggregations().get("locationType");
 								boolean valid = true;
 								for (Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets()) {
-									if ((locationMap.get(locationTypeBucket.getKeyAsString()) != null
+									if ((locationMap != null
+											&& locationMap.get(locationTypeBucket.getKeyAsString()) != null
 											&& locationMap.get(locationTypeBucket.getKeyAsString())
-													.contains(locationnameBucket.getKeyAsString())
-											|| locationMap.get(locationTypeBucket.getKeyAsString()) == null)) {
+													.contains(locationnameBucket.getKeyAsString()))
+											|| (locationMap == null
+													|| locationMap.get(locationTypeBucket.getKeyAsString()) == null)) {
 										locationData.put(locationTypeBucket.getKeyAsString(),
 												locationnameBucket.getKeyAsString());
 									} else {
@@ -211,12 +213,13 @@ public class ResultsResponse {
 					for (String key : mapData.keySet()) {
 						boolean valid = true;
 						Results data = mapData.get(key);
-						for (String locationType : locationMap.keySet()) {
-							if (!locationType.equals("parent") && !locationMap.get(locationType).contains("OVERALL")
-									&& data.getLocations().get(locationType) == null) {
-								valid = false;
+						if (locationMap != null)
+							for (String locationType : locationMap.keySet()) {
+								if (!locationType.equals("parent") && !locationMap.get(locationType).contains("OVERALL")
+										&& data.getLocations().get(locationType) == null) {
+									valid = false;
+								}
 							}
-						}
 						if (results.size() < length && valid) {
 							QueryResults qr = new QueryResults();
 							qr.setDbName(dbNameBucket.getKeyAsString());
@@ -226,7 +229,7 @@ public class ResultsResponse {
 								String dbValue = dbNameBucket.getKeyAsString().substring(0,
 										dbNameBucket.getKeyAsString().indexOf("."));
 								String tableValue = dbNameBucket.getKeyAsString().substring(
-										dbNameBucket.getKeyAsString().indexOf(".")+1,
+										dbNameBucket.getKeyAsString().indexOf(".") + 1,
 										dbNameBucket.getKeyAsString().length());
 
 								qr.setEncodedDbName(HashUtil.encode(dbValue.toLowerCase(), salt));

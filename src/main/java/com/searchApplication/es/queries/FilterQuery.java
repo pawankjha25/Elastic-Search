@@ -8,7 +8,6 @@ import com.searchApplication.entities.FilterRequest;
 
 public class FilterQuery {
 
-	@SuppressWarnings("deprecation")
 	public static BoolQueryBuilder getQuery(FilterRequest request) throws Exception {
 		BoolQueryBuilder booleanQuery = new BoolQueryBuilder();
 		try {
@@ -89,7 +88,6 @@ public class FilterQuery {
 					booleanQuery.must(locationQuery);
 				}
 			}
-			System.out.println(booleanQuery.toString());
 		} catch (Exception e) {
 			throw e;
 		}
