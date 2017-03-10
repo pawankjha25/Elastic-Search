@@ -5,10 +5,14 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import com.datastax.driver.core.Session;
 import com.searchApplication.App;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
@@ -19,6 +23,7 @@ import com.searchApplication.es.search.aggs.InsdustriInfo;
 import com.searchApplication.es.search.aggs.SectorBreakDownAggregation;
 import com.searchApplication.es.search.bucketing.AttributeBucketer;
 import com.searchApplication.utils.ElasticSearchUtility;
+import com.searchApplication.utils.ZdalyCassandraConnection;
 
 @Service
 public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
@@ -30,6 +35,23 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 
 	public ZdalyQueryServicesImpl() {
 		ZdalyQueryServicesImpl.client = ElasticSearchUtility.addClient();
+	}
+
+	@Override
+	public String health() throws Exception {
+		try {
+			ClusterHealthRequest request = new ClusterHealthRequest(env.getProperty("es.index_name"));
+			ActionFuture<ClusterHealthResponse> health = client.admin().cluster().health(request);
+			System.out.println(health.get().getStatus().name());
+			if (!health.get().getStatus().name().equalsIgnoreCase("RED")) {
+				return "200";
+			} else {
+				return "500";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "500";
+		}
 	}
 
 	@Override
@@ -86,4 +108,5 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		}
 		return response;
 	}
+
 }

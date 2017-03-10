@@ -10,14 +10,16 @@ import com.searchApplication.es.search.aggs.InsdustriInfo;
 
 public interface ZdalyQueryServices {
 
-	public BucketResponseList produceBuckets( String queryText ) throws Exception;
+	public BucketResponseList produceBuckets(String queryText) throws Exception;
 
-	public SearchOutput matchQuery( String queryText ) throws Exception;
-	
-	public SearchOutput queryWithFilters( FilterRequest request ) throws Exception;
-	
-	public QueryResultsList queryResults( FilterRequest request ) throws Exception;
-	
-	public List<InsdustriInfo> getIndustryInfo( ) throws Exception;
+	public SearchOutput matchQuery(String queryText) throws Exception;
+
+	public SearchOutput queryWithFilters(FilterRequest request) throws Exception;
+
+	public QueryResultsList queryResults(FilterRequest request) throws Exception;
+
+	public List<InsdustriInfo> getIndustryInfo() throws Exception;
+
+	public String health() throws Exception;
 
 }

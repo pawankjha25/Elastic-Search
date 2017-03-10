@@ -24,8 +24,8 @@ import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 public class ZdalyCassandraConnection
 {
 	private static final Logger LOG = LoggerFactory.getLogger(ZdalyCassandraConnection.class);
-	private static Cluster cluster;
-	private static Session session;
+	public static Cluster cluster;
+	public static Session session;
 	@Value("${zDaly.hostName}")
 	private String cassandraIP;
 	@Value("${zDaly.cassandra.port}")

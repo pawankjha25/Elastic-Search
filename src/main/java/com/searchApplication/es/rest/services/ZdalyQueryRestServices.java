@@ -297,7 +297,7 @@ public class ZdalyQueryRestServices {
 					transactionResponse.setResponseMessage("DB Name is null/Empty for one or more cases ");
 				}
 				String casDbName = dbName;
-	
+
 				String casTableName = tableName;
 				if (encrypted) {
 					casDbName = HashUtil.encode(dbName, salt);
@@ -343,5 +343,12 @@ public class ZdalyQueryRestServices {
 		exp.printStackTrace(prnt);
 		LOG.error(sw.toString());
 		sw.close();
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/health")
+	public String healthCheckUp() throws Exception {
+		return zdalyQueryServices.health();
 	}
 }
