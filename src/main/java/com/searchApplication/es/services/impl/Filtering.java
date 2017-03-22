@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import com.google.gson.Gson;
+
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.SearchOutput;
@@ -20,7 +21,7 @@ import com.searchApplication.es.services.response.QueryFilterResponse;
 public class Filtering {
 
 	public static SearchOutput getFilteringResults( FilterRequest request, String indexName, String objectType,
-			Client client ) throws Exception
+			Client client, String timeout ) throws Exception
 	{
 		SearchOutput response = new SearchOutput();
 		BoolQueryBuilder booleanQuery = null;
@@ -38,10 +39,10 @@ public class Filtering {
 			}
 
 			booleanQuery = FilterQuery.getQuery(request);
-
+			
 			SearchResponse tFdocs = null;
 			tFdocs = client.prepareSearch(indexName).setSize(0).setTypes(objectType.split(",")).setQuery(booleanQuery)
-					.addAggregation(FilterAggregation.getAggregation()).execute().actionGet();
+					.addAggregation(FilterAggregation.getAggregation()).get();
 
 			response = QueryFilterResponse.getResponse(tFdocs);
 

@@ -16,5 +16,6 @@ public class JerseyConfig extends ResourceConfig {
 		register(LoggingFilter.class);
 		register(MultiPartFeature.class);
 		register(CorsFilter.class);
+		register(GZIPWriterInterceptor.class);
 	}
 }

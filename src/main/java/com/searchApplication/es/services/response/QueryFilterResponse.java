@@ -7,12 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.nested.InternalNested;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
-import com.google.gson.Gson;
+
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.LocationAggrigation;
 import com.searchApplication.entities.SearchOutput;

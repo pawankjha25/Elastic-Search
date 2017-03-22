@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.searchApplication.Compress;
 import com.searchApplication.entities.CassandraFilterRequest;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
@@ -63,6 +64,7 @@ public class ZdalyQueryRestServices {
 	static final Logger LOG = LoggerFactory.getLogger(ZdalyQueryRestServices.class);
 
 	@GET
+	@Compress
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/industry-info")
 	public TransactionResponse getIndustryInfo() throws Exception {
@@ -87,6 +89,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@GET
+	@Compress
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/wilcard-search/{queryString}")
 	public TransactionResponse produceBucekts(
@@ -115,6 +118,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@GET
+	@Compress
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/match-query/{queryString}")
 	public TransactionResponse matchQuery(
@@ -143,6 +147,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
+	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/query-with-filters")
@@ -171,6 +176,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
+	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/query-results")
@@ -199,6 +205,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
+	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/get-time-series-data")
@@ -273,6 +280,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
+	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/get-time-series-stat-data")

@@ -18,12 +18,11 @@ import com.searchApplication.es.services.response.ResultsResponse;
 public class Results {
 
 	@SuppressWarnings("rawtypes")
-	public static QueryResultsList getResults(FilterRequest request, String indexName, String objectType, Client client)
-			throws Exception {
+	public static QueryResultsList getResults(FilterRequest request, String indexName, String objectType, Client client,
+			String timeout) throws Exception {
 		QueryResultsList response = new QueryResultsList();
 		Boolean location = false;
 		try {
-			// BoolQueryBuilder booleanQuery = FilterQuery.getQuery(request);
 
 			if (request.getLocations() != null && !request.getLocations().isEmpty()
 					&& request.getLocations().keySet().size() > 0) {
@@ -47,9 +46,9 @@ public class Results {
 			SearchResponse tFdocs = null;
 
 			long startTime = System.currentTimeMillis();
-			tFdocs = client.prepareSearch(indexName).setTypes(objectType.split(","))
-					.setQuery(FilterQuery.getQuery(request)).setSize(0).addAggregation(aggregation).execute()
-					.actionGet();
+			tFdocs = client.prepareSearch(indexName).setTerminateAfter(Integer.parseInt(timeout))
+					.setTypes(objectType.split(",")).setQuery(FilterQuery.getQuery(request)).setSize(0)
+					.addAggregation(aggregation).get();
 			long endTime = System.currentTimeMillis();
 
 			System.out.println("Service took - " + (endTime - startTime) + " milliseconds to query");

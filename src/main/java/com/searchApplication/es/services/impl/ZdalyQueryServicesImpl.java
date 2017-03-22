@@ -12,7 +12,6 @@ import org.elasticsearch.client.Client;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import com.datastax.driver.core.Session;
 import com.searchApplication.App;
 import com.searchApplication.entities.FilterRequest;
 import com.searchApplication.entities.QueryResultsList;
@@ -23,7 +22,6 @@ import com.searchApplication.es.search.aggs.InsdustriInfo;
 import com.searchApplication.es.search.aggs.SectorBreakDownAggregation;
 import com.searchApplication.es.search.bucketing.AttributeBucketer;
 import com.searchApplication.utils.ElasticSearchUtility;
-import com.searchApplication.utils.ZdalyCassandraConnection;
 
 @Service
 public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
@@ -75,7 +73,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		try {
 			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
 				response = Filtering.getFilteringResults(request, env.getProperty("es.index_name"),
-						env.getProperty("es.search_object"), client);
+						env.getProperty("es.search_object"), client,env.getProperty("es.query.timeout"));
 			}
 
 		} catch (Exception e) {
@@ -90,7 +88,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		try {
 			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
 				response = Results.getResults(request, env.getProperty("es.index_name"),
-						env.getProperty("es.search_object"), client);
+						env.getProperty("es.search_object"), client,env.getProperty("es.query.timeout"));
 			}
 		} catch (Exception e) {
 			throw e;
