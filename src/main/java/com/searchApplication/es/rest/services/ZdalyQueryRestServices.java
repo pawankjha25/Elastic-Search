@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -29,6 +30,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -55,11 +59,17 @@ public class ZdalyQueryRestServices {
 	@Value("${zDaly.cassandra.salt}")
 	private String salt;
 
+	@Value("${zDaly.cassandra.read.consistency.level}")
+	private String readConsistencyLevel;
+
 	@Value("${zDaly.cassandra.encrypt}")
 	private boolean encrypted;
 
 	@Autowired
 	private ZdalyQueryServices zdalyQueryServices;
+
+	// Re-use prepared statement to optimize performance.
+	private Map<String, PreparedStatement> preparedStatements = new ConcurrentHashMap<>(); // Thread safety is required.
 
 	static final Logger LOG = LoggerFactory.getLogger(ZdalyQueryRestServices.class);
 
@@ -260,7 +270,15 @@ public class ZdalyQueryRestServices {
 				 */
 				LOG.debug(sql.toString());
 
-				ResultSet rs = session.execute(sql.toString(), valueMap.values().toArray());
+				// Re-using prepared statement to optimize performance.
+				PreparedStatement pst = preparedStatements.computeIfAbsent(sql.toString(), query -> {
+					PreparedStatement ps = session.prepare(query);
+					ps.setConsistencyLevel(getReadConsistencyLevel());
+					return ps;
+				});
+				BoundStatement boundStatement = pst.bind(valueMap.values().toArray());
+				ResultSet rs = session.execute(boundStatement);
+
 				Iterator<Row> itr = rs.iterator();
 				while (itr.hasNext()) {
 					Row row = itr.next();
@@ -277,6 +295,10 @@ public class ZdalyQueryRestServices {
 		long end = System.currentTimeMillis();
 		LOG.debug(" requests : " + requests.size() + " Time taken : " + (end - starttime) + "ms");
 		return transactionResponse;
+	}
+
+	private ConsistencyLevel getReadConsistencyLevel() {
+		return ConsistencyLevel.valueOf(readConsistencyLevel.toUpperCase());
 	}
 
 	@POST
