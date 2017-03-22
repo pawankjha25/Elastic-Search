@@ -14,7 +14,11 @@ import com.searchApplication.entities.QueryResults;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.Results;
 
+import zdaly.etl.util.HashUtil;
+
 public class ResultsResponse {
+
+	private String salt = "zdalyrocksprod";
 
 	public static QueryResultsList getResults(SearchResponse tFdocs, Map<String, Set<String>> locationMap,
 			String stratumName, Boolean location) throws Exception {
@@ -123,8 +127,8 @@ public class ResultsResponse {
 		}
 		return response;
 	}
-	
-	public static QueryResultsList getResultsNew(SearchResponse tFdocs, Map<String, Set<String>> locationMap,
+
+	public QueryResultsList getResultsNew(SearchResponse tFdocs, Map<String, Set<String>> locationMap,
 			String stratumName, Boolean location) throws Exception {
 		QueryResultsList response = new QueryResultsList();
 		Set<QueryResults> results = new TreeSet<>();
@@ -187,10 +191,12 @@ public class ResultsResponse {
 								Terms locationTypeBuckets = locationParentBucket.getAggregations().get("locationType");
 								boolean valid = true;
 								for (Terms.Bucket locationTypeBucket : locationTypeBuckets.getBuckets()) {
-									if ((locationMap.get(locationTypeBucket.getKeyAsString()) != null
+									if ((locationMap != null
+											&& locationMap.get(locationTypeBucket.getKeyAsString()) != null
 											&& locationMap.get(locationTypeBucket.getKeyAsString())
-													.contains(locationnameBucket.getKeyAsString())
-											|| locationMap.get(locationTypeBucket.getKeyAsString()) == null)) {
+													.contains(locationnameBucket.getKeyAsString()))
+											|| (locationMap == null
+													|| locationMap.get(locationTypeBucket.getKeyAsString()) == null)) {
 										locationData.put(locationTypeBucket.getKeyAsString(),
 												locationnameBucket.getKeyAsString());
 									} else {
@@ -207,15 +213,29 @@ public class ResultsResponse {
 					for (String key : mapData.keySet()) {
 						boolean valid = true;
 						Results data = mapData.get(key);
-						for (String locationType : locationMap.keySet()) {
-							if (!locationType.equals("parent") && !locationMap.get(locationType).contains("OVERALL")
-									&& data.getLocations().get(locationType) == null) {
-								valid = false;
+						if (locationMap != null)
+							for (String locationType : locationMap.keySet()) {
+								if (!locationType.equals("parent") && !locationMap.get(locationType).contains("OVERALL")
+										&& data.getLocations().get(locationType) == null) {
+									valid = false;
+								}
 							}
-						}
 						if (results.size() < length && valid) {
 							QueryResults qr = new QueryResults();
 							qr.setDbName(dbNameBucket.getKeyAsString());
+
+							// adding encoded dbname and table name
+							if (dbNameBucket.getKeyAsString().contains(".")) {
+								String dbValue = dbNameBucket.getKeyAsString().substring(0,
+										dbNameBucket.getKeyAsString().indexOf("."));
+								String tableValue = dbNameBucket.getKeyAsString().substring(
+										dbNameBucket.getKeyAsString().indexOf(".") + 1,
+										dbNameBucket.getKeyAsString().length());
+
+								qr.setEncodedDbName(HashUtil.encode(dbValue.toLowerCase(), salt));
+								qr.setEncodedTableName(HashUtil.encode(tableValue, salt));
+							}
+
 							qr.setPropertyId(new Long(dbpropertiesBucket.getKeyAsString()));
 							qr.setStratums(mapStratums
 									.get(dbNameBucket.getKeyAsString() + ":" + dbpropertiesBucket.getKeyAsString()));

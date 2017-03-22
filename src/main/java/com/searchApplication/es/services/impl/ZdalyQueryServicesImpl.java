@@ -5,6 +5,9 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,23 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	}
 
 	@Override
+	public String health() throws Exception {
+		try {
+			ClusterHealthRequest request = new ClusterHealthRequest(env.getProperty("es.index_name"));
+			ActionFuture<ClusterHealthResponse> health = client.admin().cluster().health(request);
+			System.out.println(health.get().getStatus().name());
+			if (!health.get().getStatus().name().equalsIgnoreCase("RED")) {
+				return "200";
+			} else {
+				return "500";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "500";
+		}
+	}
+
+	@Override
 	public BucketResponseList produceBuckets(String queryText) throws Exception {
 		try {
 			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
@@ -53,7 +73,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		try {
 			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
 				response = Filtering.getFilteringResults(request, env.getProperty("es.index_name"),
-						env.getProperty("es.search_object"), client);
+						env.getProperty("es.search_object"), client,env.getProperty("es.query.timeout"));
 			}
 
 		} catch (Exception e) {
@@ -68,7 +88,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		try {
 			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
 				response = Results.getResults(request, env.getProperty("es.index_name"),
-						env.getProperty("es.search_object"), client);
+						env.getProperty("es.search_object"), client,env.getProperty("es.query.timeout"));
 			}
 		} catch (Exception e) {
 			throw e;
@@ -86,4 +106,5 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		}
 		return response;
 	}
+
 }

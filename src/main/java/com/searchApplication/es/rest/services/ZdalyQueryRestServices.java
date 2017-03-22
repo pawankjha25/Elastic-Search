@@ -1,12 +1,25 @@
 package com.searchApplication.es.rest.services;
 
-import com.datastax.driver.core.*;
-import com.searchApplication.entities.*;
-import com.searchApplication.es.entities.BucketResponseList;
-import com.searchApplication.es.interfaces.ZdalyQueryServices;
-import com.searchApplication.es.search.aggs.InsdustriInfo;
-import com.searchApplication.utils.ThreadLocalSDF;
-import com.searchApplication.utils.ZdalyCassandraConnection;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,17 +29,28 @@ import org.springframework.context.annotation.PropertySources;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import zdaly.etl.util.HashUtil;
 
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.text.DateFormat;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.searchApplication.Compress;
+import com.searchApplication.entities.CassandraFilterRequest;
+import com.searchApplication.entities.FilterRequest;
+import com.searchApplication.entities.QueryResultsList;
+import com.searchApplication.entities.SearchOutput;
+import com.searchApplication.entities.SeriesIdStatistics;
+import com.searchApplication.entities.TimeSeriesEntity;
+import com.searchApplication.entities.TransactionResponse;
+import com.searchApplication.es.entities.BucketResponseList;
+import com.searchApplication.es.interfaces.ZdalyQueryServices;
+import com.searchApplication.es.search.aggs.InsdustriInfo;
+import com.searchApplication.utils.ThreadLocalSDF;
+import com.searchApplication.utils.ZdalyCassandraConnection;
+
+import zdaly.etl.util.HashUtil;
 
 @Path("/zdaly")
 @RestController
@@ -50,6 +74,7 @@ public class ZdalyQueryRestServices {
 	static final Logger LOG = LoggerFactory.getLogger(ZdalyQueryRestServices.class);
 
 	@GET
+	@Compress
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/industry-info")
 	public TransactionResponse getIndustryInfo() throws Exception {
@@ -74,6 +99,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@GET
+	@Compress
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/wilcard-search/{queryString}")
 	public TransactionResponse produceBucekts(
@@ -102,6 +128,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@GET
+	@Compress
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/match-query/{queryString}")
 	public TransactionResponse matchQuery(
@@ -130,6 +157,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
+	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/query-with-filters")
@@ -158,6 +186,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
+	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/query-results")
@@ -186,6 +215,7 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
+	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/get-time-series-data")
@@ -207,8 +237,7 @@ public class ZdalyQueryRestServices {
 				String casTableName = table_name;
 				String period = request.getPeriod();
 				String series_id = request.getSeriesId();
-				if(db_name==null || table_name==null || series_id==null)
-				{
+				if (db_name == null || table_name == null || series_id == null) {
 					throw new Exception("Mandatory request parameters are missing");
 				}
 				if (encrypted) {
@@ -216,7 +245,8 @@ public class ZdalyQueryRestServices {
 					casTableName = HashUtil.encode(table_name, salt);
 				}
 				Map<String, Object> valueMap = new LinkedHashMap<>();
-				StringBuilder sql = new StringBuilder("select series_id, table_name, date,value, period , extended from time_series_data ");
+				StringBuilder sql = new StringBuilder(
+						"select series_id, table_name, date,value, period , extended from time_series_data ");
 				sql.append("where db_name= ? ");
 				valueMap.put("db_name", casDbName);
 
@@ -232,14 +262,12 @@ public class ZdalyQueryRestServices {
 					sql.append("and period = ? ");
 					valueMap.put("period", period);
 				}
-				/*if (fromDate != null) {
-					sql.append("and dttm >= ? ");
-					valueMap.put("fromDate", fromDate);
-				}
-				if (toDate != null) {
-					sql.append("and dttm < ? ");
-					valueMap.put("toDate", toDate);
-				}*/
+				/*
+				 * if (fromDate != null) { sql.append("and dttm >= ? ");
+				 * valueMap.put("fromDate", fromDate); } if (toDate != null) {
+				 * sql.append("and dttm < ? "); valueMap.put("toDate", toDate);
+				 * }
+				 */
 				LOG.debug(sql.toString());
 
 				// Re-using prepared statement to optimize performance.
@@ -254,12 +282,8 @@ public class ZdalyQueryRestServices {
 				Iterator<Row> itr = rs.iterator();
 				while (itr.hasNext()) {
 					Row row = itr.next();
-					list.add(new TimeSeriesEntity(series_id,
-												  table_name,
-												  row.getDecimal("value"), 
-												  row.getString("date"),
-												  row.getString("period"),
-												  row.getString("extended")));
+					list.add(new TimeSeriesEntity(series_id, table_name, row.getDecimal("value"), row.getString("date"),
+							row.getString("period"), row.getString("extended")));
 				}
 			}
 			transactionResponse.setResponseEntity(list);
@@ -278,17 +302,19 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
+	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/get-time-series-stat-data")
-	public TransactionResponse getTimeSeriesStatData(@RequestBody List<CassandraFilterRequest> requests) throws Exception {
+	public TransactionResponse getTimeSeriesStatData(@RequestBody List<CassandraFilterRequest> requests)
+			throws Exception {
 		long starttime = System.currentTimeMillis();
 		List<SeriesIdStatistics> list = new ArrayList<>();
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus(HttpStatus.OK.toString());
 		transactionResponse.setResponseMessage("Successfull");
 		transactionResponse.setResponseType("Series Id Statistics ");
-		DateFormat sdf=ThreadLocalSDF.getDateFormatter();
+		DateFormat sdf = ThreadLocalSDF.getDateFormatter();
 		try {
 			Session session = ZdalyCassandraConnection.getCassandraSession();
 			ResultSet rs = null;
@@ -300,14 +326,16 @@ public class ZdalyQueryRestServices {
 				if (tableName == null || tableName.length() == 0) {
 					transactionResponse.setResponseMessage("DB Name is null/Empty for one or more cases ");
 				}
-				String casDbName=dbName;
-				String casTableName=tableName;
+				String casDbName = dbName;
+
+				String casTableName = tableName;
 				if (encrypted) {
-					 casDbName = HashUtil.encode(dbName, salt);
-					 casTableName = HashUtil.encode(tableName, salt);
+					casDbName = HashUtil.encode(dbName, salt);
+					casTableName = HashUtil.encode(tableName, salt);
 				}
 				Map<String, Object> valueMap = new LinkedHashMap<>();
-				StringBuilder sql = new StringBuilder("select table_name,series_id,start_date,end_date,row_count from time_series_data_stat ");
+				StringBuilder sql = new StringBuilder(
+						"select table_name,series_id,start_date,end_date,row_count from time_series_data_stat ");
 				sql.append("where db_name = ? ");
 				valueMap.put("dbName", casDbName);
 				if (tableName != null) {
@@ -323,7 +351,9 @@ public class ZdalyQueryRestServices {
 				Iterator<Row> itr = rs.iterator();
 				while (itr.hasNext()) {
 					Row row = itr.next();
-					list.add(new SeriesIdStatistics(row.getString("series_id"), row.getString("table_name"),sdf.format(row.getTimestamp("start_date")), sdf.format(row.getTimestamp("end_date")), row.getVarint("row_count")));
+					list.add(new SeriesIdStatistics(row.getString("series_id"), row.getString("table_name"),
+							sdf.format(row.getTimestamp("start_date")), sdf.format(row.getTimestamp("end_date")),
+							row.getVarint("row_count")));
 				}
 			}
 			transactionResponse.setResponseEntity(list);
@@ -343,5 +373,12 @@ public class ZdalyQueryRestServices {
 		exp.printStackTrace(prnt);
 		LOG.error(sw.toString());
 		sw.close();
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/health")
+	public String healthCheckUp() throws Exception {
+		return zdalyQueryServices.health();
 	}
 }

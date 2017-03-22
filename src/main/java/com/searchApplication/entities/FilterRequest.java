@@ -13,6 +13,7 @@ public class FilterRequest {
 	private String stratumName;
 	private String reqAttList;
 	private Boolean location;
+	private Boolean seriesIdCount;
 	private Map<String, Integer> locationLevels;
 
 	public Boolean getLevel100()
@@ -93,6 +94,14 @@ public class FilterRequest {
 	public void setLocationLevels( Map<String, Integer> locationLevels )
 	{
 		this.locationLevels = locationLevels;
+	}
+
+	public Boolean getSeriesIdCount() {
+		return seriesIdCount;
+	}
+
+	public void setSeriesIdCount(Boolean seriesIdCount) {
+		this.seriesIdCount = seriesIdCount;
 	}
 
 }
