@@ -20,7 +20,7 @@ import com.searchApplication.es.entities.RowAttributes;
 
 public class AttributeBucketerTest extends SearchESTest {
 
-	private static Set<String> LOC = new HashSet<String>(Arrays.asList("illinois", "united states"));
+	private static Set<String> LOC = new HashSet<String>(Arrays.asList("illinois", "rice", "united states"));
 
 	@Test
 	public void testWithMeta() throws IOException {
@@ -175,14 +175,13 @@ public class AttributeBucketerTest extends SearchESTest {
 				.containsOnly("corn", "production planning");
 
 		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(3).getBucketTerms()))
-		.containsOnly("production planning");
-		
+				.containsOnly("production planning");
+
 		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(4).getBucketTerms()))
-		.containsOnly("yellow corn");
-		
+				.containsOnly("yellow corn");
+
 		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(5).getBucketTerms()))
 				.containsOnly("iron production");
-		
 
 		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(3).getBucketTerms()))
 				.containsOnly("production planning");
@@ -425,6 +424,119 @@ public class AttributeBucketerTest extends SearchESTest {
 				.containsOnly("yellow corn");
 		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(2).getBucketTerms()))
 				.containsOnly("corn production");
+
+	}
+
+	@Test
+	public void testLocationAttributeMatchSingleQueryWord() throws IOException {
+		createTestIndex();
+		LocationData loc = new LocationData();
+		loc.setLocation_name("ILLINOIS");
+		loc.setLocation_type("state");
+
+		LocationData loc1 = new LocationData();
+		loc1.setLocation_name("RICE STATES");
+		loc1.setLocation_type("country");
+
+		Row r4 = createAtrributeFromList("corn|corn production");
+		r4.setSector("sector");
+		r4.setSub_sector("subSector");
+		r4.setSuper_region("superRegion");
+		r4.setLocations(Arrays.asList(loc1));
+
+		Row r3 = createAtrributeFromList("rice");
+		r3.setSector("sector");
+		r3.setSub_sector("subSector");
+		r3.setSuper_region("superRegion");
+		r3.setLocations(Arrays.asList(loc));
+
+		index(r3, 3);
+
+		index(r4, 4);
+
+		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME, "rice", 1, 1000,
+				LOC);
+
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("rice");
+
+	}
+
+	@Test
+	public void testLocationAttributeMatchMultiQueryWords() throws IOException {
+		createTestIndex();
+		LocationData loc = new LocationData();
+		loc.setLocation_name("ILLINOIS");
+		loc.setLocation_type("state");
+
+		LocationData loc1 = new LocationData();
+		loc1.setLocation_name("RICE STATES");
+		loc1.setLocation_type("country");
+
+		Row r4 = createAtrributeFromList("corn|corn production");
+		r4.setSector("sector");
+		r4.setSub_sector("subSector");
+		r4.setSuper_region("superRegion");
+		r4.setLocations(Arrays.asList(loc1));
+
+		Row r3 = createAtrributeFromList("rice");
+		r3.setSector("sector");
+		r3.setSub_sector("subSector");
+		r3.setSuper_region("superRegion");
+		r3.setLocations(Arrays.asList(loc));
+
+		index(r3, 3);
+
+		index(r4, 4);
+
+		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
+				"rice production", 1, 1000, LOC);
+
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("rice");
+
+	}
+
+	@Test
+	public void testLocationAttributeMatchMultiQueryWordsLocation() throws IOException {
+		createTestIndex();
+		LocationData loc = new LocationData();
+		loc.setLocation_name("ILLINOIS");
+		loc.setLocation_type("state");
+
+		LocationData loc1 = new LocationData();
+		loc1.setLocation_name("RICE STATES");
+		loc1.setLocation_type("country");
+
+		Row r4 = createAtrributeFromList("corn|corn production");
+		r4.setSector("sector");
+		r4.setSub_sector("subSector");
+		r4.setSuper_region("superRegion");
+		r4.setLocations(Arrays.asList(loc1));
+
+		Row r3 = createAtrributeFromList("rice");
+		r3.setSector("sector");
+		r3.setSub_sector("subSector");
+		r3.setSuper_region("superRegion");
+		r3.setLocations(Arrays.asList(loc));
+
+		Row r5 = createAtrributeFromList("rice production");
+		r5.setSector("sector");
+		r5.setSub_sector("subSector");
+		r5.setSuper_region("superRegion");
+		r5.setLocations(Arrays.asList(loc1));
+
+		index(r3, 3);
+
+		index(r4, 4);
+
+		index(r5, 5);
+
+		List<Bucket> buckets = AttributeBucketer.createBucketList(client(), TEST_INDEX_NAME, TYPE_NAME,
+				"rice production illinois", 1, 1000, LOC);
+		System.out.println(buckets);
+		Assertions.assertThat(BucketTerms.createdQuerySortedBucket(buckets.get(0).getBucketTerms()))
+				.containsOnly("rice", "ILLINOIS_LOC");
 
 	}
 
