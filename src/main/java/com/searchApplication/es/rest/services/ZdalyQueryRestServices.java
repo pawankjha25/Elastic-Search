@@ -99,7 +99,6 @@ public class ZdalyQueryRestServices {
 	}
 
 	@GET
-	@Compress
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/wilcard-search/{queryString}")
 	public TransactionResponse produceBucekts(
