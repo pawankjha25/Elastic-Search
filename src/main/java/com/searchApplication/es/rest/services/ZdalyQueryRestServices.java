@@ -30,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
@@ -47,6 +46,7 @@ import com.searchApplication.entities.TransactionResponse;
 import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.interfaces.ZdalyQueryServices;
 import com.searchApplication.es.search.aggs.InsdustriInfo;
+import com.searchApplication.es.services.impl.FetchTimeSeriesData;
 import com.searchApplication.utils.ThreadLocalSDF;
 import com.searchApplication.utils.ZdalyCassandraConnection;
 
@@ -67,6 +67,11 @@ public class ZdalyQueryRestServices {
 
 	@Autowired
 	private ZdalyQueryServices zdalyQueryServices;
+	
+	@Autowired
+	private FetchTimeSeriesData fetchTimeSeriesData;
+	
+	
 
 	// Re-use prepared statement to optimize performance.
 	private Map<String, PreparedStatement> preparedStatements = new ConcurrentHashMap<>(); // Thread safety is required.
@@ -214,7 +219,6 @@ public class ZdalyQueryRestServices {
 	}
 
 	@POST
-	@Compress
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 	@Path("/get-time-series-data")
@@ -226,65 +230,8 @@ public class ZdalyQueryRestServices {
 		transactionResponse.setResponseMessage("Successfull");
 		transactionResponse.setResponseType("Object");
 		try {
-			Session session = ZdalyCassandraConnection.getCassandraSession();
-			for (CassandraFilterRequest request : requests) {
-				LOG.info(request.toString());
+			list = fetchTimeSeriesData.getData(requests);
 
-				String db_name = request.getDbName();
-				String table_name = request.getTableName();
-				String casDbName = db_name;
-				String casTableName = table_name;
-				String period = request.getPeriod();
-				String series_id = request.getSeriesId();
-				if (db_name == null || table_name == null || series_id == null) {
-					throw new Exception("Mandatory request parameters are missing");
-				}
-				if (encrypted) {
-					casDbName = HashUtil.encode(db_name, salt);
-					casTableName = HashUtil.encode(table_name, salt);
-				}
-				Map<String, Object> valueMap = new LinkedHashMap<>();
-				StringBuilder sql = new StringBuilder(
-						"select series_id, table_name, date,value, period , extended from time_series_data ");
-				sql.append("where db_name= ? ");
-				valueMap.put("db_name", casDbName);
-
-				if (table_name != null) {
-					sql.append("and table_name = ? ");
-					valueMap.put("table_name", casTableName);
-				}
-				if (series_id != null) {
-					sql.append("and series_id = ? ");
-					valueMap.put("series_id", series_id);
-				}
-				if (period != null) {
-					sql.append("and period = ? ");
-					valueMap.put("period", period);
-				}
-				/*
-				 * if (fromDate != null) { sql.append("and dttm >= ? ");
-				 * valueMap.put("fromDate", fromDate); } if (toDate != null) {
-				 * sql.append("and dttm < ? "); valueMap.put("toDate", toDate);
-				 * }
-				 */
-				LOG.debug(sql.toString());
-
-				// Re-using prepared statement to optimize performance.
-				PreparedStatement pst = preparedStatements.computeIfAbsent(sql.toString(), query -> {
-					PreparedStatement ps = session.prepare(query);
-					ps.setConsistencyLevel(getReadConsistencyLevel());
-					return ps;
-				});
-				BoundStatement boundStatement = pst.bind(valueMap.values().toArray());
-				ResultSet rs = session.execute(boundStatement);
-
-				Iterator<Row> itr = rs.iterator();
-				while (itr.hasNext()) {
-					Row row = itr.next();
-					list.add(new TimeSeriesEntity(series_id, table_name, row.getDecimal("value"), row.getString("date"),
-							row.getString("period"), row.getString("extended")));
-				}
-			}
 			transactionResponse.setResponseEntity(list);
 		} catch (Exception exp) {
 			handleException(exp);
