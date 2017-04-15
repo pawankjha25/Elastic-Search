@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import com.searchApplication.App;
 import com.searchApplication.entities.FilterRequest;
+import com.searchApplication.entities.LocationToggle;
+import com.searchApplication.entities.LocationToggleResults;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.es.entities.BucketResponseList;
@@ -73,7 +75,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		try {
 			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
 				response = Filtering.getFilteringResults(request, env.getProperty("es.index_name"),
-						env.getProperty("es.search_object"), client,env.getProperty("es.query.timeout"));
+						env.getProperty("es.search_object"), client, env.getProperty("es.query.timeout"));
 			}
 
 		} catch (Exception e) {
@@ -88,7 +90,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		try {
 			if (request.getSearchText() != null && !request.getSearchText().isEmpty()) {
 				response = Results.getResults(request, env.getProperty("es.index_name"),
-						env.getProperty("es.search_object"), client,env.getProperty("es.query.timeout"));
+						env.getProperty("es.search_object"), client, env.getProperty("es.query.timeout"));
 			}
 		} catch (Exception e) {
 			throw e;
@@ -101,6 +103,21 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		List<InsdustriInfo> response = new ArrayList<InsdustriInfo>();
 		try {
 			response.addAll(SectorBreakDownAggregation.getSectors(client, env.getProperty("es.index_name")));
+		} catch (Exception e) {
+			throw e;
+		}
+		return response;
+	}
+
+	@Override
+	public List<LocationToggleResults> getLocationDetails(List<LocationToggle> request) throws Exception {
+		List<LocationToggleResults> response = new ArrayList<>();
+		try {
+			if (!request.isEmpty()) {
+				response = LocationToggleImpl.getInstance().getLocationDetails(request,
+						env.getProperty("es.index_name"), env.getProperty("es.search_object"), client,
+						env.getProperty("es.query.timeout"));
+			}
 		} catch (Exception e) {
 			throw e;
 		}

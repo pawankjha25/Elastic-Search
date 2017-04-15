@@ -38,6 +38,8 @@ import com.datastax.driver.core.Session;
 import com.searchApplication.Compress;
 import com.searchApplication.entities.CassandraFilterRequest;
 import com.searchApplication.entities.FilterRequest;
+import com.searchApplication.entities.LocationToggle;
+import com.searchApplication.entities.LocationToggleResults;
 import com.searchApplication.entities.QueryResultsList;
 import com.searchApplication.entities.SearchOutput;
 import com.searchApplication.entities.SeriesIdStatistics;
@@ -202,6 +204,35 @@ public class ZdalyQueryRestServices {
 		try {
 			long startTime = System.currentTimeMillis();
 			QueryResultsList results = zdalyQueryServices.queryResults(filterRequest);
+			if (results != null) {
+				transactionResponse.setResponseEntity(results);
+			} else {
+				transactionResponse.setResponseMessage("No results found");
+			}
+			long endTime = System.currentTimeMillis();
+
+			System.out.println("Service took - " + (endTime - startTime) + " milliseconds to execute");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return transactionResponse;
+	}
+	
+	@POST
+	@Compress
+	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+	@Path("/get-all-location-details")
+	public TransactionResponse getAllLocationDetails(List<LocationToggle> request) throws Exception {
+		TransactionResponse transactionResponse = new TransactionResponse();
+		transactionResponse.setStatus("200");
+		transactionResponse.setResponseMessage("Successfull");
+		transactionResponse.setResponseType("Object");
+		try {
+			long startTime = System.currentTimeMillis();
+			List<LocationToggleResults> results = zdalyQueryServices.getLocationDetails(request);
 			if (results != null) {
 				transactionResponse.setResponseEntity(results);
 			} else {
