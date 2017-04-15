@@ -67,14 +67,15 @@ public class ZdalyQueryRestServices {
 
 	@Autowired
 	private ZdalyQueryServices zdalyQueryServices;
-	
+
 	@Autowired
 	private FetchTimeSeriesData fetchTimeSeriesData;
-	
-	
 
 	// Re-use prepared statement to optimize performance.
-	private Map<String, PreparedStatement> preparedStatements = new ConcurrentHashMap<>(); // Thread safety is required.
+	private Map<String, PreparedStatement> preparedStatements = new ConcurrentHashMap<>(); // Thread
+																							// safety
+																							// is
+																							// required.
 
 	static final Logger LOG = LoggerFactory.getLogger(ZdalyQueryRestServices.class);
 
@@ -108,6 +109,35 @@ public class ZdalyQueryRestServices {
 	@Path("/wilcard-search/{queryString}")
 	public TransactionResponse produceBucekts(
 			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString) throws Exception {
+		TransactionResponse transactionResponse = new TransactionResponse();
+		transactionResponse.setStatus("200");
+		transactionResponse.setResponseMessage("Successfull");
+		transactionResponse.setResponseType("Object");
+		try {
+			long startTime = System.currentTimeMillis();
+			BucketResponseList results = zdalyQueryServices.produceBuckets(queryString);
+
+			if (results != null) {
+				transactionResponse.setResponseEntity(results);
+			} else {
+				transactionResponse.setResponseMessage("No results found");
+			}
+			long endTime = System.currentTimeMillis();
+
+			System.out.println("Service took - " + (endTime - startTime) + " milliseconds to execute");
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return transactionResponse;
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/wildcard-search-with-cache/{queryString}/{updateCache}")
+	public TransactionResponse produceBucektsWithCache(
+			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString,
+			@NotNull(message = "Cannot be null") @PathParam("updateCache") String updateCache) throws Exception {
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
 		transactionResponse.setResponseMessage("Successfull");
