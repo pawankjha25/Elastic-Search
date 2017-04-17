@@ -3,11 +3,7 @@ package com.searchApplication.es.search.bucketing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -18,11 +14,8 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +23,6 @@ import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.search.bucketing.bucketeers.ESAggregationBucketeer;
 import com.searchApplication.es.search.bucketing.bucketeers.ESHitBucketeer;
 import com.searchApplication.es.search.bucketing.wordnet.WordNetSynonims;
-
-import edu.mit.jwi.morph.WordnetStemmer;
 
 public class AttributeBucketer {
 
