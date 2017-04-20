@@ -1,11 +1,13 @@
 package com.searchApplication.es.search.bucketing;
 
-public class BucketMetaData {
+import java.io.Serializable;
+
+public class BucketMetaData implements Serializable{
 
 	private String superRegion;
 	private String sector;
 	private String subSector;
-	private long total;
+	private Long total;
 
 	public BucketMetaData( String superRegion, String sector, String subSector )
 	{
@@ -13,7 +15,7 @@ public class BucketMetaData {
 		this.superRegion = superRegion;
 		this.sector = sector;
 		this.subSector = subSector;
-		this.total = 1;
+		this.total = Long.valueOf(1);
 	}
 
 	public void incrementCount()

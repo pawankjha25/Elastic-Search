@@ -57,7 +57,7 @@ public class ElasticSearchUtility {
 			//
 			Settings settings = Settings.settingsBuilder().put("cluster.name", env.getProperty("es.cluster_name"))
 					.put("number_of_shards", env.getProperty("es.num_shards"))
-					.put("client.transport.sniff", true)
+//					.put("client.transport.sniff", true)
 					.put("number_of_replicas", env.getProperty("es.num_replicas")).build();
 			
 			c = TransportClient.builder().settings(settings).build().addTransportAddress(

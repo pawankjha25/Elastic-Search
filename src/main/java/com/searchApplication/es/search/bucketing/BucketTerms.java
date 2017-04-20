@@ -1,5 +1,8 @@
 package com.searchApplication.es.search.bucketing;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,13 +10,13 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class BucketTerms implements Comparable<BucketTerms> {
+public class BucketTerms implements Comparable<BucketTerms>, Serializable{
 
 	private String attributeName;
-	private int queryWordMatch;
+	private Integer queryWordMatch;
 	private Set<String> matchedQueries;
-	private boolean isFull;
-	private int matchedQueryWordsCount;
+	private Boolean isFull;
+	private Integer matchedQueryWordsCount;
 
 	public BucketTerms() {
 

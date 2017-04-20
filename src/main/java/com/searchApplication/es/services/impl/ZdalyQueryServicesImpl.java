@@ -57,8 +57,7 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 		try {
 			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
 					env.getProperty("es.search_object"), queryText, 1, 1000, App.LOCATIONS);
-		} catch (Exception e) {
-			throw e;
+		} catch (Exception e) {			throw e;
 		}
 	}
 
