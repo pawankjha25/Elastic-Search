@@ -33,9 +33,25 @@ public class FilterQuery {
 								QueryBuilders.termQuery("attributes.attribute_name", key));
 						booleanQuery.mustNot(q2);
 					} else {
-						NestedQueryBuilder attName = QueryBuilders.nestedQuery("attributes",
-								QueryBuilders.termQuery("attributes.attribute_name", key));
-						booleanQuery.filter(attName);
+
+						if ("Sector".equalsIgnoreCase(key)) {
+							
+							BoolQueryBuilder sectorQuery = new BoolQueryBuilder();
+							NestedQueryBuilder attName1 = QueryBuilders.nestedQuery("attributes",
+									QueryBuilders.termQuery("attributes.attribute_name", key));
+							sectorQuery.should(attName1);
+							
+							NestedQueryBuilder attName2 = QueryBuilders.nestedQuery("attributes",
+									QueryBuilders.termQuery("attributes.attribute_name", "SECTOR"));
+							sectorQuery.should(attName2);
+							
+							booleanQuery.must(sectorQuery);
+
+						} else {
+							NestedQueryBuilder attName = QueryBuilders.nestedQuery("attributes",
+									QueryBuilders.termQuery("attributes.attribute_name", key));
+							booleanQuery.filter(attName);
+						}
 
 						BoolQueryBuilder booleanQuery1 = new BoolQueryBuilder();
 						for (String value : request.getFilters().get(key)) {
