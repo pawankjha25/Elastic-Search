@@ -1,11 +1,17 @@
 package com.searchApplication.es.search.bucketing;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.searchApplication.ApplicationContextProvider;
+import com.searchApplication.es.cache.AggregationCache;
+import com.searchApplication.utils.ElasticSearchUtility;
+import io.netty.util.internal.StringUtil;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequest;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -23,6 +29,7 @@ import com.searchApplication.es.entities.BucketResponseList;
 import com.searchApplication.es.search.bucketing.bucketeers.ESAggregationBucketeer;
 import com.searchApplication.es.search.bucketing.bucketeers.ESHitBucketeer;
 import com.searchApplication.es.search.bucketing.wordnet.WordNetSynonims;
+import org.springframework.context.ApplicationContext;
 
 public class AttributeBucketer {
 
@@ -30,6 +37,7 @@ public class AttributeBucketer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AttributeBucketer.class);
 	private static final String LOCATIONS = "locations";
 	private static final String SEARCH_FIELD = "description.shingled";
+	private static final long MAX_TIME_LIVE_QUERY_MS = 500;
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
 			int hitsInScroll, Set<String> locations) throws IOException {
@@ -76,15 +84,33 @@ public class AttributeBucketer {
 	}
 
 	private static List<Bucket> getBucketsFromSearch(String[] querySplit, int hitsInScroll, int loops, Client client,
-			String index, String type) throws IOException {
+													 String index, String type) throws IOException {
 		List<Bucket> bucketList;
 		if (querySplit[0].split(" ").length == 1 && querySplit[1].split(" ").length <= 1) {
-			SearchResponse sr = hitEsSingle(client, index, type, hitsInScroll, querySplit);
-			bucketList = ESAggregationBucketeer.getBucketsFromSearchResponseWithAgg(sr, querySplit, hitsInScroll, loops,
-					client);
+			String queryToken = getAnalyzedQueryTokens(querySplit, client);
+			bucketList = getCachedValue(queryToken);
+			if(bucketList == null) {
+				long startTime = System.currentTimeMillis();
+				SearchResponse sr = hitEsSingle(client, index, type, hitsInScroll, querySplit);
+				bucketList = ESAggregationBucketeer.getBucketsFromSearchResponseWithAgg(sr, querySplit, hitsInScroll, loops,
+						client);
+				long timeTaken = System.currentTimeMillis() - startTime;
+				if(timeTaken > MAX_TIME_LIVE_QUERY_MS) {
+					setCacheValue(queryToken, bucketList);
+				}
+			}
 		} else {
-			SearchResponse sr = hitEsMulti(client, index, type, hitsInScroll, querySplit);
-			bucketList = ESHitBucketeer.getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+			String queryToken = getAnalyzedQueryTokens(querySplit, client);
+			bucketList = getCachedValue(queryToken);
+			if(bucketList == null) {
+				long startTime = System.currentTimeMillis();
+				SearchResponse sr = hitEsMulti(client, index, type, hitsInScroll, querySplit);
+				bucketList = ESHitBucketeer.getBucketsFromSearchResponse(sr, querySplit, hitsInScroll, loops, client);
+				long timeTaken = System.currentTimeMillis() - startTime;
+				if(timeTaken > MAX_TIME_LIVE_QUERY_MS) {
+					setCacheValue(queryToken, bucketList);
+				}
+			}
 
 		}
 		if (bucketList.size() > 0) {
@@ -92,6 +118,84 @@ public class AttributeBucketer {
 		} else {
 			return doSynonimSearch(querySplit, hitsInScroll, loops, client, index, type);
 		}
+	}
+
+	private static String getAnalyzedQueryTokens(String[] querySplit, Client client) {
+		StringBuilder analyzedTokens = new StringBuilder();
+
+		for(String queryString: querySplit) {
+			if(!StringUtil.isNullOrEmpty(queryString)) {
+				AnalyzeRequest request = (new AnalyzeRequest(ElasticSearchUtility.env.getProperty("es.index_name")).text(queryString).analyzer
+						("shingle_analyzer"));
+				List<AnalyzeResponse.AnalyzeToken> tokens = client.admin().indices().analyze(request).actionGet().getTokens();
+				for (AnalyzeResponse.AnalyzeToken token : tokens) {
+					if(tokens.size() > 1 && token.getType().equals("shingle") || tokens.size() == 1) {
+						analyzedTokens.append(token.getTerm());
+					}
+				}
+			}
+		}
+		LOGGER.info("Analyzed Query: " + analyzedTokens);
+		return analyzedTokens.toString();
+	}
+
+	private static void setCacheValue(String queryToken, List<Bucket> bucketList) {
+		ApplicationContext applicationContext = ApplicationContextProvider.getContext();
+		AggregationCache aggregationCache = (AggregationCache) applicationContext.getBean("aggregationCache");
+		byte[] key = queryToken.getBytes();
+
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutput out = null;
+		try {
+			out = new ObjectOutputStream(bos);
+
+			out.writeObject(bucketList);
+			out.flush();
+			byte[] srBytes = bos.toByteArray();
+			aggregationCache.getCache().set(key, srBytes);
+			LOGGER.info("Cached: " + queryToken);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				bos.close();
+			} catch (IOException ex) {
+				// ignore close exception
+			}
+		}
+	}
+
+	private static List<Bucket> getCachedValue(String queryToken) {
+		ApplicationContext applicationContext = ApplicationContextProvider.getContext();
+		AggregationCache aggregationCache = (AggregationCache) applicationContext.getBean("aggregationCache");
+		byte[] key = queryToken.getBytes();
+		byte[] srBytes = aggregationCache.getCache().get(key);
+		if(srBytes == null) return null;
+
+		ByteArrayInputStream bis = new ByteArrayInputStream(srBytes);
+		ObjectInput in = null;
+		try {
+			in = new ObjectInputStream(bis);
+//			Gson gson = new Gson();
+			Object o = in.readObject();
+			List<Bucket> bucketList = (List<Bucket>)o;
+			LOGGER.info("Returned results from cache: " + queryToken);
+			return bucketList;
+//			return (SearchResponse)o;
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (in != null) {
+					in.close();
+				}
+			} catch (IOException ex) {
+				// ignore close exception
+			}
+		}
+		return null;
 	}
 
 	private static List<Bucket> doSynonimSearch(String[] querySplit, int hitsInScroll, int loops, Client client,

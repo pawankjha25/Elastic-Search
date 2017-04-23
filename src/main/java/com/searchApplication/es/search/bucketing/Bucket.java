@@ -1,17 +1,18 @@
 package com.searchApplication.es.search.bucketing;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class Bucket implements Comparable<Bucket> {
+public class Bucket implements Comparable<Bucket>, Serializable {
 
 	private Set<BucketTerms> bucketTerms;
-	private int totalPerfectMatches;
-	private int totalPartialMatches;
-	private int totalLevenstheinDistance;
-	private long totalRows;
-	private int totalLength;
+	private Integer totalPerfectMatches;
+	private Integer totalPartialMatches;
+	private Integer totalLevenstheinDistance;
+	private Long totalRows;
+	private Integer totalLength;
 	private List<BucketMetaData> bucketMetaData;
 
 	public Bucket(Set<BucketTerms> bucketTerms, int totalPerfectMatches, int totalPartialMatches,
@@ -21,7 +22,7 @@ public class Bucket implements Comparable<Bucket> {
 		this.totalPerfectMatches = totalPerfectMatches;
 		this.totalPartialMatches = totalPartialMatches;
 		this.totalLevenstheinDistance = totalLevenstheinDistance;
-		this.totalRows = 1;
+		this.totalRows = Long.valueOf(1);
 		this.bucketMetaData = new ArrayList<BucketMetaData>();
 		totalLength = calucalteTotalBucketLength();
 	}
