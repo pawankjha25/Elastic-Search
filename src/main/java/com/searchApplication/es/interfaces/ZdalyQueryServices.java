@@ -10,7 +10,7 @@ import com.searchApplication.es.search.aggs.InsdustriInfo;
 
 public interface ZdalyQueryServices {
 
-	public BucketResponseList produceBuckets(String queryText) throws Exception;
+	public BucketResponseList produceBuckets(String queryText, boolean updateCache) throws Exception;
 
 	public SearchOutput matchQuery(String queryText) throws Exception;
 

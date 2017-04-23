@@ -40,9 +40,9 @@ public class AttributeBucketer {
 	private static final long MAX_TIME_LIVE_QUERY_MS = 500;
 
 	public static BucketResponseList generateBuckets(Client client, String index, String type, String query, int loops,
-			int hitsInScroll, Set<String> locations) throws IOException {
+			int hitsInScroll, Set<String> locations, boolean updateCache) throws IOException {
 		List<Bucket> buckets = aggregateBuckets(
-				createBucketList(client, index, type, query, loops, hitsInScroll, locations));
+				createBucketList(client, index, type, query, loops, hitsInScroll, locations, updateCache));
 		return BucketResponseList.buildFromBucketList(buckets, query);
 	}
 
@@ -66,29 +66,32 @@ public class AttributeBucketer {
 	}
 
 	public static List<Bucket> createBucketList(Client client, String index, String type, String query, int loops,
-			int hitsInScroll, Set<String> locations) throws IOException {
+			int hitsInScroll, Set<String> locations, boolean updateCache) throws IOException {
 
 		LOGGER.debug("Start query ");
 		String[] querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 1);
-		List<Bucket> bucketList = getBucketsFromSearch(querySplit, hitsInScroll, loops, client, index, type);
+		List<Bucket> bucketList = getBucketsFromSearch(querySplit, hitsInScroll, loops, client, index, type, updateCache);
 		LOGGER.debug("Query {} split size {}", query, query.split(" ").length);
 		if (bucketList.size() == 0 && query.split(" ").length == 1) {
 			querySplit = generateAttAndLocQueries(cleanQuery(query), locations, 2);
 			LOGGER.debug("Queries {}", Arrays.toString(querySplit));
 			LOGGER.debug("Next one {}", querySplit[1].equals(""));
 			if (!querySplit[1].equals("")) {
-				bucketList = getBucketsFromSearch(querySplit, hitsInScroll, loops, client, index, type);
+				bucketList = getBucketsFromSearch(querySplit, hitsInScroll, loops, client, index, type, updateCache);
 			}
 		}
 		return bucketList;
 	}
 
 	private static List<Bucket> getBucketsFromSearch(String[] querySplit, int hitsInScroll, int loops, Client client,
-													 String index, String type) throws IOException {
-		List<Bucket> bucketList;
+													 String index, String type, boolean updateCache) throws
+			IOException {
+		List<Bucket> bucketList = null;
 		if (querySplit[0].split(" ").length == 1 && querySplit[1].split(" ").length <= 1) {
 			String queryToken = getAnalyzedQueryTokens(querySplit, client);
-			bucketList = getCachedValue(queryToken);
+			if(!updateCache) {
+				bucketList = getCachedValue(queryToken);
+			}
 			if(bucketList == null) {
 				long startTime = System.currentTimeMillis();
 				SearchResponse sr = hitEsSingle(client, index, type, hitsInScroll, querySplit);
@@ -101,7 +104,9 @@ public class AttributeBucketer {
 			}
 		} else {
 			String queryToken = getAnalyzedQueryTokens(querySplit, client);
-			bucketList = getCachedValue(queryToken);
+			if(!updateCache) {
+				bucketList = getCachedValue(queryToken);
+			}
 			if(bucketList == null) {
 				long startTime = System.currentTimeMillis();
 				SearchResponse sr = hitEsMulti(client, index, type, hitsInScroll, querySplit);
@@ -116,7 +121,7 @@ public class AttributeBucketer {
 		if (bucketList.size() > 0) {
 			return bucketList;
 		} else {
-			return doSynonimSearch(querySplit, hitsInScroll, loops, client, index, type);
+			return doSynonimSearch(querySplit, hitsInScroll, loops, client, index, type, updateCache);
 		}
 	}
 
@@ -199,7 +204,7 @@ public class AttributeBucketer {
 	}
 
 	private static List<Bucket> doSynonimSearch(String[] querySplit, int hitsInScroll, int loops, Client client,
-			String index, String type) throws IOException {
+			String index, String type, boolean updateCache) throws IOException {
 		List<Bucket> bucketList = new ArrayList<Bucket>();
 
 		List<List<String>> queries = new ArrayList<List<String>>();
@@ -217,7 +222,7 @@ public class AttributeBucketer {
 			String[] synQueries = new String[2];
 			synQueries[1] = querySplit[1];
 			synQueries[0] = synonimQueries.get(synCounter).replaceAll("_", " ");
-			bucketList = getBucketsFromSearch(synQueries, hitsInScroll, loops, client, index, type);
+			bucketList = getBucketsFromSearch(synQueries, hitsInScroll, loops, client, index, type, updateCache);
 			if (bucketList.isEmpty()) {
 				break;
 			}

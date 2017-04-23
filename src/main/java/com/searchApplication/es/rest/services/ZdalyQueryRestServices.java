@@ -65,6 +65,9 @@ public class ZdalyQueryRestServices {
 	@Value("${zDaly.cassandra.encrypt}")
 	private boolean encrypted;
 
+	@Value("${update.cache.api}")
+	private boolean updateCacheApi;
+
 	@Autowired
 	private ZdalyQueryServices zdalyQueryServices;
 
@@ -115,7 +118,7 @@ public class ZdalyQueryRestServices {
 		transactionResponse.setResponseType("Object");
 		try {
 			long startTime = System.currentTimeMillis();
-			BucketResponseList results = zdalyQueryServices.produceBuckets(queryString);
+			BucketResponseList results = zdalyQueryServices.produceBuckets(queryString, false);
 
 			if (results != null) {
 				transactionResponse.setResponseEntity(results);
@@ -138,13 +141,23 @@ public class ZdalyQueryRestServices {
 	public TransactionResponse produceBucektsWithCache(
 			@NotNull(message = "Cannot be null") @PathParam("queryString") String queryString,
 			@NotNull(message = "Cannot be null") @PathParam("updateCache") String updateCache) throws Exception {
+
 		TransactionResponse transactionResponse = new TransactionResponse();
 		transactionResponse.setStatus("200");
 		transactionResponse.setResponseMessage("Successfull");
 		transactionResponse.setResponseType("Object");
+		if(!updateCacheApi) {
+			transactionResponse.setStatus("403");
+			transactionResponse.setResponseMessage("Method not allowed");
+			return transactionResponse;
+		}
 		try {
 			long startTime = System.currentTimeMillis();
-			BucketResponseList results = zdalyQueryServices.produceBuckets(queryString);
+			boolean update = false;
+			if("true".equalsIgnoreCase(updateCache)) {
+				update = true;
+			}
+			BucketResponseList results = zdalyQueryServices.produceBuckets(queryString, update);
 
 			if (results != null) {
 				transactionResponse.setResponseEntity(results);

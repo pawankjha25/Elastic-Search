@@ -17,7 +17,7 @@ public class BucketTimer {
 		long start = System.currentTimeMillis();
 
 		LOGGER.info("{}", AttributeBucketer.generateBuckets(client, index, type, query, loops, hitsInScroll,
-				locations).getSearchResponse());
+				locations, false).getSearchResponse());
 
 		long end = System.currentTimeMillis() - start;
 		LOGGER.info("The process lasted {} ", end);

@@ -53,10 +53,10 @@ public class ZdalyQueryServicesImpl implements ZdalyQueryServices {
 	}
 
 	@Override
-	public BucketResponseList produceBuckets(String queryText) throws Exception {
+	public BucketResponseList produceBuckets(String queryText, boolean updateCache) throws Exception {
 		try {
 			return AttributeBucketer.generateBuckets(client, env.getProperty("es.index_name"),
-					env.getProperty("es.search_object"), queryText, 1, 1000, App.LOCATIONS);
+					env.getProperty("es.search_object"), queryText, 1, 1000, App.LOCATIONS, updateCache);
 		} catch (Exception e) {			throw e;
 		}
 	}
