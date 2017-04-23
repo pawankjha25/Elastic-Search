@@ -45,7 +45,7 @@ public class FetchTimeSeriesData {
 
 			for (String req : reqList.keySet()) {
 
-				Statement get = getCassandrQuery(reqList.get(req));
+				Statement get = getCassandrQuery(reqList.get(req), salt);
 				System.out.println(get.toString());
 
 				ResultSet rs = session.execute(get);
@@ -56,6 +56,24 @@ public class FetchTimeSeriesData {
 							row.getString(TimeSeriesTable.TABLE_NAME), row.getDecimal("value"), row.getString("date"),
 							row.getString("period"), row.getString("extended")));
 				}
+				
+				// ------------Temporary fix---------------
+
+				if (list.isEmpty()) {
+					Statement get2 = getCassandrQuery(reqList.get(req), "zdalyrocks");
+					System.out.println(get2.toString());
+
+					ResultSet rs2 = session.execute(get);
+					Iterator<Row> itr2 = rs2.iterator();
+					while (itr2.hasNext()) {
+						Row row = itr2.next();
+						list.add(new TimeSeriesEntity(row.getString(TimeSeriesTable.SERIES_ID),
+								row.getString(TimeSeriesTable.TABLE_NAME), row.getDecimal("value"),
+								row.getString("date"), row.getString("period"), row.getString("extended")));
+					}
+				}
+				
+				//------------end----------------
 			}
 
 		} catch (Exception e) {
@@ -108,7 +126,7 @@ public class FetchTimeSeriesData {
 		return res;
 	}
 
-	private Statement getCassandrQuery(TimeSeriesDataRequest timeSeriesDataRequest) {
+	private Statement getCassandrQuery(TimeSeriesDataRequest timeSeriesDataRequest, String salt) {
 
 		Statement get = null;
 
