@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.searchApplication.ApplicationContextProvider;
 import com.searchApplication.es.cache.AggregationCache;
+import com.searchApplication.utils.ElasticSearchUtility;
 import io.netty.util.internal.StringUtil;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequest;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
@@ -124,15 +125,17 @@ public class AttributeBucketer {
 
 		for(String queryString: querySplit) {
 			if(!StringUtil.isNullOrEmpty(queryString)) {
-				AnalyzeRequest request = (new AnalyzeRequest("zdaly-1").text(queryString).analyzer("shingle_analyzer"));
+				AnalyzeRequest request = (new AnalyzeRequest(ElasticSearchUtility.env.getProperty("es.index_name")).text(queryString).analyzer
+						("shingle_analyzer"));
 				List<AnalyzeResponse.AnalyzeToken> tokens = client.admin().indices().analyze(request).actionGet().getTokens();
 				for (AnalyzeResponse.AnalyzeToken token : tokens) {
-					if(token.getType().equals("shingle")) {
+					if(tokens.size() > 1 && token.getType().equals("shingle") || tokens.size() == 1) {
 						analyzedTokens.append(token.getTerm());
 					}
 				}
 			}
 		}
+		LOGGER.info("Analyzed Query: " + analyzedTokens);
 		return analyzedTokens.toString();
 	}
 
@@ -140,7 +143,6 @@ public class AttributeBucketer {
 		ApplicationContext applicationContext = ApplicationContextProvider.getContext();
 		AggregationCache aggregationCache = (AggregationCache) applicationContext.getBean("aggregationCache");
 		byte[] key = queryToken.getBytes();
-
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutput out = null;
@@ -151,6 +153,7 @@ public class AttributeBucketer {
 			out.flush();
 			byte[] srBytes = bos.toByteArray();
 			aggregationCache.getCache().set(key, srBytes);
+			LOGGER.info("Cached: " + queryToken);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -176,6 +179,7 @@ public class AttributeBucketer {
 //			Gson gson = new Gson();
 			Object o = in.readObject();
 			List<Bucket> bucketList = (List<Bucket>)o;
+			LOGGER.info("Returned results from cache: " + queryToken);
 			return bucketList;
 //			return (SearchResponse)o;
 		} catch (IOException e) {
