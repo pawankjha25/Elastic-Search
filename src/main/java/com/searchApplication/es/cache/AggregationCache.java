@@ -43,7 +43,7 @@ public class AggregationCache {
                 env.getProperty("redis.host"),
                 Integer.valueOf(env.getProperty("redis.port").trim()),
                 5000,
-                20,
+                Integer.valueOf(env.getProperty("redis.pool.size").trim()),
                 "");
     }
 }

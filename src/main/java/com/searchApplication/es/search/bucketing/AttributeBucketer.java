@@ -30,6 +30,7 @@ import com.searchApplication.es.search.bucketing.bucketeers.ESAggregationBuckete
 import com.searchApplication.es.search.bucketing.bucketeers.ESHitBucketeer;
 import com.searchApplication.es.search.bucketing.wordnet.WordNetSynonims;
 import org.springframework.context.ApplicationContext;
+import redis.clients.jedis.Jedis;
 
 public class AttributeBucketer {
 
@@ -151,13 +152,13 @@ public class AttributeBucketer {
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutput out = null;
-		try {
+		try ( Jedis cache = aggregationCache.getCache() ){
 			out = new ObjectOutputStream(bos);
 
 			out.writeObject(bucketList);
 			out.flush();
 			byte[] srBytes = bos.toByteArray();
-			aggregationCache.getCache().set(key, srBytes);
+			cache.set(key, srBytes);
 			LOGGER.info("Cached: " + queryToken);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -173,13 +174,13 @@ public class AttributeBucketer {
 	private static List<Bucket> getCachedValue(String queryToken) {
 		ApplicationContext applicationContext = ApplicationContextProvider.getContext();
 		AggregationCache aggregationCache = (AggregationCache) applicationContext.getBean("aggregationCache");
-		byte[] key = queryToken.getBytes();
-		byte[] srBytes = aggregationCache.getCache().get(key);
-		if(srBytes == null) return null;
-
-		ByteArrayInputStream bis = new ByteArrayInputStream(srBytes);
 		ObjectInput in = null;
-		try {
+		byte[] key = queryToken.getBytes();
+		try ( Jedis cache = aggregationCache.getCache() ){
+			byte[] srBytes = cache.get(key);
+			if(srBytes == null) return null;
+			ByteArrayInputStream bis = new ByteArrayInputStream(srBytes);
+
 			in = new ObjectInputStream(bis);
 //			Gson gson = new Gson();
 			Object o = in.readObject();
@@ -196,6 +197,7 @@ public class AttributeBucketer {
 				if (in != null) {
 					in.close();
 				}
+
 			} catch (IOException ex) {
 				// ignore close exception
 			}
